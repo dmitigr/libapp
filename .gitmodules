@@ -109,3 +109,6 @@
 [submodule "src/dmitigr/3rdparty/uwsc"]
 	path = src/dmitigr/3rdparty/uwsc
 	url = https://github.com/dmitigr/cpp-3rd-uwsc.git
+[submodule "src/dmitigr/gpio"]
+	path = src/dmitigr/gpio
+	url = https://github.com/dmitigr/cpp-lib-gpio.git
