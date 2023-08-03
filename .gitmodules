@@ -112,3 +112,6 @@
 [submodule "src/dmitigr/gpio"]
 	path = src/dmitigr/gpio
 	url = https://github.com/dmitigr/cpp-lib-gpio.git
+[submodule "src/dmitigr/cpp-lib-chrx"]
+	path = src/dmitigr/chrx
+	url = https://github.com/dmitigr/cpp-lib-chrx.git
