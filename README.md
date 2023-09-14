@@ -278,7 +278,7 @@ For conditions of distribution and use, please see the corresponding license.
 [OpenSSL]: https://www.openssl.org/
 [PostgreSQL]: https://www.postgresql.org/
 [RapidJSON]: http://rapidjson.org/
-[RapisJSON_LICENSE]: https://github.com/dmitigr/cpp-3rd-rapidjson/blob/main/license.txt
+[RapidJSON_LICENSE]: https://github.com/dmitigr/cpp-3rd-rapidjson/blob/main/license.txt
 [SQLite]: https://www.sqlite.org/
 [uSockets]: https://github.com/uNetworking/uSockets
 [uSockets_LICENSE]: https://github.com/dmitigr/cpp-3rd-usockets/blob/main/LICENSE
