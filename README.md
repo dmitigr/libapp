@@ -248,9 +248,9 @@ distributed under [APACHE LICENSE, VERSION 2.0][Apache_2_LICENSE].
 
 Third-party software are distributed under:
 
-  - [RapidJSON] is distributed under the following [RapidJSON_LICENSE];
-  - [uSockets] is distributed under the following [uSockets_LICENSE];
-  - [uWebSockets] is distributed under the following [uWebSockets_LICENSE].
+  - [RapidJSON] is distributed under the following [license][RapidJSON_LICENSE];
+  - [uSockets] is distributed under the following [license][uSockets_LICENSE];
+  - [uWebSockets] is distributed under the following [license][uWebSockets_LICENSE].
 
 For conditions of distribution and use, please see the corresponding license.
 
