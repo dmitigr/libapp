@@ -115,3 +115,12 @@
 [submodule "src/dmitigr/cpp-lib-chrx"]
 	path = src/dmitigr/chrx
 	url = https://github.com/dmitigr/cpp-lib-chrx.git
+[submodule "src/dmitigr/wincom"]
+	path = src/dmitigr/wincom
+	url = https://github.com/dmitigr/cpp-lib-wincom.git
+[submodule "src/dmitigr/winole"]
+	path = src/dmitigr/winole
+	url = https://github.com/dmitigr/cpp-lib-winole.git
+[submodule "src/dmitigr/winbase"]
+	path = src/dmitigr/winbase
+	url = https://github.com/dmitigr/cpp-lib-winbase.git
