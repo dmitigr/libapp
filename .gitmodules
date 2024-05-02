@@ -124,3 +124,6 @@
 [submodule "src/dmitigr/winbase"]
 	path = src/dmitigr/winbase
 	url = https://github.com/dmitigr/cpp-lib-winbase.git
+[submodule "src/dmitigr/lin"]
+	path = src/dmitigr/lin
+	url = https://github.com/dmitigr/cpp-lib-lin.git
