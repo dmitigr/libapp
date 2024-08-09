@@ -127,3 +127,6 @@
 [submodule "src/dmitigr/nix"]
     path = src/dmitigr/nix
     url = https://github.com/dmitigr/cpp-lib-nix.git
+[submodule "src/dmitigr/mac"]
+	path = src/dmitigr/mac
+	url = https://github.com/dmitigr/cpp-lib-mac.git
