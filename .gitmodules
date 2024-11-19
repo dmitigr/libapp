@@ -1,132 +1,132 @@
 [submodule "cmake"]
     path = cmake
-    url = https://github.com/dmitigr/cpp-cmake.git
+    url = ../cpp-cmake.git
 [submodule "src/dmitigr/algo"]
     path = src/dmitigr/algo
-    url = https://github.com/dmitigr/cpp-lib-algo.git
+    url = ../cpp-lib-algo.git
 [submodule "src/dmitigr/base"]
     path = src/dmitigr/base
-    url = https://github.com/dmitigr/cpp-lib-base.git
+    url = ../cpp-lib-base.git
 [submodule "src/dmitigr/concur"]
     path = src/dmitigr/concur
-    url = https://github.com/dmitigr/cpp-lib-concur.git
+    url = ../cpp-lib-concur.git
 [submodule "src/dmitigr/dt"]
     path = src/dmitigr/dt
-    url = https://github.com/dmitigr/cpp-lib-dt.git
+    url = ../cpp-lib-dt.git
 [submodule "src/dmitigr/fcgi"]
     path = src/dmitigr/fcgi
-    url = https://github.com/dmitigr/cpp-lib-fcgi.git
+    url = ../cpp-lib-fcgi.git
 [submodule "src/dmitigr/fsx"]
     path = src/dmitigr/fsx
-    url = https://github.com/dmitigr/cpp-lib-fsx.git
+    url = ../cpp-lib-fsx.git
 [submodule "src/dmitigr/hsh"]
     path = src/dmitigr/hsh
-    url = https://github.com/dmitigr/cpp-lib-hsh.git
+    url = ../cpp-lib-hsh.git
 [submodule "src/dmitigr/http"]
     path = src/dmitigr/http
-    url = https://github.com/dmitigr/cpp-lib-http.git
+    url = ../cpp-lib-http.git
 [submodule "src/dmitigr/jrpc"]
     path = src/dmitigr/jrpc
-    url = https://github.com/dmitigr/cpp-lib-jrpc.git
+    url = ../cpp-lib-jrpc.git
 [submodule "src/dmitigr/lisp"]
     path = src/dmitigr/lisp
-    url = https://github.com/dmitigr/cpp-lib-lisp.git
+    url = ../cpp-lib-lisp.git
 [submodule "src/dmitigr/log"]
     path = src/dmitigr/log
-    url = https://github.com/dmitigr/cpp-lib-log.git
+    url = ../cpp-lib-log.git
 [submodule "src/dmitigr/math"]
     path = src/dmitigr/math
-    url = https://github.com/dmitigr/cpp-lib-math.git
+    url = ../cpp-lib-math.git
 [submodule "src/dmitigr/msg"]
     path = src/dmitigr/msg
-    url = https://github.com/dmitigr/cpp-lib-msg.git
+    url = ../cpp-lib-msg.git
 [submodule "src/dmitigr/mulf"]
     path = src/dmitigr/mulf
-    url = https://github.com/dmitigr/cpp-lib-mulf.git
+    url = ../cpp-lib-mulf.git
 [submodule "src/dmitigr/net"]
     path = src/dmitigr/net
-    url = https://github.com/dmitigr/cpp-lib-net.git
+    url = ../cpp-lib-net.git
 [submodule "src/dmitigr/os"]
     path = src/dmitigr/os
-    url = https://github.com/dmitigr/cpp-lib-os.git
+    url = ../cpp-lib-os.git
 [submodule "src/dmitigr/pgfe"]
     path = src/dmitigr/pgfe
-    url = https://github.com/dmitigr/cpp-lib-pgfe.git
+    url = ../cpp-lib-pgfe.git
 [submodule "src/dmitigr/pgfex"]
     path = src/dmitigr/pgfex
-    url = https://github.com/dmitigr/cpp-lib-pgfex.git
+    url = ../cpp-lib-pgfex.git
 [submodule "src/dmitigr/prg"]
     path = src/dmitigr/prg
-    url = https://github.com/dmitigr/cpp-lib-prg.git
+    url = ../cpp-lib-prg.git
 [submodule "src/dmitigr/que"]
     path = src/dmitigr/que
-    url = https://github.com/dmitigr/cpp-lib-que.git
+    url = ../cpp-lib-que.git
 [submodule "src/dmitigr/rajson"]
     path = src/dmitigr/rajson
-    url = https://github.com/dmitigr/cpp-lib-rajson.git
+    url = ../cpp-lib-rajson.git
 [submodule "src/dmitigr/rnd"]
     path = src/dmitigr/rnd
-    url = https://github.com/dmitigr/cpp-lib-rnd.git
+    url = ../cpp-lib-rnd.git
 [submodule "src/dmitigr/sqlixx"]
     path = src/dmitigr/sqlixx
-    url = https://github.com/dmitigr/cpp-lib-sqlixx.git
+    url = ../cpp-lib-sqlixx.git
 [submodule "src/dmitigr/str"]
     path = src/dmitigr/str
-    url = https://github.com/dmitigr/cpp-lib-str.git
+    url = ../cpp-lib-str.git
 [submodule "src/dmitigr/tpl"]
     path = src/dmitigr/tpl
-    url = https://github.com/dmitigr/cpp-lib-tpl.git
+    url = ../cpp-lib-tpl.git
 [submodule "src/dmitigr/url"]
     path = src/dmitigr/url
-    url = https://github.com/dmitigr/cpp-lib-url.git
+    url = ../cpp-lib-url.git
 [submodule "src/dmitigr/util"]
     path = src/dmitigr/util
-    url = https://github.com/dmitigr/cpp-lib-util.git
+    url = ../cpp-lib-util.git
 [submodule "src/dmitigr/uv"]
     path = src/dmitigr/uv
-    url = https://github.com/dmitigr/cpp-lib-uv.git
+    url = ../cpp-lib-uv.git
 [submodule "src/dmitigr/web"]
     path = src/dmitigr/web
-    url = https://github.com/dmitigr/cpp-lib-web.git
+    url = ../cpp-lib-web.git
 [submodule "src/dmitigr/wscl"]
     path = src/dmitigr/wscl
-    url = https://github.com/dmitigr/cpp-lib-wscl.git
+    url = ../cpp-lib-wscl.git
 [submodule "src/dmitigr/ws"]
     path = src/dmitigr/ws
-    url = https://github.com/dmitigr/cpp-lib-ws.git
+    url = ../cpp-lib-ws.git
 [submodule "src/dmitigr/3rdparty/portable_endian"]
     path = src/dmitigr/3rdparty/portable_endian
-    url = https://github.com/dmitigr/cpp-3rd-portable_endian.git
+    url = ../cpp-3rd-portable_endian.git
 [submodule "src/dmitigr/3rdparty/rapidjson"]
     path = src/dmitigr/3rdparty/rapidjson
-    url = https://github.com/dmitigr/cpp-3rd-rapidjson.git
+    url = ../cpp-3rd-rapidjson.git
 [submodule "src/dmitigr/3rdparty/usockets"]
     path = src/dmitigr/3rdparty/usockets
-    url = https://github.com/dmitigr/cpp-3rd-usockets.git
+    url = ../cpp-3rd-usockets.git
 [submodule "src/dmitigr/3rdparty/uwebsockets"]
     path = src/dmitigr/3rdparty/uwebsockets
-    url = https://github.com/dmitigr/cpp-3rd-uwebsockets.git
+    url = ../cpp-3rd-uwebsockets.git
 [submodule "src/dmitigr/3rdparty/uwsc"]
     path = src/dmitigr/3rdparty/uwsc
-    url = https://github.com/dmitigr/cpp-3rd-uwsc.git
+    url = ../cpp-3rd-uwsc.git
 [submodule "src/dmitigr/gpio"]
     path = src/dmitigr/gpio
-    url = https://github.com/dmitigr/cpp-lib-gpio.git
+    url = ../cpp-lib-gpio.git
 [submodule "src/dmitigr/cpp-lib-chrx"]
     path = src/dmitigr/chrx
-    url = https://github.com/dmitigr/cpp-lib-chrx.git
+    url = ../cpp-lib-chrx.git
 [submodule "src/dmitigr/wincom"]
     path = src/dmitigr/wincom
-    url = https://github.com/dmitigr/cpp-lib-wincom.git
+    url = ../cpp-lib-wincom.git
 [submodule "src/dmitigr/winole"]
     path = src/dmitigr/winole
-    url = https://github.com/dmitigr/cpp-lib-winole.git
+    url = ../cpp-lib-winole.git
 [submodule "src/dmitigr/winbase"]
     path = src/dmitigr/winbase
-    url = https://github.com/dmitigr/cpp-lib-winbase.git
+    url = ../cpp-lib-winbase.git
 [submodule "src/dmitigr/nix"]
     path = src/dmitigr/nix
-    url = https://github.com/dmitigr/cpp-lib-nix.git
+    url = ../cpp-lib-nix.git
 [submodule "src/dmitigr/mac"]
     path = src/dmitigr/mac
     url = ../cpp-lib-mac.git
