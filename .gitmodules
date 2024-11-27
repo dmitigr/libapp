@@ -79,9 +79,6 @@
 [submodule "src/dmitigr/url"]
     path = src/dmitigr/url
     url = ../cpp-lib-url.git
-[submodule "src/dmitigr/util"]
-    path = src/dmitigr/util
-    url = ../cpp-lib-util.git
 [submodule "src/dmitigr/uv"]
     path = src/dmitigr/uv
     url = ../cpp-lib-uv.git
