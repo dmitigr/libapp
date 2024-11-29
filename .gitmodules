@@ -1,9 +1,6 @@
 [submodule "cmake"]
     path = cmake
     url = ../cpp-cmake.git
-[submodule "src/dmitigr/algo"]
-    path = src/dmitigr/algo
-    url = ../cpp-lib-algo.git
 [submodule "src/dmitigr/base"]
     path = src/dmitigr/base
     url = ../cpp-lib-base.git
