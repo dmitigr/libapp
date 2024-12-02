@@ -55,9 +55,6 @@
 [submodule "src/dmitigr/prg"]
     path = src/dmitigr/prg
     url = ../cpp-lib-prg.git
-[submodule "src/dmitigr/que"]
-    path = src/dmitigr/que
-    url = ../cpp-lib-que.git
 [submodule "src/dmitigr/rajson"]
     path = src/dmitigr/rajson
     url = ../cpp-lib-rajson.git
