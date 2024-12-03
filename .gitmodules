@@ -13,9 +13,6 @@
 [submodule "src/dmitigr/fcgi"]
     path = src/dmitigr/fcgi
     url = ../cpp-lib-fcgi.git
-[submodule "src/dmitigr/fsx"]
-    path = src/dmitigr/fsx
-    url = ../cpp-lib-fsx.git
 [submodule "src/dmitigr/hsh"]
     path = src/dmitigr/hsh
     url = ../cpp-lib-hsh.git
