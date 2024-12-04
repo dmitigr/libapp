@@ -100,9 +100,6 @@
 [submodule "src/dmitigr/gpio"]
     path = src/dmitigr/gpio
     url = ../cpp-lib-gpio.git
-[submodule "src/dmitigr/cpp-lib-chrx"]
-    path = src/dmitigr/chrx
-    url = ../cpp-lib-chrx.git
 [submodule "src/dmitigr/wincom"]
     path = src/dmitigr/wincom
     url = ../cpp-lib-wincom.git
