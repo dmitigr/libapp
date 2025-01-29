@@ -1,0 +1,2 @@
+* text eol=lf
+test/mulf-form-data*.txt text eol=crlf

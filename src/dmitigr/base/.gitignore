@@ -1,0 +1,17 @@
+*~
+*.[oa]
+*.exe
+*.[ip]db
+*.ilk
+*.obj
+.DS_Store
+BROWSE
+.idea
+.vs
+
+*bld*
+*build*
+
+_private
+doxygen
+Doxyfile
