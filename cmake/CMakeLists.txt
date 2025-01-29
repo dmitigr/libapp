@@ -249,8 +249,8 @@ foreach(lib ${dmitigr_libs})
       "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/${lib}/Doxyfile" @ONLY
       NEWLINE_STYLE UNIX)
 
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/doc/doxyfile.specific")
-      file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/doc/doxyfile.specific"
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/doxyfile.specific")
+      file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/doxyfile.specific"
         DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/${lib}")
     else()
       file(TOUCH "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/${lib}/doxyfile.specific")
