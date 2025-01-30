@@ -239,7 +239,7 @@ inline std::error_code set_affinity(std::thread& thread,
 #else
   (void)thread;
   (void)cpu;
-  return std::errc::not_supported;
+  return make_error_code(std::errc::not_supported);
 #endif
 }
 

@@ -183,7 +183,7 @@ public:
   ~Socket_guard()
   {
     if (close() != 0)
-      os::print_last_error("cannot close socket");
+      net::print_last_error("cannot close socket");
   }
 
   /**

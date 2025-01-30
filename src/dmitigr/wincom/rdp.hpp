@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "../base/contract.hpp"
+#include "../base/utility.hpp"
 #include "../winbase/windows.hpp"
 #include "enumerator.hpp"
 #include "exceptions.hpp"
