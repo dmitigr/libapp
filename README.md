@@ -15,7 +15,9 @@ Includes:
 All of these libraries can be used as shared libraries, static libraries or
 header-only libraries.
 
-## Unbundled third-party dependencies
+## Third-party dependencies
+
+### Unbundled third-party dependencies
 
 - [CMake] build system version 3.16+;
 - C++17 compiler ([GCC] 7.4+ or [Microsoft Visual C++][Visual_Studio] 15.7+);
@@ -25,7 +27,7 @@ header-only libraries.
 - [SQLite] for [sqlixx];
 - [zlib] library (optionally) for [ws].
 
-## Bundled third-party dependencies
+### Bundled third-party dependencies
 
 - [Portable endian];
 - [RapidJSON];
