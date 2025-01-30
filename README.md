@@ -1,6 +1,6 @@
-# Igrilibs - the collection of C++ libraries
+# C++ library for application development
 
-Igrilibs includes:
+Includes:
 
 - [fcgi] - FastCGI implementation (server);
 - [http] - HTTP parts implementation (with basic client and server);
@@ -15,12 +15,6 @@ Igrilibs includes:
 All of these libraries can be used as shared libraries, static libraries or
 header-only libraries.
 
-Some of these libraries are available in the dedicated repositories:
-
-- [dmitigr::fcgi][dmitigr_fcgi];
-- [dmitigr::pgfe][dmitigr_pgfe];
-- [dmitigr::sqlixx][dmitigr_sqlixx].
-
 ## Unbundled third-party dependencies
 
 - [CMake] build system version 3.16+;
@@ -33,12 +27,11 @@ Some of these libraries are available in the dedicated repositories:
 
 ## Bundled third-party dependencies
 
-|Name           |Source                                            |
-|:--------------|:-------------------------------------------------|
-|Portable endian|https://github.com/dmitigr/cpp-3rd-portable_endian|
-|RapidJSON      |https://github.com/dmitigr/cpp-3rd-rapidjson      |
-|uSockets       |https://github.com/dmitigr/cpp-3rd-usockets       |
-|uWebSockets    |https://github.com/dmitigr/cpp-3rd-uwebsockets    |
+- [Portable endian];
+- [RapidJSON];
+- [uSockets];
+- [uWebSockets];
+- [uwsc].
 
 ## CMake options
 
@@ -105,9 +98,9 @@ The default build type is *Debug*.
 
 ### Installation on Linux
 
-    $ git clone --recurse-submodules https://github.com/dmitigr/igrilibs.git
-    $ mkdir igrilibs/build
-    $ cd igrilibs/build
+    $ git clone https://github.com/dmitigr/libapp.git
+    $ mkdir libapp/build
+    $ cd libapp/build
     $ cmake ..
     $ cmake --build . --parallel
     $ cmake --install .
@@ -116,9 +109,9 @@ The default build type is *Debug*.
 
 Run the Developer Command Prompt for Visual Studio and type:
 
-    > git clone --recurse-submodules https://github.com/dmitigr/igrilibs.git
-    > mkdir igrilibs\build
-    > cd igrilibs\build
+    > git clone https://github.com/dmitigr/libapp.git
+    > mkdir libapp\build
+    > cd libapp\build
     > cmake -A x64 ..
     > cmake --build . --config Release --parallel
 
@@ -248,26 +241,24 @@ distributed under [APACHE LICENSE, VERSION 2.0][Apache_2_LICENSE].
 
 Third-party software are distributed under:
 
+  - [Portable endian] is in the public domain;
   - [RapidJSON] is distributed under the following [license][RapidJSON_LICENSE];
   - [uSockets] is distributed under the following [license][uSockets_LICENSE];
-  - [uWebSockets] is distributed under the following [license][uWebSockets_LICENSE].
+  - [uWebSockets] is distributed under the following [license][uWebSockets_LICENSE];
+  - [uwsc] is distributed under the following [license][uwsc_LICENSE].
 
 For conditions of distribution and use, please see the corresponding license.
 
 [Apache_2_LICENSE]: https://www.apache.org/licenses/LICENSE-2.0
 
-[dmitigr_fcgi]: https://github.com/dmitigr/fcgi.git
-[dmitigr_pgfe]: https://github.com/dmitigr/pgfe.git
-[dmitigr_sqlixx]: https://github.com/dmitigr/sqlixx.git
-
-[fcgi]: https://github.com/dmitigr/cpp-lib-fcgi.git
-[http]: https://github.com/dmitigr/cpp-lib-http.git
-[jrpc]: https://github.com/dmitigr/cpp-lib-jrpc.git
-[pgfe]: https://github.com/dmitigr/cpp-lib-pgfe.git
-[rajson]: https://github.com/dmitigr/cpp-lib-rajson.git
-[sqlixx]: https://github.com/dmitigr/cpp-lib-sqlixx.git
-[ws]: https://github.com/dmitigr/cpp-lib-ws.git
-[wscl]: https://github.com/dmitigr/cpp-lib-wscl.git
+[fcgi]: https://github.com/dmitigr/libapp/tree/main/src/dmitigr/fcgi
+[http]: https://github.com/dmitigr/libapp/tree/main/src/dmitigr/http
+[jrpc]: https://github.com/dmitigr/libapp/tree/main/src/dmitigr/jrpc
+[pgfe]: https://github.com/dmitigr/libapp/tree/main/src/dmitigr/pgfe
+[rajson]: https://github.com/dmitigr/libapp/tree/main/src/dmitigr/rajson
+[sqlixx]: https://github.com/dmitigr/libapp/tree/main/src/dmitigr/sqlixx
+[ws]: https://github.com/dmitigr/libapp/tree/main/src/dmitigr/ws
+[wscl]: https://github.com/dmitigr/libapp/tree/main/src/dmitigr/wscl
 
 [CMake]: https://cmake.org/
 [CMake_find_package]: https://cmake.org/cmake/help/latest/command/find_package.html
@@ -276,6 +267,7 @@ For conditions of distribution and use, please see the corresponding license.
 [libpq]: https://www.postgresql.org/docs/current/static/libpq.html
 [libuv]: https://libuv.org/
 [OpenSSL]: https://www.openssl.org/
+[Portable endian]: https://github.com/dmitigr/libapp/blob/main/src/dmitigr/3rdparty/portable_endian
 [PostgreSQL]: https://www.postgresql.org/
 [RapidJSON]: http://rapidjson.org/
 [RapidJSON_LICENSE]: https://github.com/dmitigr/cpp-3rd-rapidjson/blob/main/license.txt
@@ -284,5 +276,7 @@ For conditions of distribution and use, please see the corresponding license.
 [uSockets_LICENSE]: https://github.com/dmitigr/cpp-3rd-usockets/blob/main/LICENSE
 [uWebSockets]: https://github.com/uNetworking/uWebSockets
 [uWebSockets_LICENSE]: https://github.com/dmitigr/cpp-3rd-uwebsockets/blob/main/LICENSE
+[uwsc]: https://github.com/zhaojh329/libuwsc
+[uwsc_LICENSE]: https://github.com/zhaojh329/libuwsc/blob/master/LICENSE
 [Visual_Studio]: https://www.visualstudio.com/
 [zlib]: https://zlib.net/
