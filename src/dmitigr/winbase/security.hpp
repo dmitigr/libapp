@@ -324,4 +324,13 @@ inline void set_token_information(const HANDLE token,
     throw Sys_exception{"cannot set token information"};
 }
 
+// -----------------------------------------------------------------------------
+
+inline SECURITY_ATTRIBUTES make_security_attributes() noexcept
+{
+  SECURITY_ATTRIBUTES result{};
+  result.nLength = sizeof(SECURITY_ATTRIBUTES);
+  return result;
+}
+
 } // namespace dmitigr::winbase

@@ -99,6 +99,13 @@ private:
       static_cast<DWORD>(-1), static_cast<DWORD>(-1)};
 };
 
+inline STARTUPINFOW make_startup_info() noexcept
+{
+  STARTUPINFOW result{};
+  result.cb = sizeof(result);
+  return result;
+}
+
 /// @returns A handle to an opened process.
 inline Handle_guard open_process(const DWORD pid,
   const DWORD desired_access, const bool inherit_handle)

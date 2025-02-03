@@ -93,6 +93,14 @@ public:
     return result;
   }
 
+  /// @returns The released handle.
+  HANDLE release() noexcept
+  {
+    auto result = handle_;
+    handle_ = INVALID_HANDLE_VALUE;
+    return result;
+  }
+
 private:
   HANDLE handle_{INVALID_HANDLE_VALUE};
 };
