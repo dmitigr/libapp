@@ -25,11 +25,18 @@ dmitigr_libs_set_library_info(nix 0 0 0 "Unix specific")
 # ------------------------------------------------------------------------------
 
 set(dmitigr_nix_headers
-  detach.hpp
-  ifaddrs.hpp
+  error.hpp
   ipc_pipe.hpp
-  sysctl.hpp
-  )
+  process.hpp
+)
+
+if(LINUX OR APPLE)
+  list(APPEND dmitigr_nix_headers detach.hpp ifaddrs.hpp)
+endif()
+if(FREEBSD OR APPLE)
+  list(APPEND dmitigr_nix_headers sysctl.hpp)
+endif()
+
 
 set(dmitigr_nix_implementations
   )

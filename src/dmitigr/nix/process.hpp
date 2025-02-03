@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2024 Dmitry Igrishin
+// Copyright 2025 Dmitry Igrishin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,20 +14,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DMITIGR_NIX_NIX_HPP
-#define DMITIGR_NIX_NIX_HPP
+#include <chrono>
+#include <csignal>
+#include <system_error>
+#include <thread>
 
-#if defined(__linux__) || defined(__APPLE__)
-#include "detach.hpp"
-#include "ifaddrs.hpp"
-#endif
+#include <sys/types.h>
+#include <unistd.h>
 
-#if defined(__FreeBSD__) || defined(__APPLE__)
-#include "sysctl.hpp"
-#endif
+namespace dmitigr::nix {
 
-#include "error.hpp"
-#include "ipc_pipe.hpp"
-#include "process.hpp"
+inline void wait_for_exit(const pid_t pid,
+  const std::chrono::milliseconds polling_interval)
+{
+  while (true) {
+    if (kill(pid, 0) < 0) {
+      if (errno == ESRCH)
+        break;
+      else
+        throw std::system_error{errno, std::generic_category()};
+    }
+    std::this_thread::sleep_for(polling_interval);
+  }
+}
 
-#endif  // DMITIGR_NIX_NIX_HPP
+} // dmitigr::nix
