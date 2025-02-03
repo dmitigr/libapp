@@ -19,6 +19,7 @@
 
 #include "data.hpp"
 #include "exceptions.hpp"
+#include "row.hpp"
 #include "types_fwd.hpp"
 
 #include <memory>
@@ -186,7 +187,7 @@ inline T to(std::unique_ptr<Data>&& data, Types&& ... args)
 template<typename T, typename ... Types>
 inline T to(const Row& row, Types&& ... args)
 {
-  if (!bool(row))
+  if (!row)
     throw Generic_exception{"cannot convert to type: invalid Row instance"};
   return Conversions<T>::to_type(row, std::forward<Types>(args)...);
 }
@@ -202,7 +203,7 @@ inline T to(const Row& row, Types&& ... args)
 template<typename T, typename ... Types>
 inline T to(Row&& row, Types&& ... args)
 {
-  if (!bool(row))
+  if (!row)
     throw Generic_exception{"cannot convert to type: invalid Row instance"};
   return Conversions<T>::to_type(std::move(row), std::forward<Types>(args)...);
 }

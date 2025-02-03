@@ -31,13 +31,19 @@ set(dmitigr_libs_os_deps base)
 # ------------------------------------------------------------------------------
 
 set(dmitigr_os_headers
+  basics.hpp
   environment.hpp
   error.hpp
   exceptions.hpp
   last_error.hpp
   pid.hpp
   types_fwd.hpp
-  )
+  windows.hpp
+)
+
+if(NOT APPLE)
+  list(APPEND dmitigr_os_headers smbios.hpp)
+endif()
 
 set(dmitigr_os_implementations
   )
@@ -62,6 +68,9 @@ endif()
 # ------------------------------------------------------------------------------
 
 if(DMITIGR_LIBS_TESTS)
-  set(dmitigr_os_tests smbios)
+  set(dmitigr_os_tests)
+  if(NOT APPLE)
+    list(APPEND dmitigr_os_tests smbios)
+  endif()
   set(dmitigr_os_tests_target_link_libraries dmitigr_base)
 endif()

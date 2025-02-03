@@ -418,7 +418,7 @@ public:
   /**
    * @brief Requests the server to describe this prepared statement.
    *
-   * @see is_described() describe(), Connection::describe_nio().
+   * @see is_described(), describe(), Connection::describe_nio().
    */
   DMITIGR_PGFE_API void describe_nio();
 
