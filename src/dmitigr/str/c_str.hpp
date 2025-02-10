@@ -17,15 +17,31 @@
 #ifndef DMITIGR_STR_C_STR_HPP
 #define DMITIGR_STR_C_STR_HPP
 
+#include "../base/traits.hpp"
+
 #include <cctype>
+#include <cstring>
+#include <cwchar>
 #include <cwctype>
 #include <initializer_list>
+#include <type_traits>
 
 namespace dmitigr::str {
 
 // -----------------------------------------------------------------------------
 // C-strings
 // -----------------------------------------------------------------------------
+
+template<typename Ch>
+std::size_t len(const Ch* const str) noexcept
+{
+  if constexpr (std::is_same_v<Ch, char>)
+    return std::strlen(str);
+  else if constexpr (std::is_same_v<Ch, wchar_t>)
+    return std::wcslen(str);
+  else
+    static_assert(false_value<Ch>);
+}
 
 /**
  * @returns The pointer to a next non-space character, or pointer to the
