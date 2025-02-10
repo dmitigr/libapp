@@ -33,8 +33,11 @@ public:
     close();
   }
 
+  /// The default constructor.
+  Handle_guard() noexcept = default;
+
   /// The constructor.
-  explicit Handle_guard(const HANDLE handle = INVALID_HANDLE_VALUE) noexcept
+  explicit Handle_guard(const HANDLE handle) noexcept
     : handle_{handle}
   {}
 
