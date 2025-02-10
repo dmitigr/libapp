@@ -17,12 +17,37 @@
 #pragma once
 #pragma comment(lib, "kernel32")
 
-#include "error.hpp"
+#include "exceptions.hpp"
+#include "hguard.hpp"
 
 #include <chrono>
 #include <stdexcept>
 
 namespace dmitigr::winbase {
+
+inline Handle_guard create_event(const LPSECURITY_ATTRIBUTES secattrs,
+  const bool manual_reset, const bool initial_state, LPCWSTR name = {})
+{
+  auto result = CreateEventW(secattrs, manual_reset, initial_state, name);
+  if (!result)
+    throw Sys_exception{"cannot create event"};
+  return Handle_guard{result};
+}
+
+inline Handle_guard open_event(const DWORD desired_access,
+  const bool inherit, LPCWSTR name)
+{
+  auto result = OpenEventW(desired_access, inherit, name);
+  if (!result)
+    throw Sys_exception{"cannot open event"};
+  return Handle_guard{result};
+}
+
+inline void set_event(const HANDLE hdl)
+{
+  if (!SetEvent(hdl))
+    throw Sys_exception{"cannot set event"};
+}
 
 /**
  * @param handle A handle to the object.
