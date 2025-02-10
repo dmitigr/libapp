@@ -30,6 +30,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 namespace dmitigr::str {
 
@@ -200,6 +201,16 @@ trimmed(const std::basic_string_view<CharT, Traits> str,
   const Trim tr = Trim::all) noexcept
 {
   return trimmed(str, tr, is_not_visible);
+}
+
+/// @returns Vector of string pointers.
+template<typename String>
+auto vector_c_str(const std::vector<String>& args)
+{
+  std::vector<const typename String::value_type*> argv(args.size() + 1, nullptr);
+  std::transform(args.cbegin(), args.cend(), argv.begin(),
+    [](const String& arg){return arg.data();});
+  return argv;
 }
 
 // -----------------------------------------------------------------------------

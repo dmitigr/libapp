@@ -21,6 +21,7 @@
 #ifndef DMITIGR_NIX_IPC_PIPE_HPP
 #define DMITIGR_NIX_IPC_PIPE_HPP
 
+#include "../str/transform.hpp"
 #include "error.hpp"
 
 #include <algorithm>
@@ -41,18 +42,6 @@
 #include <sys/wait.h>
 
 namespace dmitigr::nix::ipc::pp {
-
-namespace detail {
-
-inline std::vector<const char*> argvec(const std::vector<std::string>& args)
-{
-  std::vector<const char*> argv(args.size() + 1, nullptr);
-  transform(args.cbegin(), args.cend(), argv.begin(),
-    [](const std::string& arg){return arg.data();});
-  return argv;
-}
-
-} // namespace detail
 
 /**
  * @brief Executes a `prog`.
@@ -113,7 +102,7 @@ inline int exec_and_wait(const std::string& prog,
     close(fildes_from_child_err[1]);
 
     // exec*() return only if an error has occurred.
-    const auto argv = detail::argvec(args);
+    const auto argv = str::vector_c_str(args);
     (void)execvp(prog.c_str(), const_cast<char**>(argv.data()));
     const int err{errno};
     std::fprintf(stderr, "%s", error_message(err).c_str());
