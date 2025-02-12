@@ -33,12 +33,23 @@ namespace dmitigr::str {
 // -----------------------------------------------------------------------------
 
 template<typename Ch>
-std::size_t len(const Ch* const str) noexcept
+std::size_t length(const Ch* const str) noexcept
 {
   if constexpr (std::is_same_v<Ch, char>)
     return std::strlen(str);
   else if constexpr (std::is_same_v<Ch, wchar_t>)
     return std::wcslen(str);
+  else
+    static_assert(false_value<Ch>);
+}
+
+template<typename Ch>
+Ch* copy(Ch* dst, const Ch* const src, const std::size_t count) noexcept
+{
+  if constexpr (std::is_same_v<Ch, char>)
+    return std::strncpy(dst, src, count);
+  else if constexpr (std::is_same_v<Ch, wchar_t>)
+    return std::wcsncpy(dst, src, count);
   else
     static_assert(false_value<Ch>);
 }
