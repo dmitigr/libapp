@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -210,16 +211,23 @@ inline DWORD exit_code_process(const HANDLE handle)
   return result;
 }
 
-/// @returns The termination status of the specified process which terminated.
-inline DWORD wait_for_exit(const HANDLE process,
+/**
+ * @returns The termination status of the specified process, or `std::nullopt`
+ * if `timeout` reached before the `process` termination.
+ */
+inline std::optional<DWORD> wait_for_exit(const HANDLE process,
   const std::chrono::milliseconds timeout = std::chrono::milliseconds::max())
 {
   const auto status = wait_for_single_object(process, timeout);
-  if (status == WAIT_TIMEOUT)
-    throw std::runtime_error{"process wait timeout"};
-  else if (status != WAIT_OBJECT_0)
-    throw std::runtime_error{"process wait error "+std::to_string(status)};
-  return exit_code_process(process);
+  if (status == WAIT_OBJECT_0)
+    return exit_code_process(process);
+  else if (status == WAIT_TIMEOUT)
+    return std::nullopt;
+  else if (status == WAIT_FAILED)
+    throw Sys_exception{"cannot wait process for exit"};
+  else
+    throw std::runtime_error{"cannot wait process for exit:"
+      " unexpected status "+std::to_string(status)};
 }
 
 } // namespace dmitigr::winbase
