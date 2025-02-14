@@ -21,7 +21,6 @@
 #include "hguard.hpp"
 
 #include <chrono>
-#include <stdexcept>
 
 namespace dmitigr::winbase {
 
@@ -61,7 +60,7 @@ inline DWORD wait_for_single_object(const HANDLE handle,
     timeout == timeout.max() ? INFINITE : static_cast<DWORD>(timeout.count())};
   const auto result = WaitForSingleObject(handle, timeout_native);
   if (result == WAIT_FAILED)
-    throw std::runtime_error{last_error_message()};
+    throw Sys_exception{"cannot wait for single object"};
   return result;
 }
 
