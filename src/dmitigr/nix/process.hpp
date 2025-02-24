@@ -20,6 +20,7 @@
 #include <thread>
 
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 namespace dmitigr::nix {
@@ -36,6 +37,14 @@ inline void wait_for_exit(const pid_t pid,
     }
     std::this_thread::sleep_for(polling_interval);
   }
+}
+
+inline int wait(const pid_t pid, const int options = {})
+{
+  int wstatus{};
+  if (waitpid(pid, &wstatus, options) < 0)
+    throw std::system_error{errno, std::generic_category()};
+  return wstatus;
 }
 
 } // dmitigr::nix
