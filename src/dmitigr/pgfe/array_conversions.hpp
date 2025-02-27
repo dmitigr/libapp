@@ -40,8 +40,8 @@ template<typename T,
   template<class, class> class Container,
   template<class> class Allocator,
   typename ... Types>
-std::string to_array_literal(const Container<std::optional<T>,
-  Allocator<std::optional<T>>>& container, char delimiter = ',', Types&& ... args);
+std::string to_array_literal(const Container<T, Allocator<T>>& container,
+  char delimiter = ',', Types&& ... args);
 
 /// @returns The container representation of the PostgreSQL array `literal`.
 template<class Container, typename ... Types>
@@ -209,8 +209,7 @@ struct Array_string_conversions_vals<Container<T, Allocator<T>>> final {
   template<typename ... Types>
   static std::string to_string(const Type& value, Types&& ... args)
   {
-    return Array_string_conversions_opts<Cont>::to_string(
-      to_container_of_optionals(value), std::forward<Types>(args)...);
+    return to_array_literal(value, ',', std::forward<Types>(args)...);
   }
 
 private:
@@ -241,11 +240,11 @@ struct Array_data_conversions_vals<Container<T, Allocator<T>>> final {
   }
 
   template<typename ... Types>
-  static std::unique_ptr<Data> to_data(Type&& value, Types&& ... args)
+  static std::unique_ptr<Data> to_data(const Type& value, Types&& ... args)
   {
-    return Array_data_conversions_opts<Cont>::to_data(
-      to_container_of_optionals(std::forward<Type>(value)),
-      std::forward<Types>(args)...);
+    using Convs = Array_string_conversions_vals<Type>;
+    return Data::make(Convs::to_string(value, std::forward<Types>(args)...),
+      Data_format::text);
   }
 
 private:
@@ -635,13 +634,40 @@ const char* fill_container(Container<std::optional<T>,
   }
 }
 
+/// Appends `element` to result.
+template<typename T, typename ... Types>
+void append_array(std::string& result, const T& element,
+  const char delimiter, Types&& ... args)
+{
+  /*
+   * End elements shall be quoted, subliterals shall not be quoted.
+   * Using overloads defined in nested namespace "arrays" for this.
+   */
+  using namespace arrays;
+  result.append(quote_for_array_element(element));
+  result.append(to_array_literal(element, delimiter,
+      std::forward<Types>(args)...));
+  result.append(quote_for_array_element(element));
+}
+
+/// @overload
+template<typename T, typename ... Types>
+void append_array(std::string& result, const std::optional<T>& element,
+  const char delimiter, Types&& ... args)
+{
+  if (element)
+    append_array(result, *element, delimiter, std::forward<Types>(args)...);
+  else
+    result.append("NULL");
+}
+
 /// @returns PostgreSQL array literal converted from the given `container`.
 template<typename T,
   template<class, class> class Container,
   template<class> class Allocator,
   typename ... Types>
-std::string to_array_literal(const Container<std::optional<T>,
-  Allocator<std::optional<T>>>& container, const char delimiter, Types&& ... args)
+std::string to_array_literal(const Container<T, Allocator<T>>& container,
+  const char delimiter, Types&& ... args)
 {
   auto i = cbegin(container);
   const auto e = cend(container);
@@ -649,19 +675,7 @@ std::string to_array_literal(const Container<std::optional<T>,
   std::string result("{");
   if (i != e) {
     while (true) {
-      if (const std::optional<T>& element = *i) {
-        /*
-         * End elements shall be quoted, subliterals shall not be quoted.
-         * We are using overloads defined in nested namespace "arrays" for this.
-         */
-        using namespace arrays;
-        result.append(quote_for_array_element(*element));
-        result.append(to_array_literal(*element, delimiter,
-            std::forward<Types>(args)...));
-        result.append(quote_for_array_element(*element));
-      } else
-        result.append("NULL");
-
+      append_array(result, *i, delimiter, std::forward<Types>(args)...);
       if (++i != e)
         result += delimiter;
       else
