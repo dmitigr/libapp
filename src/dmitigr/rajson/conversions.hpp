@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2023 Dmitry Igrishin
+// Copyright 2025 Dmitry Igrishin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -147,6 +147,46 @@ struct Arithmetic_generic_conversions {
   {
     return to_value<Encoding, Allocator>(value);
   }
+
+  template<typename T, class Encoding, class Allocator>
+  static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
+  {
+    if (value.IsInt()) {
+      check<T, std::int32_t>();
+      const auto result = value.GetInt();
+      return static_cast<T>(result);
+    } else if (value.IsUint()) {
+      check<T, std::uint32_t>();
+      const auto result = value.GetUint();
+      return static_cast<T>(result);
+    } else if (value.IsInt64()) {
+      check<T, std::int64_t>();
+      const auto result = value.GetInt64();
+      return static_cast<T>(result);
+    } else if (value.IsUint64()) {
+      check<T, std::uint64_t>();
+      const auto result = value.GetUint64();
+      return static_cast<T>(result);
+    } else if (value.IsFloat() || value.IsLosslessFloat()) {
+      check<T, float>();
+      const auto result = value.GetFloat();
+      return static_cast<T>(result);
+    } else if (value.IsDouble() || value.IsLosslessDouble()) {
+      check<T, double>();
+      const auto result = value.GetDouble();
+      return static_cast<T>(result);
+    }
+    throw Exception{"cannot convert JSON value to numeric"};
+  }
+
+private:
+  template<typename T, typename U>
+  static void check()
+  {
+    if (sizeof(T) < sizeof(U))
+      throw Exception{"cannot convert JSON value to numeric:"
+        " result size too small"};
+  };
 };
 
 /// Full specialization for `bool`.
@@ -162,33 +202,13 @@ struct Conversions<bool> final : Arithmetic_generic_conversions {
   }
 };
 
-/// Full specialization for `std::uint8_t`.
+/// Full specialization for `std::int32_t`.
 template<>
-struct Conversions<std::uint8_t> final : Arithmetic_generic_conversions {
+struct Conversions<std::int32_t> final : Arithmetic_generic_conversions {
   template<class Encoding, class Allocator>
   static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
   {
-    if (value.IsUint()) {
-      const auto result = value.GetUint();
-      if (result <= std::numeric_limits<std::uint8_t>::max())
-        return static_cast<std::uint8_t>(result);
-    }
-    throw Exception{"cannot convert JSON value to std::uint8_t"};
-  }
-};
-
-/// Full specialization for `std::uint16_t`.
-template<>
-struct Conversions<std::uint16_t> final : Arithmetic_generic_conversions {
-  template<class Encoding, class Allocator>
-  static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
-  {
-    if (value.IsUint()) {
-      const auto result = value.GetUint();
-      if (result <= std::numeric_limits<std::uint16_t>::max())
-        return static_cast<std::uint16_t>(result);
-    }
-    throw Exception{"cannot convert JSON value to std::uint16_t"};
+    return Arithmetic_generic_conversions::to_type<std::int32_t>(value);
   }
 };
 
@@ -198,73 +218,7 @@ struct Conversions<std::uint32_t> final : Arithmetic_generic_conversions {
   template<class Encoding, class Allocator>
   static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
   {
-    if (value.IsUint()) {
-      const auto result = value.GetUint();
-      if (result <= std::numeric_limits<std::uint32_t>::max())
-        return static_cast<std::uint32_t>(result);
-    }
-    throw Exception{"cannot convert JSON value to std::uint32_t"};
-  }
-};
-
-/// Full specialization for `std::uint64_t`.
-template<>
-struct Conversions<std::uint64_t> final : Arithmetic_generic_conversions {
-  template<class Encoding, class Allocator>
-  static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
-  {
-    if (value.IsUint64())
-      return static_cast<std::uint64_t>(value.GetUint64());
-
-    throw Exception{"cannot convert JSON value to std::uint64_t"};
-  }
-};
-
-/// Full specialization for `std::int8_t`.
-template<>
-struct Conversions<std::int8_t> final : Arithmetic_generic_conversions {
-  template<class Encoding, class Allocator>
-  static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
-  {
-    if (value.IsInt()) {
-      const auto result = value.GetInt();
-      if (std::numeric_limits<std::int8_t>::min() <= result &&
-        result <= std::numeric_limits<std::int8_t>::max())
-        return static_cast<std::int8_t>(result);
-    }
-    throw Exception{"cannot convert JSON value to std::int8_t"};
-  }
-};
-
-/// Full specialization for `std::int16_t`.
-template<>
-struct Conversions<std::int16_t> final : Arithmetic_generic_conversions {
-  template<class Encoding, class Allocator>
-  static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
-  {
-    if (value.IsInt()) {
-      const auto result = value.GetInt();
-      if (std::numeric_limits<std::int16_t>::min() <= result &&
-        result <= std::numeric_limits<std::int16_t>::max())
-        return static_cast<std::int16_t>(result);
-    }
-    throw Exception{"cannot convert JSON value to std::int16_t"};
-  }
-};
-
-/// Full specialization for `std::int32_t`.
-template<>
-struct Conversions<std::int32_t> final : Arithmetic_generic_conversions {
-  template<class Encoding, class Allocator>
-  static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
-  {
-    if (value.IsInt()) {
-      const auto result = value.GetInt();
-      if (std::numeric_limits<std::int32_t>::min() <= result &&
-        result <= std::numeric_limits<std::int32_t>::max())
-        return static_cast<std::int32_t>(result);
-    }
-    throw Exception{"cannot convert JSON value to std::int32_t"};
+    return Arithmetic_generic_conversions::to_type<std::uint32_t>(value);
   }
 };
 
@@ -274,10 +228,17 @@ struct Conversions<std::int64_t> final : Arithmetic_generic_conversions {
   template<class Encoding, class Allocator>
   static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
   {
-    if (value.IsInt64())
-      return static_cast<std::int64_t>(value.GetInt64());
+    return Arithmetic_generic_conversions::to_type<std::int64_t>(value);
+  }
+};
 
-    throw Exception{"cannot convert JSON value to std::int64_t"};
+/// Full specialization for `std::uint64_t`.
+template<>
+struct Conversions<std::uint64_t> final : Arithmetic_generic_conversions {
+  template<class Encoding, class Allocator>
+  static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
+  {
+    return Arithmetic_generic_conversions::to_type<std::uint64_t>(value);
   }
 };
 
@@ -287,10 +248,7 @@ struct Conversions<float> final : Arithmetic_generic_conversions {
   template<class Encoding, class Allocator>
   static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
   {
-    if (value.IsFloat() || value.IsLosslessFloat())
-      return value.GetFloat();
-
-    throw Exception{"cannot convert JSON value to float"};
+    return Arithmetic_generic_conversions::to_type<float>(value);
   }
 };
 
@@ -300,10 +258,7 @@ struct Conversions<double> final : Arithmetic_generic_conversions {
   template<class Encoding, class Allocator>
   static auto to_type(const rapidjson::GenericValue<Encoding, Allocator>& value)
   {
-    if (value.IsDouble() || value.IsLosslessDouble())
-      return value.GetDouble();
-
-    throw Exception{"cannot convert JSON value to double"};
+    return Arithmetic_generic_conversions::to_type<double>(value);
   }
 };
 
