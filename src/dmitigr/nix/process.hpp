@@ -16,12 +16,18 @@
 
 #include <chrono>
 #include <csignal>
+#include <filesystem>
+#include <string>
 #include <system_error>
 #include <thread>
 
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#ifdef __APPLE__
+#include <libproc.h>
+#endif
 
 namespace dmitigr::nix {
 
@@ -46,5 +52,19 @@ inline int wait(const pid_t pid, const int options = {})
     throw std::system_error{errno, std::generic_category()};
   return wstatus;
 }
+
+#if defined (__linux__) || defined (__APPLE__)
+inline std::filesystem::path process_image_path(const pid_t pid)
+{
+#if defined (__APPLE__)
+  std::string result(PROC_PIDPATHINFO_MAXSIZE, 0);
+  if (proc_pidpath(pid, result.data(), result.size()) <= 0)
+    throw std::system_error{errno, std::system_category()};
+  return result;
+#elif defined (__linux__)
+  return std::filesystem::read_symlink("/proc/"+std::to_string(pid)+"/exe");
+#endif
+}
+#endif
 
 } // dmitigr::nix
