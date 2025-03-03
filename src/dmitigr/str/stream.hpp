@@ -43,7 +43,6 @@ namespace dmitigr::str {
  * @param pred The predicate of form `pred(line)` that returns `true` to
  * indicate that `line` read from the file must be appended to the result.
  * @param delimiter The delimiter character.
- * @param is_binary The indicator of binary read mode.
  */
 template<typename Pred>
 std::vector<std::string>

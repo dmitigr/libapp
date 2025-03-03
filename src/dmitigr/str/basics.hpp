@@ -24,9 +24,9 @@ namespace str {
 
 /// Denotes trimming mode bitmask.
 enum class Trim {
-  lhs = 1,
-  rhs,
-  all
+  lhs = 0x1,
+  rhs = 0x2,
+  all = lhs | rhs
 };
 
 /// Denotes a byte format.
