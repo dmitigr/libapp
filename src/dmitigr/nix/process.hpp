@@ -14,6 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef DMITIGR_NIX_PROCESS_HPP
+#define DMITIGR_NIX_PROCESS_HPP
+
 #include <chrono>
 #include <csignal>
 #include <filesystem>
@@ -68,3 +71,5 @@ inline std::filesystem::path process_image_path(const pid_t pid)
 #endif
 
 } // dmitigr::nix
+
+#endif  // DMITIGR_NIX_PROCESS_HPP
