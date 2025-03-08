@@ -247,7 +247,7 @@ int main()
 
       {
         const auto x = req.parameter("x").not_null<int>();
-        const auto y = req.parameter("y").not_null<std::int8_t>();
+        const auto y = req.parameter("y").not_null<std::int32_t>();
         const auto z = req.parameter("z").optional<int>();
         DMITIGR_ASSERT(x == 10);
         DMITIGR_ASSERT(y == 20);
