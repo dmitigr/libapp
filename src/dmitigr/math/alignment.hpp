@@ -35,7 +35,7 @@ constexpr bool is_power_of_two(const T number) noexcept
  * @param alignment An aligment to calculated the padding.
  *
  * @par Requires
- * `(size >= 0 && is_power_of_two(alignment))`.
+ * `(value >= 0 && is_power_of_two(alignment))`.
  */
 template<typename T>
 constexpr auto padding(const T value, const T alignment)
