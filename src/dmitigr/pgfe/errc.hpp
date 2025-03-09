@@ -495,6 +495,9 @@ enum class Sqlstate {
   /// 25P03
   c25_idle_in_transaction_session_timeout = 3624915,
 
+  /// 25P04
+  c25_transaction_timeout = 3624916,
+
   /*
    * Class 26 - Invalid SQL Statement Name
    */

@@ -283,6 +283,8 @@ DMITIGR_PGFE_INLINE const char* to_literal(const Sqlstate errc) noexcept
     return "c25_in_failed_sql_transaction";
   case Errc::c25_idle_in_transaction_session_timeout:
     return "c25_idle_in_transaction_session_timeout";
+  case Errc::c25_transaction_timeout:
+    return "c25_transaction_timeout";
   case Errc::c26_invalid_sql_statement_name:
     return "c26_invalid_sql_statement_name";
   case Errc::c27_triggered_data_change_violation:
