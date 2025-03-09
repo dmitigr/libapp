@@ -19,7 +19,7 @@
 
 #include "../base/algorithm.hpp"
 #include "../base/assert.hpp"
-#include "../math/interval.hpp"
+#include "../base/math.hpp"
 #include "../str/predicate.hpp"
 #include "exceptions.hpp"
 #include "response.hpp"

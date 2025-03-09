@@ -14,12 +14,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "../base/assert.hpp"
+#include "../base/math.hpp"
 #include "basics.hpp"
 #include "exceptions.hpp"
 #include "server_connection.hpp"
 #include "streambuf.hpp"
-#include "../base/assert.hpp"
-#include "../math/alignment.hpp"
 
 #include <algorithm>
 #include <array>

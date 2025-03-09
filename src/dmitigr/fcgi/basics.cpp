@@ -15,7 +15,7 @@
 // limitations under the License.
 
 #include "../base/assert.hpp"
-#include "../math/alignment.hpp"
+#include "../base/math.hpp"
 #include "../net/descriptor.hpp"
 #include "basics.hpp"
 #include "connection.hpp"

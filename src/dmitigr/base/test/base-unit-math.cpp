@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2023 Dmitry Igrishin
+// Copyright 2025 Dmitry Igrishin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 // limitations under the License.
 
 #include "../../base/assert.hpp"
-#include "../../math/math.hpp"
+#include "../../base/math.hpp"
 
 #include <array>
 #include <vector>

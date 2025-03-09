@@ -50,7 +50,7 @@ set(dmitigr_fcgi_implementations
 # Dependencies
 # ------------------------------------------------------------------------------
 
-set(dmitigr_libs_fcgi_deps base math net)
+set(dmitigr_libs_fcgi_deps base net)
 
 # ------------------------------------------------------------------------------
 # Tests

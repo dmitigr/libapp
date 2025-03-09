@@ -41,7 +41,7 @@ set(dmitigr_jrpc_implementations
 # Dependencies
 # ------------------------------------------------------------------------------
 
-set(dmitigr_libs_jrpc_deps base math rajson str)
+set(dmitigr_libs_jrpc_deps base rajson str)
 
 # ------------------------------------------------------------------------------
 # Tests
@@ -49,5 +49,5 @@ set(dmitigr_libs_jrpc_deps base math rajson str)
 
 if(DMITIGR_LIBS_TESTS)
   set(dmitigr_jrpc_tests request response)
-  set(dmitigr_jrpc_tests_target_link_libraries dmitigr_base dmitigr_math)
+  set(dmitigr_jrpc_tests_target_link_libraries dmitigr_base)
 endif()

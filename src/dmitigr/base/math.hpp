@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2023 Dmitry Igrishin
+// Copyright 2025 Dmitry Igrishin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,15 +14,67 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DMITIGR_MATH_INTERVAL_HPP
-#define DMITIGR_MATH_INTERVAL_HPP
+#ifndef DMITIGR_BASE_MATH_HPP
+#define DMITIGR_BASE_MATH_HPP
 
-#include "../base/assert.hpp"
-#include "exceptions.hpp"
+#include "assert.hpp"
 
+#include <stdexcept>
 #include <utility>
 
 namespace dmitigr::math {
+
+// -----------------------------------------------------------------------------
+// Alignment
+// -----------------------------------------------------------------------------
+
+/// @returns `true` if `number` is a power of 2.
+template<typename T>
+constexpr bool is_power_of_two(const T number) noexcept
+{
+  return (number & (number - 1)) == 0;
+}
+
+/**
+ * @returns The size of padding.
+ *
+ * @param value A value for which a padding need to be calculated.
+ * @param alignment An aligment to calculated the padding.
+ *
+ * @par Requires
+ * `(value >= 0 && is_power_of_two(alignment))`.
+ */
+template<typename T>
+constexpr auto padding(const T value, const T alignment)
+{
+  if (!(value >= 0))
+    throw std::invalid_argument{"cannot calculate padding for a negative value"};
+  else if (!is_power_of_two(alignment))
+    throw std::invalid_argument{"cannot calculate padding with alignment that is not "
+      "power of 2"};
+  return (static_cast<T>(0) - value) & static_cast<T>(alignment - 1);
+}
+
+/**
+ * @returns The value aligned by using `alignment`.
+ *
+ * @par Requires
+ * `(value >= 0 && is_power_of_two(alignment))`.
+ */
+template<typename T>
+constexpr T aligned(const T value, const T alignment)
+{
+  if (!(value >= 0))
+    throw std::invalid_argument{"cannot align a negative value"};
+  else if (!is_power_of_two(alignment))
+    throw std::invalid_argument{"cannot align a value with alignment that is not "
+      "power of 2"};
+  return (value + (alignment - 1)) & -alignment;
+}
+
+// -----------------------------------------------------------------------------
+// Interval
+// -----------------------------------------------------------------------------
 
 /// Represents a type of interval.
 enum class Interval_type {
@@ -61,7 +113,7 @@ public:
     , max_{std::move(max)}
   {
     if (!(min_ <= max_))
-      throw Exception{"interval is invalid (min > max)"};
+      throw std::invalid_argument{"interval is invalid (min > max)"};
   }
 
   /**
@@ -78,7 +130,7 @@ public:
     const bool requirement = (type_ == Type::closed && min_ <= max_) ||
       (type_ != Type::closed && min_ < max_);
     if (!requirement)
-      throw Exception{"interval is invalid (min > max or min >= max)"};
+      throw std::invalid_argument{"interval is invalid (min > max or min >= max)"};
   }
 
   /// @returns [min, max] interval.
@@ -154,6 +206,54 @@ private:
   T max_{};
 };
 
+// -----------------------------------------------------------------------------
+// Statistic
+// -----------------------------------------------------------------------------
+
+/**
+ * @returns An average of values.
+ *
+ * @param data Input data
+ */
+template<class Container>
+constexpr double avg(const Container& data) noexcept
+{
+  double result{};
+  const auto data_size = data.size();
+  for (const double num : data)
+    result += (num / static_cast<double>(data_size));
+  return result;
+}
+
+/**
+ * @returns A variance of values.
+ *
+ * @param data Input data.
+ * @param avg An average of `data`.
+ * @param general Is the `data` represents general population?
+ */
+template<class Container>
+constexpr double variance(const Container& data, const double avg,
+  const bool general = true) noexcept
+{
+  const auto den = static_cast<double>(data.size() - !general);
+  double result{};
+  for (const double num : data) {
+    const double d = num - avg;
+    result += (d / den) * d; // (d * d) / den
+  }
+  DMITIGR_ASSERT(result >= 0);
+  return result;
+}
+
+/// @overload
+template<class Container>
+constexpr double variance(const Container& data,
+  const bool general = true) noexcept
+{
+  return variance(data, avg(data), general);
+}
+
 } // namespace dmitigr::math
 
-#endif  // DMITIGR_MATH_INTERVAL_HPP
+#endif  // DMITIGR_BASE_MATH_HPP
