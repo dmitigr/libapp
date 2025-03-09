@@ -24,7 +24,7 @@ namespace dmitigr::lisp {
 /**
  * @ingroup errors
  *
- * @brief Error codes (or conditions).
+ * @brief Error codes.
  */
 enum class Errc {
   /// Not an error.

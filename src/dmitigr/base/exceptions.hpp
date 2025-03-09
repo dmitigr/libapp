@@ -35,10 +35,10 @@ public:
   /**
    * @brief Constructs an instance associaterd with `errc`.
    *
-   * @param errc The error condition.
+   * @param errc The error code.
    * @param what The what-string.
    */
-  explicit Exception(std::error_condition errc, const std::string& what = {})
+  explicit Exception(std::error_code errc, const std::string& what = {})
     : err_{errc, what}
   {}
 
@@ -62,10 +62,10 @@ public:
     return err_.what().c_str();
   }
 
-  /// @returns The error condition.
-  std::error_condition condition() const noexcept
+  /// @returns The error code.
+  std::error_code code() const noexcept
   {
-    return err_.condition();
+    return err_.code();
   }
 
   /// @returns The underlying Err instance.

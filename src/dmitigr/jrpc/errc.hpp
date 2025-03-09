@@ -97,7 +97,7 @@ namespace std {
  * @brief The full specialization for integration with `<system_error>`.
  */
 template<>
-struct is_error_condition_enum<dmitigr::jrpc::Server_errc> final : true_type {};
+struct is_error_code_enum<dmitigr::jrpc::Server_errc> final : true_type {};
 
 } // namespace std
 

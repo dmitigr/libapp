@@ -47,7 +47,7 @@ int main()
         array_dimension(literal);
         DMITIGR_ASSERT(false);
       } catch (const Generic_exception& e) {
-        DMITIGR_ASSERT(e.condition() == malformed_literal);
+        DMITIGR_ASSERT(e.code() == malformed_literal);
       }
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;

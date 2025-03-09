@@ -80,11 +80,11 @@ inline const Server_error_category& server_error_category() noexcept
 /**
  * @ingroup errors
  *
- * @returns `std::error_condition(int(errc), server_error_category())`
+ * @returns `std::error_code(int(errc), server_error_category())`
  */
-inline std::error_condition make_error_condition(const Server_errc errc) noexcept
+inline std::error_code make_error_code(const Server_errc errc) noexcept
 {
-  return std::error_condition{static_cast<int>(errc), server_error_category()};
+  return std::error_code{static_cast<int>(errc), server_error_category()};
 }
 
 } // namespace dmitigr::jrpc

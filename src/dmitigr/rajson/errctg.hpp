@@ -34,7 +34,7 @@ namespace std {
  * @brief The full specialization for integration with `<system_error>`.
  */
 template<>
-struct is_error_condition_enum<rapidjson::ParseErrorCode> final : true_type {};
+struct is_error_code_enum<rapidjson::ParseErrorCode> final : true_type {};
 
 /**
  * @ingroup errors
@@ -42,7 +42,7 @@ struct is_error_condition_enum<rapidjson::ParseErrorCode> final : true_type {};
  * @brief The full specialization for integration with `<system_error>`.
  */
 template<>
-struct is_error_condition_enum<dmitigr::rajson::Errc> final : true_type {};
+struct is_error_code_enum<dmitigr::rajson::Errc> final : true_type {};
 
 } // namespace std
 
@@ -68,7 +68,7 @@ public:
   }
 
   /**
-   * @returns The string that describes the error condition denoted by `ev`.
+   * @returns The string that describes the error code denoted by `ev`.
    *
    * @par Requires
    * `ev` must corresponds to the value of `rapidjson::ParseErrorCode`.
@@ -104,12 +104,12 @@ inline const Parse_error_category& parse_error_category() noexcept
 /**
  * @ingroup errors
  *
- * @returns `std::error_condition(int(errc), parse_error_category())`.
+ * @returns `std::error_code(int(errc), parse_error_category())`.
  */
-inline std::error_condition
-make_error_condition(const rapidjson::ParseErrorCode errc) noexcept
+inline std::error_code
+make_error_code(const rapidjson::ParseErrorCode errc) noexcept
 {
-  return std::error_condition{static_cast<int>(errc), parse_error_category()};
+  return std::error_code{static_cast<int>(errc), parse_error_category()};
 }
 
 // -----------------------------------------------------------------------------
@@ -132,7 +132,7 @@ public:
   }
 
   /**
-   * @returns The string that describes the error condition denoted by `ev`.
+   * @returns The string that describes the error code denoted by `ev`.
    *
    * @par Requires
    * `ev` must corresponds to the value of Errc.
@@ -164,9 +164,9 @@ inline const Generic_error_category& generic_error_category() noexcept
 /**
  * @ingroup errors
  *
- * @returns `std::error_condition(int(errc), generic_error_category())`.
+ * @returns `std::error_code(int(errc), generic_error_category())`.
  */
-inline std::error_condition make_error_condition(const Errc errc) noexcept
+inline std::error_code make_error_code(const Errc errc) noexcept
 {
   return {static_cast<int>(errc), generic_error_category()};
 }

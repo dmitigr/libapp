@@ -28,14 +28,14 @@ try {
   try {
     conn->describe_nio("error");
   } catch (const pgfe::Generic_exception& e) {
-    ASSERT(pgfe::generic_error_category() == e.condition().category());
+    ASSERT(pgfe::generic_error_category() == e.code().category());
   }
 
   conn->connect();
   try {
     conn->describe_nio("error");
   } catch (const pgfe::Sqlstate_exception& e) {
-    ASSERT(pgfe::sqlstate_error_category() == e.condition().category());
+    ASSERT(pgfe::sqlstate_error_category() == e.code().category());
   }
 } catch (const std::exception& e) {
   std::cerr << e.what() << std::endl;

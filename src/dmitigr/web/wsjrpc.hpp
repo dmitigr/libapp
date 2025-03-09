@@ -70,15 +70,15 @@ protected:
         std::string what = e.what();
         const bool what_was_empty = what.empty();
         if (what_was_empty)
-          what = jrpc::to_literal_anyway(jrpc::Server_errc{e.condition().value()});
+          what = jrpc::to_literal_anyway(jrpc::Server_errc{e.code().value()});
         std::clog << what << '\n';
-        const auto& err = what_was_empty ? jrpc::Error{e.condition(), id, what} : e;
+        const auto& err = what_was_empty ? jrpc::Error{e.code(), id, what} : e;
         send_utf8(err);
       } catch(const dmitigr::Exception& e) {
         std::string what = e.what();
         if (what.empty())
           what = e.err().message();
-        const jrpc::Error err{e.condition(), id, what};
+        const jrpc::Error err{e.code(), id, what};
         log::clog() << "wsjrpc::handle_message: " << what << '\n';
         send_utf8(err);
       } catch(const std::logic_error& e) {

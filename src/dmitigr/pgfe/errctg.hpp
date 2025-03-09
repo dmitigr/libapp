@@ -30,7 +30,7 @@ namespace std {
  * @brief The full specialization for the integration with `<system_error>`.
  */
 template<>
-struct is_error_condition_enum<dmitigr::pgfe::Errc> final : true_type {};
+struct is_error_code_enum<dmitigr::pgfe::Errc> final : true_type {};
 
 /**
  * @ingroup errors
@@ -38,7 +38,7 @@ struct is_error_condition_enum<dmitigr::pgfe::Errc> final : true_type {};
  * @brief The full specialization for the integration with `<system_error>`.
  */
 template<>
-struct is_error_condition_enum<dmitigr::pgfe::Sqlstate> final : true_type {};
+struct is_error_code_enum<dmitigr::pgfe::Sqlstate> final : true_type {};
 
 } // namespace std
 
@@ -60,7 +60,7 @@ public:
   }
 
   /**
-   * @returns The string that describes the error condition denoted by `ev`.
+   * @returns The string that describes the error code denoted by `ev`.
    *
    * @par Requires
    * `ev` must corresponds to the value of Errc.
@@ -87,7 +87,7 @@ public:
   }
 
   /**
-   * @returns The string that describes the error condition denoted by `ev`.
+   * @returns The string that describes the error code denoted by `ev`.
    *
    * @par Requires
    * `ev` must corresponds to the value of Sqlstate.
@@ -123,21 +123,21 @@ inline const Sqlstate_error_category& sqlstate_error_category() noexcept
 /**
  * @ingroup errors
  *
- * @returns `std::error_condition(int(errc), generic_error_category())`
+ * @returns `std::error_code(int(errc), generic_error_category())`
  */
-inline std::error_condition make_error_condition(const Errc errc) noexcept
+inline std::error_code make_error_code(const Errc errc) noexcept
 {
-  return std::error_condition{static_cast<int>(errc), generic_error_category()};
+  return std::error_code{static_cast<int>(errc), generic_error_category()};
 }
 
 /**
  * @ingroup errors
  *
- * @returns `std::error_condition(int(errc), sqlstate_error_category())`
+ * @returns `std::error_code(int(errc), sqlstate_error_category())`
  */
-inline std::error_condition make_error_condition(const Sqlstate errc) noexcept
+inline std::error_code make_error_code(const Sqlstate errc) noexcept
 {
-  return std::error_condition{static_cast<int>(errc), sqlstate_error_category()};
+  return std::error_code{static_cast<int>(errc), sqlstate_error_category()};
 }
 
 } // namespace dmitigr::pgfe

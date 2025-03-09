@@ -44,7 +44,7 @@ class Sqlite_exception final : public Exception {
 public:
   /// The constructor.
   Sqlite_exception(const int ev, const std::string& what)
-    : Exception{std::error_condition{ev, sqlite_error_category()}, what}
+    : Exception{std::error_code{ev, sqlite_error_category()}, what}
   {}
 };
 

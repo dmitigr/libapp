@@ -30,7 +30,7 @@ namespace std {
  * @brief The full specialization for integration with `<system_error>`.
  */
 template<>
-struct is_error_condition_enum<dmitigr::lisp::Errc> final : true_type {};
+struct is_error_code_enum<dmitigr::lisp::Errc> final : true_type {};
 
 } // namespace std
 
@@ -44,7 +44,7 @@ namespace dmitigr::lisp {
 class Error_category : public std::error_category {
 public:
   /**
-   * @returns The string that describes the error condition denoted by `ev`.
+   * @returns The string that describes the error code denoted by `ev`.
    *
    * @par Requires
    * `ev` must corresponds to the value of Errc.
@@ -133,21 +133,21 @@ inline const User_error_category& user_error_category() noexcept
 /**
  * @ingroup errors
  *
- * @returns `std::error_condition(int(errc), generic_error_category())`.
+ * @returns `std::error_code(int(errc), generic_error_category())`.
  */
-inline std::error_condition make_error_condition(const Errc errc) noexcept
+inline std::error_code make_error_code(const Errc errc) noexcept
 {
   return {static_cast<int>(errc), generic_error_category()};
 }
 
 // -----------------------------------------------------------------------------
 
-inline bool is_parse_error(const std::error_condition& cond) noexcept
+inline bool is_parse_error(const std::error_code& code) noexcept
 {
   constexpr int pe_min{10000};
   constexpr int pe_max{10999};
-  const int val = cond.value();
-  return cond.category() == generic_error_category() &&
+  const int val = code.value();
+  return code.category() == generic_error_category() &&
     pe_min <= val && val <= pe_max;
 }
 

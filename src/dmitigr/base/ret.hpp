@@ -48,9 +48,9 @@ struct Ret final {
   {}
 
   /// @overload
-  template<typename ErrCondEnum,
-    typename = std::enable_if_t<std::is_error_condition_enum_v<ErrCondEnum>>>
-  Ret(const ErrCondEnum ec) noexcept
+  template<typename ErrCodeEnum,
+    typename = std::enable_if_t<std::is_error_code_enum_v<ErrCodeEnum>>>
+  Ret(const ErrCodeEnum ec) noexcept
     : err{ec}
   {}
 

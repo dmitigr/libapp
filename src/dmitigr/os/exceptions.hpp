@@ -56,7 +56,7 @@ public:
 
   /// @overload
   Sys_exception(const int ev, const std::string& what)
-    : Exception{std::system_category().default_error_condition(ev), what}
+    : Exception{std::error_code{ev, std::system_category()}, what}
   {}
 };
 

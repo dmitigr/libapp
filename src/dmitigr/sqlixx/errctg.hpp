@@ -35,7 +35,7 @@ public:
     return "dmitigr_sqlixx_sqlite_error";
   }
 
-  /// @returns The string that describes the error condition denoted by `ev`.
+  /// @returns The string that describes the error code denoted by `ev`.
   std::string message(const int ev) const override
   {
     return std::string{name()}.append(" ").append(std::to_string(ev));

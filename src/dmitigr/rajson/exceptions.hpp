@@ -50,7 +50,7 @@ class Parse_exception final : public Exception {
 public:
   /// The constructor.
   explicit Parse_exception(const rapidjson::ParseResult pr)
-    : Exception{make_error_condition(pr.Code()),
+    : Exception{make_error_code(pr.Code()),
       rapidjson::GetParseError_En(pr.Code())}
     , pr_{pr}
   {}

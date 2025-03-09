@@ -562,7 +562,7 @@ public:
   std::string to_string() const override
   {
     return std::string{"("}.append("error").append(" ")
-      .append(std::to_string(err_.condition().value())).append(" ")
+      .append(std::to_string(err_.code().value())).append(" ")
       .append("'").append(err_.what()).append("'").append(")");
   }
 
@@ -574,8 +574,8 @@ public:
   Ret<int> cmp(const Shared_expr& rhs) const noexcept override
   {
     if (is_err(rhs))
-      return err().condition() < rhs->err().condition() ? -1
-        : err().condition() == rhs->err().condition() ? 0 : 1;
+      return err().code() < rhs->err().code() ? -1
+        : err().code() == rhs->err().code() ? 0 : 1;
     else
       return Err{Errc::expr_not_error};
   }

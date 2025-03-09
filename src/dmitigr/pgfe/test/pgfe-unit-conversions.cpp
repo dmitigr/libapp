@@ -240,7 +240,7 @@ int main()
       try {
         const auto converted = pgfe::to<Arr>(*data);
       } catch (const pgfe::Generic_exception& e) {
-        test_ok = (e.condition() == pgfe::Errc::insufficient_dimensionality);
+        test_ok = (e.code() == pgfe::Errc::insufficient_dimensionality);
       }
       DMITIGR_ASSERT(test_ok);
     }
@@ -256,7 +256,7 @@ int main()
       try {
         const auto converted = pgfe::to<Arr2>(*data);
       } catch (const pgfe::Generic_exception& e) {
-        test_ok = (e.condition() == pgfe::Errc::excessive_dimensionality);
+        test_ok = (e.code() == pgfe::Errc::excessive_dimensionality);
       }
       DMITIGR_ASSERT(test_ok);
     }
@@ -354,18 +354,18 @@ int main()
       {
         auto malformed_literals  = {"{1", "{1,", "{1,}", "1}", ",1}", "{,1}"};
         for (const auto* malformed_literal : malformed_literals) {
-          std::error_condition cond;
+          std::error_code code;
           try {
             const auto native = pgfe::to<Arr>(pgfe::Data::make(malformed_literal));
           } catch (const pgfe::Generic_exception& e) {
-            cond = e.condition();
-            if (cond != pgfe::Errc::malformed_literal) {
+            code = e.code();
+            if (code != pgfe::Errc::malformed_literal) {
               std::cerr << "Expected pgfe::Errc::malformed_literal, but got "
-                        << cond.value() << "." << std::endl;
+                        << code.value() << "." << std::endl;
               throw;
             }
           }
-          DMITIGR_ASSERT(cond == pgfe::Errc::malformed_literal);
+          DMITIGR_ASSERT(code == pgfe::Errc::malformed_literal);
         }
       }
 
@@ -373,18 +373,18 @@ int main()
         auto malformed_literals2 = {"{{1}", "{{1", "{{1,}", "{{1,}}",
           "{{1},}", "{{,1}}", "{,{1}}"};
         for (const auto* malformed_literal : malformed_literals2) {
-          std::error_condition cond;
+          std::error_code code;
           try {
             const auto native = pgfe::to<Arr2>(pgfe::Data::make(malformed_literal));
           } catch (const pgfe::Generic_exception& e) {
-            cond = e.condition();
-            if (cond != pgfe::Errc::malformed_literal) {
+            code = e.code();
+            if (code != pgfe::Errc::malformed_literal) {
               std::cerr << "Expected pgfe::Errc::malformed_literal, but got "
-                        << cond.value() << "." << std::endl;
+                        << code.value() << "." << std::endl;
               throw;
             }
           }
-          DMITIGR_ASSERT(cond == pgfe::Errc::malformed_literal);
+          DMITIGR_ASSERT(code == pgfe::Errc::malformed_literal);
         }
       }
     }

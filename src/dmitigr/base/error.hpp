@@ -27,7 +27,7 @@ namespace dmitigr {
 /**
  * @ingroup errors
  *
- * @brief Generic error codes (or conditions).
+ * @brief Generic error codes.
  */
 enum class Errc {
   /// Generic error.
@@ -76,7 +76,7 @@ namespace std {
  * @brief The full specialization for integration with `<system_error>`.
  */
 template<>
-struct is_error_condition_enum<dmitigr::Errc> final : true_type {};
+struct is_error_code_enum<dmitigr::Errc> final : true_type {};
 
 } // namespace std
 
@@ -98,7 +98,7 @@ public:
   }
 
   /**
-   * @returns The string that describes the error condition denoted by `ev`.
+   * @returns The string that describes the error code denoted by `ev`.
    *
    * @par Requires
    * `ev` must corresponds to the value of Errc.
@@ -130,9 +130,9 @@ inline const Generic_error_category& generic_error_category() noexcept
 /**
  * @ingroup errors
  *
- * @returns `std::error_condition(int(errc), generic_error_category())`.
+ * @returns `std::error_code(int(errc), generic_error_category())`.
  */
-inline std::error_condition make_error_condition(const Errc errc) noexcept
+inline std::error_code make_error_code(const Errc errc) noexcept
 {
   return {static_cast<int>(errc), generic_error_category()};
 }
@@ -148,21 +148,21 @@ public:
   Err() noexcept = default;
 
   /// The constructor.
-  explicit Err(std::error_condition cond, std::string what = {}) noexcept
-    : condition_{std::move(cond)}
+  explicit Err(std::error_code code, std::string what = {}) noexcept
+    : code_{std::move(code)}
     , what_{std::move(what)}
   {}
 
   /// @returns `true` if the instance represents an error.
   explicit operator bool() const noexcept
   {
-    return static_cast<bool>(condition_);
+    return static_cast<bool>(code_);
   }
 
-  /// @returns The error condition.
-  std::error_condition condition() const noexcept
+  /// @returns The error code.
+  std::error_code code() const noexcept
   {
-    return condition_;
+    return code_;
   }
 
   /// @returns The what-string.
@@ -171,12 +171,12 @@ public:
     return what_;
   }
 
-  /// @returns The error message combined from `condition().message()` and `what()`.
+  /// @returns The error message combined from `code().message()` and `what()`.
   const std::string& message() const noexcept
   {
     try {
       if (message_.empty()) {
-        message_ = condition_.message();
+        message_ = code_.message();
         if (!what_.empty())
           message_.append(": ").append(what_);
       }
@@ -188,39 +188,39 @@ public:
   }
 
 private:
-  std::error_condition condition_;
+  std::error_code code_;
   std::string what_;
   mutable std::string message_;
 };
 
 /// @returns `true` if `lhs` is equals to `rhs`.
-inline bool operator==(const Err& lhs, const std::error_condition& rhs) noexcept
+inline bool operator==(const Err& lhs, const std::error_code& rhs) noexcept
 {
-  return lhs.condition() == rhs;
+  return lhs.code() == rhs;
 }
 
 /// @overload
-inline bool operator==(const std::error_condition& lhs, const Err& rhs) noexcept
+inline bool operator==(const std::error_code& lhs, const Err& rhs) noexcept
 {
-  return lhs == rhs.condition();
+  return lhs == rhs.code();
 }
 
 /// @overload
 inline bool operator==(const Err& lhs, const Err& rhs) noexcept
 {
-  return lhs.condition() == rhs.condition();
+  return lhs.code() == rhs.code();
 }
 
 /// @returns `true` if `lhs` is not equals to `rhs`.
-inline bool operator!=(const Err& lhs, const std::error_condition& rhs) noexcept
+inline bool operator!=(const Err& lhs, const std::error_code& rhs) noexcept
 {
-  return !(lhs.condition() == rhs);
+  return !(lhs.code() == rhs);
 }
 
 /// @overload
-inline bool operator!=(const std::error_condition& lhs, const Err& rhs) noexcept
+inline bool operator!=(const std::error_code& lhs, const Err& rhs) noexcept
 {
-  return !(lhs == rhs.condition());
+  return !(lhs == rhs.code());
 }
 
 /// @overload

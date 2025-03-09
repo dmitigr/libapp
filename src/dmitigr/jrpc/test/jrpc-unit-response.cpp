@@ -44,7 +44,7 @@ int main()
       DMITIGR_ASSERT(r->jsonrpc() == "2.0");
       DMITIGR_ASSERT(r->id().IsString());
       DMITIGR_ASSERT(std::strcmp(r->id().GetString(), "1") == 0);
-      DMITIGR_ASSERT(r->condition() == jrpc::Server_errc::method_not_found);
+      DMITIGR_ASSERT(r->code() == jrpc::Server_errc::method_not_found);
       DMITIGR_ASSERT(!r->data());
       DMITIGR_ASSERT(r->to_string() == R"({"jsonrpc":"2.0","error":{"code":-32601,"message":"Method not found"},"id":"1"})");
     }
@@ -84,7 +84,7 @@ int main()
       DMITIGR_ASSERT(err.jsonrpc() == "2.0");
       DMITIGR_ASSERT(err.id().IsNull());
       DMITIGR_ASSERT(!err.data());
-      DMITIGR_ASSERT(err.condition() == jrpc::Server_errc::parse_error);
+      DMITIGR_ASSERT(err.code() == jrpc::Server_errc::parse_error);
       err.set_data("important!");
       DMITIGR_ASSERT(err.data());
       DMITIGR_ASSERT(err.data()->IsString());

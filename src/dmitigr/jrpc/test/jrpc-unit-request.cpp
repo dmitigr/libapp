@@ -108,7 +108,7 @@ int main()
         DMITIGR_ASSERT(e.jsonrpc() == "2.0");
         DMITIGR_ASSERT(e.id().IsInt());
         DMITIGR_ASSERT(e.id().GetInt() == 1);
-        DMITIGR_ASSERT(e.condition() == jrpc::Server_errc::invalid_request);
+        DMITIGR_ASSERT(e.code() == jrpc::Server_errc::invalid_request);
         DMITIGR_ASSERT(!e.data());
       }
     }
@@ -126,7 +126,7 @@ int main()
         DMITIGR_ASSERT(e.jsonrpc() == "2.0");
         DMITIGR_ASSERT(e.id().IsInt());
         DMITIGR_ASSERT(e.id().GetInt() == 1);
-        DMITIGR_ASSERT(e.condition() == jrpc::Server_errc::invalid_request);
+        DMITIGR_ASSERT(e.code() == jrpc::Server_errc::invalid_request);
         DMITIGR_ASSERT(!e.data());
       }
     }
@@ -143,7 +143,7 @@ int main()
       } catch (const jrpc::Error& e) {
         DMITIGR_ASSERT(e.jsonrpc() == "2.0");
         DMITIGR_ASSERT(e.id().IsNull());
-        DMITIGR_ASSERT(e.condition() == jrpc::Server_errc::invalid_request);
+        DMITIGR_ASSERT(e.code() == jrpc::Server_errc::invalid_request);
         DMITIGR_ASSERT(!e.data());
       }
     }
@@ -226,7 +226,7 @@ int main()
           const auto z = zr.not_null<int>(math::Interval{1, 2000});
           (void)z;
         } catch (const jrpc::Error& e) {
-          DMITIGR_ASSERT(e.condition() == jrpc::Server_errc::invalid_params);
+          DMITIGR_ASSERT(e.code() == jrpc::Server_errc::invalid_params);
         }
       }
 

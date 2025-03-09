@@ -111,7 +111,7 @@ private:
       if (!res->id().IsInt())
         std::clog << "skipping jrpc response with non-integer ID\n";
       else if (auto* const e = dynamic_cast<jrpc::Error*>(res.get())) {
-        std::clog << "jrpc error: " << e->condition().value();
+        std::clog << "jrpc error: " << e->code().value();
         const std::string_view what{e->what()};
         if (!what.empty())
           std::clog << " (" << what << ")";

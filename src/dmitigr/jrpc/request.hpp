@@ -632,7 +632,7 @@ public:
    * @throws An instance of type Error with the specified `code`,
    * ID borrowed from this instance and specified error `message`.
    */
-  [[noreturn]] void throw_error(const std::error_condition code,
+  [[noreturn]] void throw_error(const std::error_code code,
     const std::string& message = {}) const
   {
     if (id())
@@ -645,7 +645,7 @@ public:
    * @returns An instance of type Error with the specified `code`,
    * ID borrowed from this instance and specified error `message`.
    */
-  Error make_error(const std::error_condition code,
+  Error make_error(const std::error_code code,
     const std::string& message = {}) const
   {
     if (id())

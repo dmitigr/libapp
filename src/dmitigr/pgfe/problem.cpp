@@ -39,7 +39,7 @@ DMITIGR_PGFE_INLINE bool Problem::is_invariant_ok() const noexcept
   return !pq_result_ || is_sqlstate(condition());
 }
 
-DMITIGR_PGFE_INLINE std::error_condition Problem::condition() const noexcept
+DMITIGR_PGFE_INLINE std::error_code Problem::condition() const noexcept
 {
   return {sqlstate_string_to_int(code()), sqlstate_error_category()};
 }
@@ -150,17 +150,17 @@ DMITIGR_PGFE_INLINE std::optional<Problem_severity> Problem::severity() const no
   return s ? to_problem_severity(std::string_view{s}) : std::nullopt;
 }
 
-DMITIGR_PGFE_INLINE std::error_condition Problem::min_condition() noexcept
+DMITIGR_PGFE_INLINE std::error_code Problem::min_condition() noexcept
 {
   return {0, sqlstate_error_category()};
 }
 
-DMITIGR_PGFE_INLINE std::error_condition Problem::max_condition() noexcept
+DMITIGR_PGFE_INLINE std::error_code Problem::max_condition() noexcept
 {
   return {60466175, sqlstate_error_category()};
 }
 
-DMITIGR_PGFE_INLINE std::error_condition Problem::min_error_condition() noexcept
+DMITIGR_PGFE_INLINE std::error_code Problem::min_error_condition() noexcept
 {
   return {139968, sqlstate_error_category()};
 }
@@ -193,7 +193,7 @@ DMITIGR_PGFE_INLINE std::string Problem::sqlstate_int_to_string(const int value)
   return str::to_string(value, 36);
 }
 
-DMITIGR_PGFE_INLINE bool Problem::is_sqlstate(const std::error_condition value) noexcept
+DMITIGR_PGFE_INLINE bool Problem::is_sqlstate(const std::error_code value) noexcept
 {
   return value.category() == sqlstate_error_category() && is_sqlstate(value.value());
 }

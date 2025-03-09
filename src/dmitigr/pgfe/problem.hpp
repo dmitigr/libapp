@@ -50,7 +50,7 @@ public:
   Problem& operator=(Problem&&) = default;
 
   /// @returns The error condition which corresponds to code().
-  DMITIGR_PGFE_API std::error_condition condition() const noexcept;
+  DMITIGR_PGFE_API std::error_code condition() const noexcept;
 
   /// @returns The SQLSTATE code the problem.
   DMITIGR_PGFE_API const char* code() const noexcept;
@@ -178,13 +178,13 @@ public:
   DMITIGR_PGFE_API const char* source_function() const noexcept;
 
   /// @returns The error condition that corresponds to SQLSTATE `00000`.
-  static DMITIGR_PGFE_API std::error_condition min_condition() noexcept;
+  static DMITIGR_PGFE_API std::error_code min_condition() noexcept;
 
   /// @returns The error condition that corresponds to SQLSTATE `ZZZZZ`.
-  static DMITIGR_PGFE_API std::error_condition max_condition() noexcept;
+  static DMITIGR_PGFE_API std::error_code max_condition() noexcept;
 
   /// @returns The error condition that corresponds to SQLSTATE `03000`.
-  static DMITIGR_PGFE_API std::error_condition min_error_condition() noexcept;
+  static DMITIGR_PGFE_API std::error_code min_error_condition() noexcept;
 
   /**
    * @returns The integer representation of the SQLSTATE, or `-1` on `nullptr`.
@@ -203,7 +203,7 @@ public:
   static DMITIGR_PGFE_API std::string sqlstate_int_to_string(int value);
 
   /// @returns `true` if the given `value` corresponds to SQLSTATE.
-  static DMITIGR_PGFE_API bool is_sqlstate(std::error_condition value) noexcept;
+  static DMITIGR_PGFE_API bool is_sqlstate(std::error_code value) noexcept;
 
   /// @overload
   static DMITIGR_PGFE_API bool is_sqlstate(int value) noexcept;

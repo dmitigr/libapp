@@ -1013,8 +1013,8 @@ public:
             return; // done: error is queued
           } catch (const dmitigr::Exception& e) {
             log::clog()<<"HTTP: "<<e.err().message()<<'\n';
-            if (e.condition().category() == http::server_error_category()) {
-              io->loop_submit([io, err = e.condition().value()]
+            if (e.code().category() == http::server_error_category()) {
+              io->loop_submit([io, err = e.code().value()]
               {
                 send_error(io, static_cast<http::Server_errc>(err));
               });
@@ -1068,8 +1068,8 @@ public:
       return true; // done: request is scheduled or handled
     } catch (const dmitigr::Exception& e) {
       log::clog()<<"HTTP scheduler: "<<e.err().message()<<'\n';
-      if (e.condition().category() == http::server_error_category())
-        return send_error(io, static_cast<http::Server_errc>(e.condition().value()));
+      if (e.code().category() == http::server_error_category())
+        return send_error(io, static_cast<http::Server_errc>(e.code().value()));
     } catch (...) {
       log::clog()<<"HTTP scheduler: unknown error\n";
     }

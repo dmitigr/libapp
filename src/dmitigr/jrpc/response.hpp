@@ -84,7 +84,7 @@ public:
   }
 
   /// The constructor.
-  Error(const std::error_condition code, const Null /*id*/,
+  Error(const std::error_code code, const Null /*id*/,
     const std::string& message = {})
     : Error{code, message}
   {
@@ -94,7 +94,7 @@ public:
 
   /// @overload
   template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-  Error(const std::error_condition code, const T id,
+  Error(const std::error_code code, const T id,
     const std::string& message = {})
     : Error{code, message}
   {
@@ -103,7 +103,7 @@ public:
   }
 
   /// @overload
-  Error(const std::error_condition code,
+  Error(const std::error_code code,
     const std::string_view id, const std::string& message = {})
     : Error{code, message}
   {
@@ -237,7 +237,7 @@ private:
   }
 
   // Used by Request.
-  Error(const std::error_condition code, rapidjson::Value&& id,
+  Error(const std::error_code code, rapidjson::Value&& id,
     const std::string& message = {})
     : Error{code, message}
   {
@@ -246,7 +246,7 @@ private:
   }
 
   // Used by Request.
-  Error(const std::error_condition code, const rapidjson::Value& id,
+  Error(const std::error_code code, const rapidjson::Value& id,
     const std::string& message = {})
     : Error{code, message}
   {
@@ -255,7 +255,7 @@ private:
   }
 
   // Used by Response.
-  Error(const std::error_condition code, const std::string& message,
+  Error(const std::error_code code, const std::string& message,
     std::shared_ptr<rapidjson::Document> rep)
     : Exception{code, message}
     , rep_{std::move(rep)}
@@ -265,7 +265,7 @@ private:
   }
 
   // Used for pre initialization
-  explicit Error(const std::error_condition code,
+  explicit Error(const std::error_code code,
     const std::string& message = {})
     : Error{code, message,
       std::make_shared<rapidjson::Document>(rapidjson::kObjectType)}
@@ -282,7 +282,7 @@ private:
       using T = rapidjson::Type;
       using V = rapidjson::Value;
       V e{T::kObjectType};
-      e.AddMember("code", V{condition().value()}, alloc);
+      e.AddMember("code", V{code().value()}, alloc);
       e.AddMember("message", message, alloc);
       rep_->AddMember("error", std::move(e), alloc);
     }
@@ -519,7 +519,7 @@ inline std::unique_ptr<Response> Response::make(const std::string_view input)
 
       // Done.
       return std::unique_ptr<Error>{new Error{
-        std::error_condition{rajson::to<int>(codei->value),
+        std::error_code{rajson::to<int>(codei->value),
           server_error_category()},
         rajson::to<std::string>(msgi->value),
         std::make_shared<rapidjson::Document>(std::move(rep))}};

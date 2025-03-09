@@ -435,7 +435,7 @@ inline Ret_expr fun_math_calc(const Tup_expr& fun, Env& env, const int def0,
 
       for (std::size_t i{1}; i < easz; ++i) {
         if (auto e = (result.get()->*op)(eargs[i]))
-          return Ret_expr::make_error(Err{e.condition(), fun.fun_name()});
+          return Ret_expr::make_error(Err{e.code(), fun.fun_name()});
       }
       return Ret_expr::make_result(result);
     };
@@ -937,9 +937,9 @@ inline Ret_expr fun_error(const Tup_expr& fun, Env& env)
         return Err{Errc::fun_usage, fun.fun_name()};
     }
 
-    const std::error_condition cond{static_cast<int>(condition->num_integer()),
+    const std::error_code code{static_cast<int>(condition->num_integer()),
       user_error_category()};
-    return make_expr<Err_expr>(what ? Err{cond, what->str()} : Err{cond});
+    return make_expr<Err_expr>(what ? Err{code, what->str()} : Err{code});
   } else
     return r.err;
 }
@@ -974,7 +974,7 @@ inline Ret_expr fun_error_code(const Tup_expr& fun, Env& env)
 
   if (auto r = (*arg)->eval(env)) {
     if (is_err(r.res))
-      return make_expr<Integer_expr>(r.res->err().condition().value());
+      return make_expr<Integer_expr>(r.res->err().code().value());
     else
       return Nil_expr::instance();
   } else
@@ -1034,7 +1034,7 @@ inline Ret_expr fun_error_category(const Tup_expr& fun, Env& env)
 
   if (auto r = (*arg)->eval(env)) {
     if (is_err(r.res))
-      return make_expr<Str_expr>(r.res->err().condition().category().name());
+      return make_expr<Str_expr>(r.res->err().code().category().name());
     else
       return Nil_expr::instance();
   } else
@@ -1067,7 +1067,7 @@ inline Ret_expr fun_fs_file_size(const Tup_expr& fun, Env& env)
       if (!ec)
         return make_expr<Integer_expr>(result);
       else // throw by default
-        return Err{ec.default_error_condition(), file_name};
+        return Err{ec, file_name};
     } else
       return Err{Errc::fun_usage, fun.fun_name()};
   } else
