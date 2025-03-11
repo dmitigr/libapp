@@ -78,32 +78,23 @@ inline auto* next_non_space_pointer(const wchar_t* p) noexcept
 }
 
 /// @returns The specified `value` if `(value != nullptr)`, or `""` otherwise.
-inline auto* value_or_empty(const char* const value) noexcept
+template<typename Ch>
+const Ch* value_or_empty(const Ch* const value) noexcept
 {
-  return value ? value : "";
-}
-
-/// @overload
-inline auto* value_or_empty(const wchar_t* const value) noexcept
-{
-  return value ? value : L"";
+  if constexpr (std::is_same_v<Ch, char>)
+    return value ? value : "";
+  else if constexpr (std::is_same_v<Ch, wchar_t>)
+    return value ? value : L"";
+  else
+    static_assert(false_value<Ch>);
 }
 
 /**
  * @returns The first non-null value of specified `values`, or `nullptr` if all
  * the `values` are nulls.
  */
-inline const char* coalesce(std::initializer_list<const char*> values) noexcept
-{
-  for (const auto value : values) {
-    if (value)
-      return value;
-  }
-  return nullptr;
-}
-
-/// @overload
-inline const wchar_t* coalesce(std::initializer_list<const wchar_t*> values) noexcept
+template<typename Ch>
+const Ch* coalesce(std::initializer_list<const Ch*> values) noexcept
 {
   for (const auto value : values) {
     if (value)
