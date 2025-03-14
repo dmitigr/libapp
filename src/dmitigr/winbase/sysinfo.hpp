@@ -22,7 +22,6 @@
 #include "exceptions.hpp"
 
 #include <filesystem>
-#include <stdexcept>
 #include <string>
 
 namespace dmitigr::winbase {
