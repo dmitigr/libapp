@@ -53,6 +53,18 @@ inline std::wstring computer_name(const COMPUTER_NAME_FORMAT type)
   return result;
 }
 
+inline void set_computer_name(const COMPUTER_NAME_FORMAT type, const LPCWSTR value)
+{
+  if (!SetComputerNameExW(type, value))
+    throw Sys_exception{"cannot set computer name of type "+std::to_string(type)};
+}
+
+/// @overload
+inline void set_computer_name(const COMPUTER_NAME_FORMAT type, const std::wstring& value)
+{
+  set_computer_name(type, value.c_str());
+}
+
 /**
  * @returns The string representation of a `value`.
  *
