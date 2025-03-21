@@ -202,6 +202,20 @@ inline std::vector<DWORD> enum_processes()
   return result;
 }
 
+/// Terminates process denoted by `handle`.
+inline void terminate_process(const HANDLE handle, const UINT exit_code)
+{
+  if (!TerminateProcess(handle, exit_code))
+    throw Sys_exception{"cannot terminate process"};
+}
+
+/// @overload
+inline void terminate_process(const DWORD pid, const UINT exit_code)
+{
+  const auto hdl = open_process(pid, PROCESS_TERMINATE, false);
+  terminate_process(hdl, exit_code);
+}
+
 /// @returns The termination status of the specified process.
 inline DWORD exit_code_process(const HANDLE handle)
 {
