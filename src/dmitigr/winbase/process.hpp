@@ -113,7 +113,7 @@ inline Handle_guard open_process(const DWORD pid,
 {
   HANDLE result{OpenProcess(desired_access, inherit_handle, pid)};
   if (result == NULL)
-    throw std::runtime_error{last_error_message()};
+    throw Sys_exception{"cannot open process"};
   return Handle_guard{result};
 }
 
@@ -123,7 +123,7 @@ inline Handle_guard open_process_token(const HANDLE process_handle,
 {
   HANDLE result{INVALID_HANDLE_VALUE};
   if (!OpenProcessToken(process_handle, desired_access, &result))
-    throw std::runtime_error{last_error_message()};
+    throw Sys_exception{"cannot open process token"};
   return Handle_guard{result};
 }
 
