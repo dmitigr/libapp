@@ -36,6 +36,8 @@ set(dmitigr_libs_msg_deps base os rajson sqlixx)
 # ------------------------------------------------------------------------------
 
 if(DMITIGR_LIBS_TESTS)
-  set(dmitigr_msg_tests convproc)
-  set(dmitigr_msg_tests_target_link_libraries)
+  if(NOT WIN32)
+    set(dmitigr_msg_tests convproc)
+  endif()
+  list(APPEND dmitigr_msg_tests_target_link_libraries)
 endif()
