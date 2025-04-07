@@ -52,4 +52,15 @@ inline void set_dialog_item_text(const HWND dlg, const int item_id,
     throw std::runtime_error{last_error_message()};
 }
 
+inline bool set_dialog_item_text_if_different(const HWND dlg, const int item_id,
+  const std::wstring& value)
+{
+  const auto old_value = dialog_item_text(dlg, item_id, value.size());
+  if (old_value != value) {
+    set_dialog_item_text(dlg, item_id, value);
+    return true;
+  }
+  return false;
+}
+
 } // namespace dmitigr::winbase
