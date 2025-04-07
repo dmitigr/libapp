@@ -21,6 +21,7 @@
 #include "../base/noncopymove.hpp"
 #include "../base/traits.hpp"
 #include "exceptions.hpp"
+#include "hguard.hpp"
 
 #include <optional>
 #include <stdexcept>
@@ -286,6 +287,24 @@ std::optional<T> value(const HKEY key, const std::wstring& subkey,
   const std::wstring& name)
 {
   return value<T>(key, subkey.c_str(), name.c_str());
+}
+
+// -----------------------------------------------------------------------------
+
+inline void notify_change_key_value(const HKEY key,
+  const bool watch_subtree, const DWORD filter, const HANDLE event)
+{
+  const auto r = RegNotifyChangeKeyValue(key, watch_subtree, filter,
+    event, event != INVALID_HANDLE_VALUE);
+  if (r != ERROR_SUCCESS)
+    throw std::runtime_error{"cannot notify the caller about changes to the"
+      " attributes or contents of a registry key"};
+}
+
+inline void wait_change_key_value(const HKEY key, const bool watch_subtree,
+  const DWORD filter)
+{
+  notify_change_key_value(key, watch_subtree, filter, INVALID_HANDLE_VALUE);
 }
 
 } // namespace dmitigr::winbase::registry
