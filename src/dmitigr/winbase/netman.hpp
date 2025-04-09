@@ -81,12 +81,8 @@ inline void local_group_add_members(const std::wstring& group_name,
 
   const auto err = NetLocalGroupAddMembers(server, group_name.c_str(),
     0, reinterpret_cast<LPBYTE>(members.data()), static_cast<DWORD>(members.size()));
-  if (err != NERR_Success) {
-    if (err == NERR_GroupNotFound)
-      throw std::runtime_error{"cannot add group members: group not found"};
-    else
-      throw Sys_exception{err, "cannot add group members"};
-  }
+  if (err != NERR_Success)
+    throw Sys_exception{err, "cannot add group members"};
 }
 
 inline void local_group_add_members(const std::wstring& group_name,
@@ -111,12 +107,8 @@ inline void local_group_del_members(const std::wstring& group_name,
 
   const auto err = NetLocalGroupDelMembers(server, group_name.c_str(),
     0, reinterpret_cast<LPBYTE>(members.data()), static_cast<DWORD>(members.size()));
-  if (err != NERR_Success) {
-    if (err == NERR_GroupNotFound)
-      throw std::runtime_error{"cannot remove group members: group not found"};
-    else
-      throw Sys_exception{err, "cannot remove group members"};
-  }
+  if (err != NERR_Success)
+    throw Sys_exception{err, "cannot remove group members"};
 }
 
 inline void local_group_del_members(const std::wstring& group_name,
