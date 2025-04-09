@@ -42,7 +42,7 @@ int main()
     const auto* const qsc1 = cfg1.ptr();
     const dmsvc::Service_config cfg2{svc};
     const auto* const qsc2 = cfg2.ptr();
-    ASSERT((uintptr_t)qsc1->lpBinaryPathName != (uintptr_t)qsc2->lpBinaryPathName);
+    ASSERT((uintptr_t)cfg1->lpBinaryPathName != (uintptr_t)cfg2->lpBinaryPathName);
 
     wcout << std::hex;
     for (const auto* const qsc : {qsc1, qsc2}) {

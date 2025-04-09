@@ -30,32 +30,41 @@ int main()
   using std::clog;
   using std::wcout;
   using std::endl;
-  namespace win = dmitigr::winbase;
+  namespace dmwin = dmitigr::winbase;
+  using dmwin::utf16_to_utf8;
 
   try {
-    const win::Sid rdp_sid{SECURITY_NT_AUTHORITY,
+    const dmwin::Sid rdp_sid{SECURITY_NT_AUTHORITY,
       SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_REMOTE_DESKTOP_USERS};
-    const win::Account grp{rdp_sid.ptr()};
-    const win::Account user{L"dmitigr"};
+    const auto grp = dmwin::Account::make_if_mapped(rdp_sid.ptr());
+    if (!grp) {
+      cout << "Remote desktop is not available on this computer" << endl;
+      return 0;
+    } else {
+      const auto grpinfo = dmwin::netman::local_group_info_1_if_exists(grp.name());
+      if (grpinfo)
+        cout << "Found remote desktop group \""
+             << utf16_to_utf8(grpinfo->lgrpi1_name) << "\"" << endl;
+    }
+    const dmwin::Account user{L"dmitigr"};
+
     try {
-      win::netman::local_group_add_members(grp.name(), {user.sid()});
-    } catch (const win::Sys_exception& e) {
-      using win::utf16_to_utf8;
+      dmwin::netman::local_group_add_members(grp.name(), {user.sid()});
+    } catch (const dmwin::Sys_exception& e) {
       if (e.code().value() == ERROR_MEMBER_IN_ALIAS)
         cout<<utf16_to_utf8(user.name())
             <<" is already in group "
             <<"\""<<utf16_to_utf8(grp.name())<<"\""<<endl;
     }
     try {
-      win::netman::local_group_del_members(grp.name(), {user.sid()});
-    } catch (const win::Sys_exception& e) {
-      using win::utf16_to_utf8;
+      dmwin::netman::local_group_del_members(grp.name(), {user.sid()});
+    } catch (const dmwin::Sys_exception& e) {
       if (e.code().value() == ERROR_MEMBER_NOT_IN_ALIAS)
         cout<<utf16_to_utf8(user.name())
             <<" not in group "
             <<"\""<<utf16_to_utf8(grp.name())<<"\""<<endl;
     }
-  } catch (const win::Sys_exception& e) {
+  } catch (const dmwin::Sys_exception& e) {
     const auto code = e.code().value();
     clog << "error "<<code<<": " << e.what() << endl;
   } catch (const std::exception& e) {
