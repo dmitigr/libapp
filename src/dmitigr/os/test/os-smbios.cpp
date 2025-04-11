@@ -90,6 +90,51 @@ int main()
         cout << "    thread_enabled: " << proc.thread_enabled << endl;
       }
     }
+
+    {
+      cout << "Memory devices:" << endl;
+      const auto mems = smbios.memory_devices_info();
+      for (std::size_t i{}; i < mems.size(); ++i) {
+        const auto& mem = mems[i];
+        cout << "  Memory device " << i << ":" << endl;
+        cout << "    Physical Memory Array Handle: " << mem.phys_mem_array_handle << endl;
+        cout << "    Memory Error Info Handle: " << mem.mem_err_info_handle << endl;
+        cout << "    Total Width: " << mem.total_width << endl;
+        cout << "    Data Width: " << mem.data_width << endl;
+        cout << "    Size: " << mem.size << endl;
+        cout << "    Extended Size: " << mem.extended_size << endl;
+        cout << "    Form Factor: " << static_cast<int>(mem.form_factor) << endl;
+        cout << "    Device Set: " << static_cast<int>(mem.device_set) << endl;
+        cout << "    Device Locator: " << mem.device_locator.value_or("NULL") << endl;
+        cout << "    Bank Locator: " << mem.bank_locator.value_or("NULL") << endl;
+        cout << "    Memory Type: " << static_cast<int>(mem.memory_type) << endl;
+        cout << "    Type Detail: " << mem.type_detail << endl;
+        cout << "    Speed: " << mem.speed << endl;
+        cout << "    Extended Speed: " << mem.extended_speed << endl;
+        cout << "    Configured Speed: " << mem.configured_memory_speed << endl;
+        cout << "    Extended Configured Speed: " << mem.extended_configured_memory_speed << endl;
+        cout << "    Manufacturer: " << mem.manufacturer.value_or("NULL") << endl;
+        cout << "    Serial Number: " << mem.serial_number.value_or("NULL") << endl;
+        cout << "    Asset Tag: " << mem.asset_tag.value_or("NULL") << endl;
+        cout << "    Part Number: " << mem.part_number.value_or("NULL") << endl;
+        cout << "    Firmware Version: " << mem.firmware_version.value_or("NULL") << endl;
+        cout << "    Attributes: " << static_cast<int>(mem.attributes) << endl;
+        cout << "    Minimum Voltage: " << mem.minimum_voltage << endl;
+        cout << "    Maximum Voltage: " << mem.maximum_voltage << endl;
+        cout << "    Configured Voltage: " << mem.configured_voltage << endl;
+        cout << "    Memory Technology: " << static_cast<int>(mem.memory_technology) << endl;
+        cout << "    Operating Modes: " << mem.memory_operating_mode_capability << endl;
+        cout << "    Module Manufacturer ID: " << mem.module_manufacturer_id << endl;
+        cout << "    Module Product ID: " << mem.module_product_id << endl;
+        cout << "    Controller Manufacturer ID: " << mem.memory_subsystem_controller_manufacturer_id << endl;
+        cout << "    Controller Product ID: " << mem.memory_subsystem_controller_product_id << endl;
+        cout << "    Non-volatile Size: " << mem.non_volatile_size << endl;
+        cout << "    Volatile Size: " << mem.volatile_size << endl;
+        cout << "    Cache Size: " << mem.cache_size << endl;
+        cout << "    Logical Size: " << mem.logical_size << endl;
+    }
+  }
+
   } catch (const std::exception& e) {
     std::clog << "error: " << e.what() << std::endl;
     return 1;
