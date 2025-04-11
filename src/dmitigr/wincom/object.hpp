@@ -19,6 +19,7 @@
 
 #include "../base/assert.hpp"
 #include "../base/noncopymove.hpp"
+#include "../base/traits.hpp"
 #include "../winbase/windows.hpp"
 #include "exceptions.hpp"
 
@@ -521,8 +522,12 @@ String get(const Wrapper& wrapper, HRESULT(Api::* getter)(BSTR*))
   DMITIGR_ASSERT(getter);
   BSTR value{};
   (detail::api<Api>(wrapper).*getter)(&value);
-  if (!value)
-    throw std::runtime_error{"cannot get BSTR value"};
+  if (!value) {
+    if constexpr (Is_optional_v<String>)
+      return String{};
+    else
+      throw std::runtime_error{"cannot get BSTR value"};
+  }
   _bstr_t tmp{value, false}; // take ownership
   return String(tmp);
 }
