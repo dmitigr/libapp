@@ -97,10 +97,10 @@ int main()
       for (std::size_t i{}; i < mems.size(); ++i) {
         const auto& mem = mems[i];
         cout << "  Memory device " << i << ":" << endl;
-        
+
         // SMBIOS 2.1+ fields
         cout << "    Physical Memory Array Handle: " << mem.physical_memory_array_handle << endl;
-        cout << "    Memory Error Information Handle: " << mem.memory_error_information_handle << endl;
+        cout << "    Memory Error Information Handle: " << mem.memory_error_info_handle << endl;
         cout << "    Total Width: " << mem.total_width << endl;
         cout << "    Data Width: " << mem.data_width << endl;
         cout << "    Size: " << mem.size << endl;

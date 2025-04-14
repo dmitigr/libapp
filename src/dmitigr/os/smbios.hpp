@@ -98,7 +98,7 @@ public:
   struct Memory_device_info final : Structure {
     // SMBIOS 2.1+ fields
     Word physical_memory_array_handle{};  // 0x04
-    Word memory_error_information_handle{};  // 0x06
+    Word memory_error_info_handle{};  // 0x06
     Word total_width{};  // 0x08
     Word data_width{};  // 0x0A
     Word size{};  // 0x0C
@@ -108,26 +108,26 @@ public:
     std::optional<std::string> bank_locator;  // 0x11
     Byte memory_type{};  // 0x12
     Word type_detail{};  // 0x13
-    
+
     // SMBIOS 2.3+ fields
     Word speed{};  // 0x15
     std::optional<std::string> manufacturer;  // 0x17
     std::optional<std::string> serial_number;  // 0x18
     std::optional<std::string> asset_tag;  // 0x19
     std::optional<std::string> part_number;  // 0x1A
-    
+
     // SMBIOS 2.6+ fields
     Byte attributes{};  // 0x1B
-    
+
     // SMBIOS 2.7+ fields
     Dword extended_size{};  // 0x1C
     Word configured_memory_speed{};  // 0x20
-    
+
     // SMBIOS 2.8+ fields
     Word minimum_voltage{};  // 0x22
     Word maximum_voltage{};  // 0x24
     Word configured_voltage{};  // 0x26
-    
+
     // SMBIOS 3.2+ fields
     Byte memory_technology{};  // 0x28
     Word memory_operating_mode_capability{};  // 0x29
@@ -140,12 +140,12 @@ public:
     Qword volatile_size{};  // 0x3C
     Qword cache_size{};  // 0x44
     Qword logical_size{};  // 0x4C
-    
+
     // SMBIOS 3.3+ fields
     Dword extended_speed{};  // 0x54
     Dword extended_configured_memory_speed{};  // 0x58
 };
-    
+
   struct Processor_info final : Structure {
     enum class Type : Byte {
       Unspecified = 0x00,
@@ -635,7 +635,7 @@ public:
 
   std::vector<Memory_device_info> memory_devices_info() const {
     std::vector<Memory_device_info> result;
-    
+
     for (auto* s = first_structure(); s; s = next_structure(s)) {
       if (s->structure_type == 0x11) {
         Memory_device_info info;
@@ -643,10 +643,10 @@ public:
         info.structure_length = s->structure_length;
         info.structure_handle = s->structure_handle;
         const auto hdr = header();
-  
+
         if (hdr.is_version_ge(2,1)) {
           info.physical_memory_array_handle = field<decltype(info.physical_memory_array_handle)>(s, 0x04);
-          info.memory_error_information_handle = field<decltype(info.memory_error_information_handle)>(s, 0x06);
+          info.memory_error_info_handle = field<decltype(info.memory_error_info_handle)>(s, 0x06);
           info.total_width = field<decltype(info.total_width)>(s, 0x08);
           info.data_width = field<decltype(info.data_width)>(s, 0x0A);
           info.size = field<decltype(info.size)>(s, 0x0C);
@@ -657,7 +657,7 @@ public:
           info.memory_type = field<decltype(info.memory_type)>(s, 0x12);
           info.type_detail = field<decltype(info.type_detail)>(s, 0x13);
         }
-  
+
         if (hdr.is_version_ge(2,3)) {
           info.speed = field<decltype(info.speed)>(s, 0x15);
           info.manufacturer = field<decltype(info.manufacturer)>(s, 0x17);
@@ -665,22 +665,22 @@ public:
           info.asset_tag = field<decltype(info.asset_tag)>(s, 0x19);
           info.part_number = field<decltype(info.part_number)>(s, 0x1A);
         }
-  
+
         if (hdr.is_version_ge(2,6)) {
           info.attributes = field<decltype(info.attributes)>(s, 0x1B);
         }
-  
+
         if (hdr.is_version_ge(2,7)) {
           info.extended_size = field<decltype(info.extended_size)>(s, 0x1C);
           info.configured_memory_speed = field<decltype(info.configured_memory_speed)>(s, 0x20);
         }
-  
+
         if (hdr.is_version_ge(2,8)) {
           info.minimum_voltage = field<decltype(info.minimum_voltage)>(s, 0x22);
           info.maximum_voltage = field<decltype(info.maximum_voltage)>(s, 0x24);
           info.configured_voltage = field<decltype(info.configured_voltage)>(s, 0x26);
         }
-  
+
         if (hdr.is_version_ge(3,2)) {
           info.memory_technology = field<decltype(info.memory_technology)>(s, 0x28);
           info.memory_operating_mode_capability = field<decltype(info.memory_operating_mode_capability)>(s, 0x29);
@@ -694,18 +694,18 @@ public:
           info.cache_size = field<decltype(info.cache_size)>(s, 0x44);
           info.logical_size = field<decltype(info.logical_size)>(s, 0x4C);
         }
-  
+
         if (hdr.is_version_ge(3,3)) {
           info.extended_speed = field<decltype(info.extended_speed)>(s, 0x54);
           info.extended_configured_memory_speed = field<decltype(info.extended_configured_memory_speed)>(s, 0x58);
         }
-  
+
         result.push_back(info);
       }
     }
     return result;
   }
-  
+
   std::vector<Processor_info> processors_info() const
   {
     const auto header = this->header();
