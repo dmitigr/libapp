@@ -645,8 +645,10 @@ public:
         const auto hdr = header();
 
         if (hdr.is_version_ge(2,1)) {
-          info.physical_memory_array_handle = field<decltype(info.physical_memory_array_handle)>(s, 0x04);
-          info.memory_error_info_handle = field<decltype(info.memory_error_info_handle)>(s, 0x06);
+          info.physical_memory_array_handle =
+            field<decltype(info.physical_memory_array_handle)>(s, 0x04);
+          info.memory_error_info_handle =
+            field<decltype(info.memory_error_info_handle)>(s, 0x06);
           info.total_width = field<decltype(info.total_width)>(s, 0x08);
           info.data_width = field<decltype(info.data_width)>(s, 0x0A);
           info.size = field<decltype(info.size)>(s, 0x0C);
@@ -672,7 +674,8 @@ public:
 
         if (hdr.is_version_ge(2,7)) {
           info.extended_size = field<decltype(info.extended_size)>(s, 0x1C);
-          info.configured_memory_speed = field<decltype(info.configured_memory_speed)>(s, 0x20);
+          info.configured_memory_speed =
+            field<decltype(info.configured_memory_speed)>(s, 0x20);
         }
 
         if (hdr.is_version_ge(2,8)) {
@@ -683,12 +686,16 @@ public:
 
         if (hdr.is_version_ge(3,2)) {
           info.memory_technology = field<decltype(info.memory_technology)>(s, 0x28);
-          info.memory_operating_mode_capability = field<decltype(info.memory_operating_mode_capability)>(s, 0x29);
+          info.memory_operating_mode_capability =
+            field<decltype(info.memory_operating_mode_capability)>(s, 0x29);
           info.firmware_version = field<decltype(info.firmware_version)>(s, 0x2B);
-          info.module_manufacturer_id = field<decltype(info.module_manufacturer_id)>(s, 0x2C);
+          info.module_manufacturer_id =
+            field<decltype(info.module_manufacturer_id)>(s, 0x2C);
           info.module_product_id = field<decltype(info.module_product_id)>(s, 0x2E);
-          info.memory_subsystem_controller_manufacturer_id = field<decltype(info.memory_subsystem_controller_manufacturer_id)>(s, 0x30);
-          info.memory_subsystem_controller_product_id = field<decltype(info.memory_subsystem_controller_product_id)>(s, 0x32);
+          info.memory_subsystem_controller_manufacturer_id =
+            field<decltype(info.memory_subsystem_controller_manufacturer_id)>(s, 0x30);
+          info.memory_subsystem_controller_product_id =
+            field<decltype(info.memory_subsystem_controller_product_id)>(s, 0x32);
           info.non_volatile_size = field<decltype(info.non_volatile_size)>(s, 0x34);
           info.volatile_size = field<decltype(info.volatile_size)>(s, 0x3C);
           info.cache_size = field<decltype(info.cache_size)>(s, 0x44);
@@ -697,7 +704,8 @@ public:
 
         if (hdr.is_version_ge(3,3)) {
           info.extended_speed = field<decltype(info.extended_speed)>(s, 0x54);
-          info.extended_configured_memory_speed = field<decltype(info.extended_configured_memory_speed)>(s, 0x58);
+          info.extended_configured_memory_speed =
+            field<decltype(info.extended_configured_memory_speed)>(s, 0x58);
         }
 
         result.push_back(info);

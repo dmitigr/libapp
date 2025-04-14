@@ -99,8 +99,10 @@ int main()
         cout << "  Memory device " << i << ":" << endl;
 
         // SMBIOS 2.1+ fields
-        cout << "    Physical Memory Array Handle: " << mem.physical_memory_array_handle << endl;
-        cout << "    Memory Error Information Handle: " << mem.memory_error_info_handle << endl;
+        cout << "    Physical Memory Array Handle: "
+             << mem.physical_memory_array_handle << endl;
+        cout << "    Memory Error Information Handle: "
+             << mem.memory_error_info_handle << endl;
         cout << "    Total Width: " << mem.total_width << endl;
         cout << "    Data Width: " << mem.data_width << endl;
         cout << "    Size: " << mem.size << endl;
@@ -131,13 +133,19 @@ int main()
         cout << "    Configured Voltage: " << mem.configured_voltage << endl;
 
         // SMBIOS 3.2+ fields
-        cout << "    Memory Technology: " << static_cast<int>(mem.memory_technology) << endl;
-        cout << "    Memory Operating Mode Capability: " << mem.memory_operating_mode_capability << endl;
-        cout << "    Firmware Version: " << mem.firmware_version.value_or("NULL") << endl;
-        cout << "    Module Manufacturer ID: " << mem.module_manufacturer_id << endl;
+        cout << "    Memory Technology: "
+             << static_cast<int>(mem.memory_technology) << endl;
+        cout << "    Memory Operating Mode Capability: "
+             << mem.memory_operating_mode_capability << endl;
+        cout << "    Firmware Version: "
+             << mem.firmware_version.value_or("NULL") << endl;
+        cout << "    Module Manufacturer ID: "
+             << mem.module_manufacturer_id << endl;
         cout << "    Module Product ID: " << mem.module_product_id << endl;
-        cout << "    Memory Subsystem Controller Manufacturer ID: " << mem.memory_subsystem_controller_manufacturer_id << endl;
-        cout << "    Memory Subsystem Controller Product ID: " << mem.memory_subsystem_controller_product_id << endl;
+        cout << "    Memory Subsystem Controller Manufacturer ID: "
+             << mem.memory_subsystem_controller_manufacturer_id << endl;
+        cout << "    Memory Subsystem Controller Product ID: "
+             << mem.memory_subsystem_controller_product_id << endl;
         cout << "    Non-volatile Size: " << mem.non_volatile_size << endl;
         cout << "    Volatile Size: " << mem.volatile_size << endl;
         cout << "    Cache Size: " << mem.cache_size << endl;
@@ -145,7 +153,8 @@ int main()
 
         // SMBIOS 3.3+ fields
         cout << "    Extended Speed: " << mem.extended_speed << endl;
-        cout << "    Extended Configured Memory Speed: " << mem.extended_configured_memory_speed << endl;
+        cout << "    Extended Configured Memory Speed: "
+             << mem.extended_configured_memory_speed << endl;
       }
     }
 
