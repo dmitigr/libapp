@@ -633,7 +633,8 @@ public:
     return result;
   }
 
-  std::vector<Memory_device_info> memory_devices_info() const {
+  std::vector<Memory_device_info> memory_devices_info() const
+  {
     std::vector<Memory_device_info> result;
 
     for (auto* s = first_structure(); s; s = next_structure(s)) {
