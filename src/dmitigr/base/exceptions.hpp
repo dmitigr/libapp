@@ -26,6 +26,22 @@
 namespace dmitigr {
 
 /**
+ * @returns The what-string of `ex`, or `unknown` if the underlying exception
+ * is not derived from `std::exception`.
+ */
+inline std::string what(const std::exception_ptr& ex,
+  const std::string& unknown = {})
+{
+  try {
+    rethrow_exception(ex);
+  } catch (const std::exception& e) {
+    return e.what();
+  } catch (...) {
+    return unknown;
+  }
+}
+
+/**
  * @ingroup errors
  *
  * @brief The generic exception class.
