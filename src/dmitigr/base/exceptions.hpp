@@ -32,6 +32,9 @@ namespace dmitigr {
 inline std::string what(const std::exception_ptr& ex,
   const std::string& unknown = {})
 {
+  if (!ex)
+    throw std::invalid_argument{"cannot get what string: exception_ptr is null"};
+
   try {
     rethrow_exception(ex);
   } catch (const std::exception& e) {
