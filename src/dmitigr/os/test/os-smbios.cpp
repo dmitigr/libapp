@@ -158,6 +158,30 @@ int main()
       }
     }
 
+    {
+      cout << "System slots:" << endl;
+      const auto slots = smbios.system_slots_info();
+      for (std::size_t i{}; i < slots.size(); ++i) {
+        using System_slot = dmitigr::os::firmware::Smbios_table::System_slots_info;
+        const auto& slot = slots[i];
+        cout << "  System slot " << i << ":" << endl;
+        // 2.0+
+        cout << "    designation: " << slot.designation.value_or("NULL") << endl;
+        cout << "    type: " << System_slot::to_string(slot.type) << endl;
+        cout << "    data_bus_width: " << System_slot::to_string(slot.data_bus_width) << endl;
+        cout << "    current_usage: " << System_slot::to_string(slot.current_usage) << endl;
+        cout << "    length: " << System_slot::to_string(slot.length) << endl;
+        cout << "    id: " << slot.id << endl;
+        cout << "    characteristics_1: " << static_cast<int>(slot.characteristics_1) << endl;
+        // 2.1+
+        cout << "    characteristics_2: " << static_cast<int>(slot.characteristics_2) << endl;
+        // 2.6+
+        cout << "    segment_group_number: " << slot.segment_group_number << endl;
+        cout << "    bus_number: " << static_cast<int>(slot.bus_number) << endl;
+        cout << "    device_function_number: " << static_cast<int>(slot.device_function_number) << endl;
+      }
+    }
+
   } catch (const std::exception& e) {
     std::clog << "error: " << e.what() << std::endl;
     return 1;
