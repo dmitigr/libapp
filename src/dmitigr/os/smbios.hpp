@@ -518,6 +518,316 @@ public:
     Word thread_enabled{};
   };
 
+  struct System_slots_info final : Structure {
+    enum class Type : Byte {
+      Unspecified = 0x00,
+      Other = 0x01,
+      Unknown = 0x02,
+      ISA = 0x03,
+      MCA = 0x04,
+      EISA = 0x05,
+      PCI = 0x06,
+      PC_card = 0x07,
+      VL_vesa = 0x08,
+      Proprietary = 0x09,
+      Processor_card_slot = 0x0A,
+      Proprietary_memory_card_slot = 0x0B,
+      IO_riser_card_slot = 0x0C,
+      Nu_bus = 0x0D,
+      PCI_66MHz_capable = 0x0E,
+      AGP = 0x0F,
+      AGP_2X = 0x10,
+      AGP_4X = 0x11,
+      PCI_X = 0x12,
+      AGP_8X = 0x13,
+      M2_Socket_1_DP = 0x14,
+      M2_Socket_1_SD = 0x15,
+      M2_Socket_2 = 0x16,
+      M2_Socket_3 = 0x17,
+      MXM_type_I = 0x18,
+      MXM_type_II = 0x19,
+      MXM_type_III_standard = 0x1A,
+      MXM_type_III_HE = 0x1B,
+      MXM_type_IV = 0x1C,
+      MXM_3_0_Type_A = 0x1D,
+      MXM_3_0_Type_B = 0x1E,
+      PCI_Express_Gen_2_SFF_8639_U_2 = 0x1F,
+      PCI_Express_Gen_3_SFF_8639_U_2 = 0x20,
+      PCI_Express_Mini_52_pin_with_bottom_side = 0x21,
+      PCI_Express_Mini_52_pin_without_bottom_side = 0x22,
+      PCI_Express_Mini_76_pin = 0x23,
+      PCI_Express_Gen_4_SFF_8639_U_2 = 0x24,
+      PCI_Express_Gen_5_SFF_8639_U_2 = 0x25,
+      OCP_NIC_3_0_Small_Form_Factor = 0x26,
+      OCP_NIC_3_0_Large_Form_Factor = 0x27,
+      OCP_NIC_Prior_to_3_0 = 0x28,
+      CXL_Flexbus_1_0 = 0x30,
+      PC_98_C20 = 0xA0,
+      PC_98_C24 = 0xA1,
+      PC_98_E = 0xA2,
+      PC_98_Local_Bus = 0xA3,
+      PC_98_Card = 0xA4,
+      PCI_Express = 0xA5,
+      PCI_Express_x1 = 0xA6,
+      PCI_Express_x2 = 0xA7,
+      PCI_Express_x4 = 0xA8,
+      PCI_Express_x8 = 0xA9,
+      PCI_Express_x16 = 0xAA,
+      PCI_Express_Gen_2 = 0xAB,
+      PCI_Express_Gen_2_x1 = 0xAC,
+      PCI_Express_Gen_2_x2 = 0xAD,
+      PCI_Express_Gen_2_x4 = 0xAE,
+      PCI_Express_Gen_2_x8 = 0xAF,
+      PCI_Express_Gen_2_x16 = 0xB0,
+      PCI_Express_Gen_3 = 0xB1,
+      PCI_Express_Gen_3_x1 = 0xB2,
+      PCI_Express_Gen_3_x2 = 0xB3,
+      PCI_Express_Gen_3_x4 = 0xB4,
+      PCI_Express_Gen_3_x8 = 0xB5,
+      PCI_Express_Gen_3_x16 = 0xB6,
+      PCI_Express_Gen_4 = 0xB8,
+      PCI_Express_Gen_4_x1 = 0xB9,
+      PCI_Express_Gen_4_x2 = 0xBA,
+      PCI_Express_Gen_4_x4 = 0xBB,
+      PCI_Express_Gen_4_x8 = 0xBC,
+      PCI_Express_Gen_4_x16 = 0xBD,
+      PCI_Express_Gen_5 = 0xBE,
+      PCI_Express_Gen_5_x1 = 0xBF,
+      PCI_Express_Gen_5_x2 = 0xC0,
+      PCI_Express_Gen_5_x4 = 0xC1,
+      PCI_Express_Gen_5_x8 = 0xC2,
+      PCI_Express_Gen_5_x16 = 0xC3,
+      PCI_Express_Gen_6 = 0xC4,
+      Enterprise_and_Datacenter_1U_E1 = 0xC5,
+      Enterprise_and_Datacenter_3_E3 = 0xC6,
+
+      count_ = 0xC7, // total count of enums
+    };
+
+    static std::string_view to_string(const Type type) {
+      constexpr static auto enum_names = [] {
+        std::array<const char*, static_cast<std::size_t>(Type::count_)> names{};
+        names[static_cast<std::size_t>(Type::Unspecified)] = "Unspecified";
+        names[static_cast<std::size_t>(Type::Other)] = "Other";
+        names[static_cast<std::size_t>(Type::Unknown)] = "Unknown";
+        names[static_cast<std::size_t>(Type::ISA)] = "ISA";
+        names[static_cast<std::size_t>(Type::MCA)] = "MCA";
+        names[static_cast<std::size_t>(Type::EISA)] = "EISA";
+        names[static_cast<std::size_t>(Type::PCI)] = "PCI";
+        names[static_cast<std::size_t>(Type::PC_card)] = "PC Card (PCMCIA)";
+        names[static_cast<std::size_t>(Type::VL_vesa)] = "VL-VESA";
+        names[static_cast<std::size_t>(Type::Proprietary)] = "Proprietary";
+        names[static_cast<std::size_t>(Type::Processor_card_slot)] = "Processor Card Slot";
+        names[static_cast<std::size_t>(Type::Proprietary_memory_card_slot)]
+          = "Proprietary Memory Card Slot";
+        names[static_cast<std::size_t>(Type::IO_riser_card_slot)] = "I/O Riser Card Slot";
+        names[static_cast<std::size_t>(Type::Nu_bus)] = "NuBus";
+        names[static_cast<std::size_t>(Type::PCI_66MHz_capable)] = "PCI - 66MHz Capable";
+        names[static_cast<std::size_t>(Type::AGP)] = "AGP";
+        names[static_cast<std::size_t>(Type::AGP_2X)] = "AGP 2X";
+        names[static_cast<std::size_t>(Type::AGP_4X)] = "AGP 4X";
+        names[static_cast<std::size_t>(Type::PCI_X)] = "PCI-X";
+        names[static_cast<std::size_t>(Type::AGP_8X)] = "AGP 8X";
+        names[static_cast<std::size_t>(Type::M2_Socket_1_DP)]
+          = "M.2 Socket 1-DP (Mechanical Key A)";
+        names[static_cast<std::size_t>(Type::M2_Socket_1_SD)]
+          = "M.2 Socket 1-SD (Mechanical Key E)";
+        names[static_cast<std::size_t>(Type::M2_Socket_2)] = "M.2 Socket 2 (Mechanical Key B)";
+        names[static_cast<std::size_t>(Type::M2_Socket_3)] = "M.2 Socket 3 (Mechanical Key M)";
+        names[static_cast<std::size_t>(Type::MXM_type_I)] = "MXM Type I";
+        names[static_cast<std::size_t>(Type::MXM_type_II)] = "MXM Type II";
+        names[static_cast<std::size_t>(Type::MXM_type_III_standard)]
+          = "MXM Type III (standard connector)";
+        names[static_cast<std::size_t>(Type::MXM_type_III_HE)] = "MXM Type III (HE connector)";
+        names[static_cast<std::size_t>(Type::MXM_type_IV)] = "MXM Type IV";
+        names[static_cast<std::size_t>(Type::MXM_3_0_Type_A)] = "MXM 3.0 Type A";
+        names[static_cast<std::size_t>(Type::MXM_3_0_Type_B)] = "MXM 3.0 Type B";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_2_SFF_8639_U_2)]
+          = "PCI Express Gen 2 SFF-8639 (U.2)";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_3_SFF_8639_U_2)]
+          = "PCI Express Gen 3 SFF-8639 (U.2)";
+        names[static_cast<std::size_t>(Type::PCI_Express_Mini_52_pin_with_bottom_side)]
+          = "PCI Express Mini 52-pin with bottom-side keep-outs";
+        names[static_cast<std::size_t>(Type::PCI_Express_Mini_52_pin_without_bottom_side)]
+          = "PCI Express Mini 52-pin without bottom-side keep-outs";
+        names[static_cast<std::size_t>(Type::PCI_Express_Mini_76_pin)] = "PCI Express Mini 76-pin";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_4_SFF_8639_U_2)]
+          = "PCI Express Gen 4 SFF-8639 (U.2)";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_5_SFF_8639_U_2)]
+          = "PCI Express Gen 5 SFF-8639 (U.2)";
+        names[static_cast<std::size_t>(Type::OCP_NIC_3_0_Small_Form_Factor)]
+          = "OCP NIC 3.0 Small Form Factor (SFF)";
+        names[static_cast<std::size_t>(Type::OCP_NIC_3_0_Large_Form_Factor)]
+          = "OCP NIC 3.0 Large Form Factor (LFF)";
+        names[static_cast<std::size_t>(Type::OCP_NIC_Prior_to_3_0)] = "OCP NIC Prior to 3.0";
+        names[static_cast<std::size_t>(Type::CXL_Flexbus_1_0)] = "CXL Flexbus 1.0";
+        names[static_cast<std::size_t>(Type::PC_98_C20)] = "PC-98/C20";
+        names[static_cast<std::size_t>(Type::PC_98_C24)] = "PC-98/C24";
+        names[static_cast<std::size_t>(Type::PC_98_E)] = "PC-98/E";
+        names[static_cast<std::size_t>(Type::PC_98_Local_Bus)] = "PC-98/Local Bus";
+        names[static_cast<std::size_t>(Type::PC_98_Card)] = "PC-98/Card";
+        names[static_cast<std::size_t>(Type::PCI_Express)] = "PCI Express";
+        names[static_cast<std::size_t>(Type::PCI_Express_x1)] = "PCI Express x1";
+        names[static_cast<std::size_t>(Type::PCI_Express_x2)] = "PCI Express x2";
+        names[static_cast<std::size_t>(Type::PCI_Express_x4)] = "PCI Express x4";
+        names[static_cast<std::size_t>(Type::PCI_Express_x8)] = "PCI Express x8";
+        names[static_cast<std::size_t>(Type::PCI_Express_x16)] = "PCI Express x16";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_2)] = "PCI Express Gen 2";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_2_x1)] = "PCI Express Gen 2 x1";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_2_x2)] = "PCI Express Gen 2 x2";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_2_x4)] = "PCI Express Gen 2 x4";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_2_x8)] = "PCI Express Gen 2 x8";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_2_x16)] = "PCI Express Gen 2 x16";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_3)] = "PCI Express Gen 3";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_3_x1)] = "PCI Express Gen 3 x1";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_3_x2)] = "PCI Express Gen 3 x2";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_3_x4)] = "PCI Express Gen 3 x4";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_3_x8)] = "PCI Express Gen 3 x8";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_3_x16)] = "PCI Express Gen 3 x16";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_4)] = "PCI Express Gen 4";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_4_x1)] = "PCI Express Gen 4 x1";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_4_x2)] = "PCI Express Gen 4 x2";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_4_x4)] = "PCI Express Gen 4 x4";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_4_x8)] = "PCI Express Gen 4 x8";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_4_x16)] = "PCI Express Gen 4 x16";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_5)] = "PCI Express Gen 5";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_5_x1)] = "PCI Express Gen 5 x1";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_5_x2)] = "PCI Express Gen 5 x2";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_5_x4)] = "PCI Express Gen 5 x4";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_5_x8)] = "PCI Express Gen 5 x8";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_5_x16)] = "PCI Express Gen 5 x16";
+        names[static_cast<std::size_t>(Type::PCI_Express_Gen_6)] = "PCI Express Gen 6 and Beyond";
+        names[static_cast<std::size_t>(Type::Enterprise_and_Datacenter_1U_E1)]
+          = "Enterprise and Datacenter 1U E1 Form Factor Slot (EDSFF E1.S, E1.L)";
+        names[static_cast<std::size_t>(Type::Enterprise_and_Datacenter_3_E3)]
+          = "Enterprise and Datacenter 3\" E3 Form Factor Slot (EDSFF E3.S, E3.L)";
+        return names;
+      }();
+      const auto idx = static_cast<std::size_t>(type);
+      return idx < enum_names.size() ? enum_names[idx] : "";
+    }
+
+    enum class Data_bus_width : Byte {
+      Unspecified = 0x00,
+      Other = 0x01,
+      Unknown = 0x02,
+      Bit_8 = 0x03,
+      Bit_16 = 0x04,
+      Bit_32 = 0x05,
+      Bit_64 = 0x06,
+      Bit_128 = 0x07,
+      x1 = 0x08,
+      x2 = 0x09,
+      x4 = 0x0A,
+      x8 = 0x0B,
+      x12 = 0x0C,
+      x16 = 0x0D,
+      x32 = 0x0E,
+
+      count_ = 0x0F // total count of enums
+    };
+
+    static std::string_view to_string(const Data_bus_width width) {
+      constexpr static auto enum_names = [] {
+        std::array<const char*, static_cast<std::size_t>(Data_bus_width::count_)> names{};
+        names[static_cast<std::size_t>(Data_bus_width::Unspecified)] = "Unspecified";
+        names[static_cast<std::size_t>(Data_bus_width::Other)] = "Other";
+        names[static_cast<std::size_t>(Data_bus_width::Unknown)] = "Unknown";
+        names[static_cast<std::size_t>(Data_bus_width::Bit_8)] = "8 bit";
+        names[static_cast<std::size_t>(Data_bus_width::Bit_16)] = "16 bit";
+        names[static_cast<std::size_t>(Data_bus_width::Bit_32)] = "32 bit";
+        names[static_cast<std::size_t>(Data_bus_width::Bit_64)] = "64 bit";
+        names[static_cast<std::size_t>(Data_bus_width::Bit_128)] = "128 bit";
+        names[static_cast<std::size_t>(Data_bus_width::x1)] = "1x or x1";
+        names[static_cast<std::size_t>(Data_bus_width::x2)] = "2x or x2";
+        names[static_cast<std::size_t>(Data_bus_width::x4)] = "4x or x4";
+        names[static_cast<std::size_t>(Data_bus_width::x8)] = "8x or x8";
+        names[static_cast<std::size_t>(Data_bus_width::x12)] = "12x or x12";
+        names[static_cast<std::size_t>(Data_bus_width::x16)] = "16x or x16";
+        names[static_cast<std::size_t>(Data_bus_width::x32)] = "32x or x32";
+        return names;
+      }();
+      const auto idx = static_cast<std::size_t>(width);
+      return idx < enum_names.size() ? enum_names[idx] : "";
+    }
+
+    enum class Current_usage : Byte {
+      Unspecified = 0x00,
+      Other = 0x01,
+      Unknown = 0x02,
+      Available = 0x03,
+      In_use = 0x04,
+      Unavailable = 0x05,
+
+      count_ = 0x06 // total count of enums
+    };
+
+    static std::string_view to_string(const Current_usage usage) {
+      constexpr static auto enum_names = [] {
+        std::array<const char*, static_cast<std::size_t>(Current_usage::count_)> names{};
+        names[static_cast<std::size_t>(Current_usage::Unspecified)] = "Unspecified";
+        names[static_cast<std::size_t>(Current_usage::Other)] = "Other";
+        names[static_cast<std::size_t>(Current_usage::Unknown)] = "Unknown";
+        names[static_cast<std::size_t>(Current_usage::Available)] = "Available";
+        names[static_cast<std::size_t>(Current_usage::In_use)] = "In use";
+        names[static_cast<std::size_t>(Current_usage::Unavailable)] = "Unavailable";
+        return names;
+      }();
+      const auto idx = static_cast<std::size_t>(usage);
+      return idx < enum_names.size() ? enum_names[idx] : "";
+    }
+
+    enum class Length : Byte {
+      Unspecified = 0x00,
+      Other = 0x01,
+      Unknown = 0x02,
+      Short_length = 0x03,
+      Long_length = 0x04,
+      Drive_form_2_5 = 0x05,
+      Drive_form_3_5 = 0x06,
+
+      count_ = 0x07 // total count of enums
+    };
+
+    static std::string_view to_string(const Length len) {
+      constexpr static auto enum_names = [] {
+        std::array<const char*, static_cast<std::size_t>(Length::count_)> names{};
+        names[static_cast<std::size_t>(Length::Unspecified)] = "Unspecified";
+        names[static_cast<std::size_t>(Length::Other)] = "Other";
+        names[static_cast<std::size_t>(Length::Unknown)] = "Unknown";
+        names[static_cast<std::size_t>(Length::Short_length)] = "Short Length";
+        names[static_cast<std::size_t>(Length::Long_length)] = "Long Length";
+        names[static_cast<std::size_t>(Length::Drive_form_2_5)] = "2.5\" drive form factor";
+        names[static_cast<std::size_t>(Length::Drive_form_3_5)] = "3.5\" drive form factor";
+        return names;
+      }();
+      const auto idx = static_cast<std::size_t>(len);
+      return idx < enum_names.size() ? enum_names[idx] : "";
+    }
+
+
+
+    // 2.0+
+    std::optional<std::string> designation;
+    Type type{Type::Unspecified};
+    Data_bus_width data_bus_width{Data_bus_width::Unspecified};
+    Current_usage current_usage{Current_usage::Unspecified};
+    Length length{Length::Unspecified};
+    Word id{};
+    Byte characteristics_1{};
+
+    // 2.1+
+    Byte characteristics_2{};
+
+    // 2.6+
+    Word segment_group_number{};
+    Byte bus_number{};
+    Byte device_function_number{};
+
+    // 3.2
+    // TODO: todo
+  };
+
   Smbios_table(const Byte* const data, const std::size_t size)
     : data_(size)
   {
@@ -779,6 +1089,48 @@ public:
 
       if (header.is_version_ge(3,6)) {
         info.thread_enabled = field<decltype(info.thread_enabled)>(s, 0x30);
+      }
+    }
+    return result;
+  }
+
+  std::vector<System_slots_info> system_slots_info() const {
+    const auto header = this->header();
+
+    std::vector<System_slots_info> result;
+    for (auto* s = first_structure(); s; s = next_structure(s)) {
+      if (s->structure_type != 9)
+        continue;
+
+      result.emplace_back(make_structure<System_slots_info>(*s));
+      auto& info = result.back();
+
+      if (header.is_version_ge(2,0)) {
+        info.designation = field<decltype(info.designation)>(s, 0x04);
+        info.type = static_cast<decltype(info.type)>(
+          field<std::underlying_type_t<decltype(info.type)> >(s, 0x05)
+        );
+        info.data_bus_width = static_cast<decltype(info.data_bus_width)>(
+          field<std::underlying_type_t<decltype(info.data_bus_width)> >(s, 0x06)
+        );
+        info.current_usage = static_cast<decltype(info.current_usage)>(
+          field<std::underlying_type_t<decltype(info.current_usage)> >(s, 0x07)
+        );
+        info.length = static_cast<decltype(info.length)>(
+          field<std::underlying_type_t<decltype(info.length)> >(s, 0x08)
+        );
+        info.id = field<decltype(info.id)>(s, 0x09);
+        info.characteristics_1 = field<decltype(info.characteristics_1)>(s, 0x0B);
+      }
+
+      if (header.is_version_ge(2,1)) {
+        info.characteristics_2 = field<decltype(info.characteristics_2)>(s, 0x0C);
+      }
+
+      if (header.is_version_ge(2,6)) {
+        info.segment_group_number = field<decltype(info.segment_group_number)>(s, 0x0D);
+        info.bus_number = field<decltype(info.bus_number)>(s, 0x0F);
+        info.device_function_number = field<decltype(info.device_function_number)>(s, 0x10);
       }
     }
     return result;
