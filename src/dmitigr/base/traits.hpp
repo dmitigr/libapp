@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2024 Dmitry Igrishin
+// Copyright 2025 Dmitry Igrishin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #define DMITIGR_BASE_TRAITS_HPP
 
 #include <array>
+#include <optional>
 #include <type_traits>
 
 namespace dmitigr {
@@ -28,6 +29,8 @@ constexpr bool false_value{};
 template<typename>
 constexpr bool true_value{true};
 
+// -----------------------------------------------------------------------------
+
 template<typename>
 struct Is_std_array : std::false_type {};
 
@@ -36,6 +39,17 @@ struct Is_std_array<std::array<T, N>> : std::true_type {};
 
 template<typename T>
 constexpr bool Is_std_array_v = Is_std_array<T>::value;
+
+// -----------------------------------------------------------------------------
+
+template<typename>
+struct Is_optional : std::false_type {};
+
+template<typename T>
+struct Is_optional<std::optional<T>> : std::true_type {};
+
+template<typename T>
+constexpr bool Is_optional_v = Is_optional<T>::value;
 
 } // namespace dmitigr
 

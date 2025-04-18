@@ -34,6 +34,8 @@ namespace dmitigr::winbase {
 
 class Account final {
 public:
+  Account() = default;
+
   explicit Account(const PSID sid)
     : Account{sid, std::wstring{}}
   {}
@@ -85,6 +87,18 @@ public:
       throw_cannot_create();
   }
 
+  template<typename ... Types>
+  static Account make_if_mapped(Types&& ... args)
+  {
+    try {
+      return Account{std::forward<Types>(args)...};
+    } catch (const Sys_exception& e) {
+      if (e.code().value() == ERROR_NONE_MAPPED)
+        return Account{};
+      throw;
+    }
+  }
+
   void swap(Account& rhs) noexcept
   {
     using std::swap;
@@ -118,6 +132,11 @@ public:
   const std::wstring& domain() const noexcept
   {
     return domain_;
+  }
+
+  explicit operator bool() const noexcept
+  {
+    return !sid_buf_.empty();
   }
 
 private:

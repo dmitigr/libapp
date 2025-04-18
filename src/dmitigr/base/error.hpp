@@ -94,7 +94,7 @@ public:
   /// @returns The literal `dmitigr_generic_error`.
   const char* name() const noexcept override
   {
-    return "dmitigr_generic_error";
+    return name_;
   }
 
   /**
@@ -109,11 +109,14 @@ public:
   std::string message(const int ev) const override
   {
     const char* const desc{to_literal_anyway(static_cast<Errc>(ev))};
-    constexpr const char* const sep{": "};
+    constexpr const char sep[]{": "};
     std::string result;
-    result.reserve(std::strlen(name()) + std::strlen(sep) + std::strlen(desc));
-    return result.append(name()).append(sep).append(desc);
+    result.reserve(std::size(name_) - 1 + std::size(sep) - 1 + std::strlen(desc));
+    return result.append(name_).append(sep).append(desc);
   }
+
+private:
+  static constexpr const char name_[]{"dmitigr_generic_error"};
 };
 
 /**

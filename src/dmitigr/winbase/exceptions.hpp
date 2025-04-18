@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2023 Dmitry Igrishin
+// Copyright 2025 Dmitry Igrishin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,10 +24,18 @@
 
 namespace dmitigr::winbase {
 
+enum Throw_modifier {
+  throw_all,
+  no_throw_if_not_found
+};
+
 /**
  * @ingroup errors
  *
  * @brief An exception thrown on system error.
+ *
+ * @details The system category includes:
+ *   - Network Manager Errors in range [NERR_BASE, MAX_NERR].
  */
 class Sys_exception final : public std::system_error {
 public:

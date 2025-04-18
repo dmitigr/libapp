@@ -145,6 +145,24 @@ public:
       reinterpret_cast<const QUERY_SERVICE_CONFIGW*>(data_.data()) : nullptr;
   }
 
+  const QUERY_SERVICE_CONFIGW* operator->() const
+  {
+    if (const auto* const p = ptr())
+      return p;
+    else
+      throw std::logic_error{"cannot get Service_config: null pointer"};
+  }
+
+  const QUERY_SERVICE_CONFIGW& operator*() const
+  {
+    return *(operator->());
+  }
+
+  explicit operator bool() const noexcept
+  {
+    return !data_.empty();
+  }
+
 private:
   std::vector<char> data_;
 };
