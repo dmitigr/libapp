@@ -145,6 +145,19 @@ public:
     Dword extended_speed{};  // 0x54
     Dword extended_configured_memory_speed{};  // 0x58
 };
+
+  struct Physical_memory_array_info final : Structure {
+    // SMBIOS 2.1+ fields
+    Byte location{};         // 0x04
+    Byte use{};              // 0x05
+    Byte memory_error_correction{}; // 0x06
+    Dword maximum_capacity{}; // 0x07 (in KB)
+    Word memory_error_information_handle{}; // 0x0B
+    Word number_of_memory_devices{}; // 0x0D
+    
+    // SMBIOS 2.7+ fields
+    Qword extended_maximum_capacity{}; // 0x0F (in bytes)
+  };
     
   struct Processor_info final : Structure {
     enum class Type : Byte {
@@ -702,6 +715,36 @@ public:
   
         result.push_back(info);
       }
+    }
+    return result;
+  }
+
+  std::vector<Physical_memory_array_info> physical_memory_arrays_info() const {
+    std::vector<Physical_memory_array_info> result;
+    
+    for (auto* s = first_structure(); s; s = next_structure(s)) {
+        if (s->structure_type == 0x10) {  // Type 16 - Physical Memory Array
+            Physical_memory_array_info info;
+            info.structure_type = s->structure_type;
+            info.structure_length = s->structure_length;
+            info.structure_handle = s->structure_handle;
+            const auto hdr = header();
+
+            if (hdr.is_version_ge(2,1)) {
+                info.location = field<decltype(info.location)>(s, 0x04);
+                info.use = field<decltype(info.use)>(s, 0x05);
+                info.memory_error_correction = field<decltype(info.memory_error_correction)>(s, 0x06);
+                info.maximum_capacity = field<decltype(info.maximum_capacity)>(s, 0x07);
+                info.memory_error_information_handle = field<decltype(info.memory_error_information_handle)>(s, 0x0B);
+                info.number_of_memory_devices = field<decltype(info.number_of_memory_devices)>(s, 0x0D);
+            }
+
+            if (hdr.is_version_ge(2,7)) {
+                info.extended_maximum_capacity = field<decltype(info.extended_maximum_capacity)>(s, 0x0F);
+            }
+
+            result.push_back(info);
+        }
     }
     return result;
   }
