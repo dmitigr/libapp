@@ -173,6 +173,13 @@ public:
     api().put_ControlLevel(level);
   }
 
+  CTRL_LEVEL control_level() const
+  {
+    CTRL_LEVEL result{};
+    detail::api(*this).get_ControlLevel(&result);
+    return result;
+  }
+
   void terminate_connection()
   {
     api().TerminateConnection();
