@@ -272,6 +272,25 @@ public:
     api().put_Property(_bstr_t{"SetClipboardRedirectCallback"}, val);
     return *this;
   }
+
+  Session_properties&
+  set_default_attendee_control_level(const CTRL_LEVEL value)
+  {
+    VARIANT val{};
+    VariantInit(&val);
+    val.vt = VT_I4;
+    val.lVal = value;
+    api().put_Property(_bstr_t{"DefaultAttendeeControlLevel"}, val);
+    return *this;
+  }
+
+  CTRL_LEVEL default_attendee_control_level() const
+  {
+    VARIANT val{};
+    VariantInit(&val);
+    detail::api(*this).get_Property(_bstr_t{"DefaultAttendeeControlLevel"}, &val);
+    return static_cast<CTRL_LEVEL>(val.lVal);
+  }
 };
 
 // -----------------------------------------------------------------------------
