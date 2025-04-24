@@ -200,12 +200,12 @@ public:
     return Attendee{raw};
   }
 
-  Enumerator<IEnumUnknown, IUnknown*> attendees() const
+  Enumerator<IEnumVARIANT, VARIANT> attendees() const
   {
     IUnknown* raw{};
     detail::api(*this).get__NewEnum(&raw);
     check(raw, "invalid enumerator retrieved from attendee manager");
-    return Enumerator<IEnumUnknown, IUnknown*>{raw};
+    return Enumerator<IEnumVARIANT, VARIANT>{raw};
   }
 };
 
