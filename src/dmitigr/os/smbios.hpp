@@ -103,7 +103,7 @@ public:
     Dword maximum_capacity{}; // 0x07 (in KB)
     Word memory_error_information_handle{}; // 0x0B
     Word number_of_memory_devices{}; // 0x0D
-    
+
     // SMBIOS 2.7+ fields
     Qword extended_maximum_capacity{}; // 0x0F (in bytes)
   };
@@ -646,9 +646,9 @@ public:
     return result;
   }
 
-  std::vector<Physical_memory_array_info> physical_memory_arrays_info() const {
+  std::vector<Physical_memory_array_info> physical_memory_arrays_info() const
+  {
     std::vector<Physical_memory_array_info> result;
-    
     for (auto* s = first_structure(); s; s = next_structure(s)) {
       if (s->structure_type == 0x10) {  // Type 16 - Physical Memory Array
         Physical_memory_array_info info;
@@ -660,15 +660,18 @@ public:
         if (hdr.is_version_ge(2,1)) {
           info.location = field<decltype(info.location)>(s, 0x04);
           info.use = field<decltype(info.use)>(s, 0x05);
-          info.memory_error_correction = field<decltype(info.memory_error_correction)>(s, 0x06);
+          info.memory_error_correction =
+            field<decltype(info.memory_error_correction)>(s, 0x06);
           info.maximum_capacity = field<decltype(info.maximum_capacity)>(s, 0x07);
-          info.memory_error_information_handle = field<decltype(info.memory_error_information_handle)>(s, 0x0B);
-          info.number_of_memory_devices = field<decltype(info.number_of_memory_devices)>(s, 0x0D);
+          info.memory_error_information_handle =
+            field<decltype(info.memory_error_information_handle)>(s, 0x0B);
+          info.number_of_memory_devices =
+            field<decltype(info.number_of_memory_devices)>(s, 0x0D);
         }
 
-        if (hdr.is_version_ge(2,7)) {
-          info.extended_maximum_capacity = field<decltype(info.extended_maximum_capacity)>(s, 0x0F);
-        }
+        if (hdr.is_version_ge(2,7))
+          info.extended_maximum_capacity =
+            field<decltype(info.extended_maximum_capacity)>(s, 0x0F);
 
         result.push_back(info);
       }
