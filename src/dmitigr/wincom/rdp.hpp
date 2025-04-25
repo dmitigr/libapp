@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "../base/assert.hpp"
 #include "../base/utility.hpp"
 #include "../winbase/windows.hpp"
 #include "enumerator.hpp"
@@ -29,9 +30,20 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 
 namespace dmitigr::wincom::rdp {
+
+inline bool is_view(const CTRL_LEVEL cl) noexcept
+{
+  return cl == CTRL_LEVEL_VIEW || cl == CTRL_LEVEL_REQCTRL_VIEW;
+}
+
+inline bool is_interactive(const CTRL_LEVEL cl) noexcept
+{
+  return cl == CTRL_LEVEL_INTERACTIVE || cl == CTRL_LEVEL_REQCTRL_INTERACTIVE;
+}
 
 class Invitation final : public
   Unknown_api<Invitation, IRDPSRAPIInvitation> {
@@ -157,6 +169,18 @@ public:
     return result;
   }
 
+  RDPENCOMAPI_ATTENDEE_FLAGS flags() const
+  {
+    long result{};
+    detail::api(*this).get_Flags(&result);
+    return static_cast<RDPENCOMAPI_ATTENDEE_FLAGS>(result);
+  }
+
+  bool is_local() const
+  {
+    return flags() == ATTENDEE_FLAGS_LOCAL;
+  }
+
   Tcp_connection_info tcp_connection_info() const
   {
     IUnknown* info{};
@@ -207,6 +231,12 @@ public:
     return Attendee{raw};
   }
 
+  /**
+   * @returns The enumerator of variants of type `VT_DISPATCH`.
+   *
+   * @remarks Attendee instance can be queried from each element of
+   * the returned enumerator as `Attendee::query(element.pdispVal)`.
+   */
   Enumerator<IEnumVARIANT, VARIANT> attendees() const
   {
     IUnknown* raw{};
@@ -300,6 +330,8 @@ class Event_dispatcher : public Advise_sink<_IRDPSessionEvents> {};
 template<class BasicComObject>
 class Basic_rdp_peer : private Noncopymove {
 public:
+  using Com = BasicComObject;
+
   virtual ~Basic_rdp_peer() = default;
 
   Basic_rdp_peer(std::unique_ptr<BasicComObject> com,
@@ -410,9 +442,35 @@ private:
 // Client
 // -----------------------------------------------------------------------------
 
+class Client;
+
+namespace detail {
+class Viewer_event_dispatcher final : public Event_dispatcher {
+public:
+  explicit Viewer_event_dispatcher(std::unique_ptr<Event_dispatcher> rep)
+    : rep_{std::move(rep)}
+  {}
+
+  void set_owner(void*) override;
+  HRESULT Invoke(DISPID, REFIID, LCID, WORD, DISPPARAMS*, VARIANT*, EXCEPINFO*,
+    UINT*) override;
+
+private:
+  std::unique_ptr<Event_dispatcher> rep_;
+  Client* client_{};
+};
+} // namespace detail
+
 class Client final : public Client_base {
 public:
-  using Client_base::Client_base;
+  explicit Client(std::unique_ptr<Viewer> com)
+    : Client{std::move(com), nullptr}
+  {}
+
+  Client(std::unique_ptr<Viewer> com, std::unique_ptr<Event_dispatcher> sink)
+    : Client_base{std::move(com),
+      std::make_unique<detail::Viewer_event_dispatcher>(std::move(sink))}
+  {}
 
   ~Client() override
   {
@@ -425,21 +483,32 @@ public:
   void open(const ConnStr& connection_string,
     const NameStr& name, const PassStr& password)
   {
-    const auto err = com().api().Connect(
-      detail::bstr(connection_string),
-      detail::bstr(name),
-      detail::bstr(password));
+    using wincom::detail::bstr;
+    const auto err = com().api().Connect(bstr(connection_string),
+      bstr(name), bstr(password));
     if (err != S_OK)
       throw Win_error{"cannot open RDP client", err};
+    is_open_ = true;
+  }
+
+  bool is_open() const
+  {
+    return is_open_;
   }
 
   void close()
   {
-    const auto err = com().api().Disconnect();
-    if (err != S_OK)
-      throw Win_error{"cannot close RDP client", err};
+    if (is_open_) {
+      const auto err = com().api().Disconnect();
+      if (err != S_OK)
+        throw Win_error{"cannot close RDP client", err};
+      is_open_ = false;
+    }
   }
 
+  /**
+   * @see Attendee::control_level().
+   */
   void set_control_level(const CTRL_LEVEL level)
   {
     const auto err = com().api().RequestControl(level);
@@ -447,10 +516,37 @@ public:
       throw Win_error{"cannot set control level of RDP client", err};
   }
 
-  Session_properties session_properties()
+  Attendee_manager attendee_manager() const
+  {
+    IRDPSRAPIAttendeeManager* api{};
+    wincom::detail::api(com()).get_Attendees(&api);
+    check(api, "invalid IRDPSRAPIAttendeeManager instance retrieved");
+    return Attendee_manager{api};
+  }
+
+  /**
+   * @returns The attendee of this instance (local attendee), or invalid
+   * instance if not authenticated.
+   */
+  Attendee attendee() const
+  {
+    if (!attendee_id_) {
+      auto atts = attendee_manager().attendees();
+      while (auto att = atts.next()) {
+        if (auto a = rdp::Attendee::query(att->pdispVal); a.is_local()) {
+          attendee_id_ = a.id();
+          return a;
+        }
+      }
+    } else
+      return attendee_manager().attendee(*attendee_id_);
+    return Attendee{};
+  }
+
+  Session_properties session_properties() const
   {
     IRDPSRAPISessionProperties* api{};
-    com().api().get_Properties(&api);
+    wincom::detail::api(com()).get_Properties(&api);
     check(api, "invalid IRDPSRAPISessionProperties instance retrieved");
     return Session_properties{api};
   }
@@ -461,12 +557,66 @@ public:
     com().api().put_SmartSizing(val);
   }
 
-  bool is_smart_sizing_enabled() const noexcept
+  bool is_smart_sizing_enabled() const
   {
     VARIANT_BOOL result{VARIANT_FALSE};
-    detail::api(com()).get_SmartSizing(&result);
+    wincom::detail::api(com()).get_SmartSizing(&result);
     return result == VARIANT_TRUE;
   }
+
+private:
+  friend detail::Viewer_event_dispatcher;
+  bool is_open_{};
+  mutable std::optional<long> attendee_id_;
 };
+
+namespace detail {
+void Viewer_event_dispatcher::set_owner(void* const owner)
+{
+  DMITIGR_ASSERT(owner);
+  client_ = static_cast<Client*>(owner);
+  if (rep_)
+    rep_->set_owner(owner);
+}
+
+HRESULT Viewer_event_dispatcher::Invoke(const DISPID disp_id,
+  REFIID riid,
+  const LCID cid,
+  const WORD flags,
+  DISPPARAMS* const disp_params,
+  VARIANT* const result,
+  EXCEPINFO* const excep_info,
+  UINT* const arg_err)
+{
+  UNREFERENCED_PARAMETER(riid);
+  UNREFERENCED_PARAMETER(cid);
+  UNREFERENCED_PARAMETER(flags);
+  UNREFERENCED_PARAMETER(disp_params);
+  UNREFERENCED_PARAMETER(result);
+  UNREFERENCED_PARAMETER(excep_info);
+  UNREFERENCED_PARAMETER(arg_err);
+  switch (disp_id) {
+  case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_CONNECTED: {
+    IDispatch* const dispatcher{disp_params->rgvarg[0].pdispVal};
+    auto attendee = Attendee::query(dispatcher);
+    break;
+  }
+  case DISPID_RDPSRAPI_EVENT_ON_ERROR:
+    [[fallthrough]];
+  case DISPID_RDPSRAPI_EVENT_ON_VIEWER_CONNECTED:
+    [[fallthrough]];
+  case DISPID_RDPSRAPI_EVENT_ON_VIEWER_DISCONNECTED:
+    [[fallthrough]];
+  case DISPID_RDPSRAPI_EVENT_ON_VIEWER_AUTHENTICATED:
+    [[fallthrough]];
+  case DISPID_RDPSRAPI_EVENT_ON_VIEWER_CONNECTFAILED:
+    [[fallthrough]];
+  default:
+    break;
+  }
+  return rep_ ? rep_->Invoke(disp_id, riid, cid, flags, disp_params, result,
+    excep_info, arg_err) : S_OK;
+}
+} // namespace detail
 
 } // namespace dmitigr::wincom::rdp
