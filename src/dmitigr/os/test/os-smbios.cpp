@@ -150,13 +150,33 @@ int main()
         cout << "    Volatile Size: " << mem.volatile_size << endl;
         cout << "    Cache Size: " << mem.cache_size << endl;
         cout << "    Logical Size: " << mem.logical_size << endl;
-
-        // SMBIOS 3.3+ fields
-        cout << "    Extended Speed: " << mem.extended_speed << endl;
-        cout << "    Extended Configured Memory Speed: "
-             << mem.extended_configured_memory_speed << endl;
-      }
     }
+  }
+
+  {
+    cout << "Physical Memory Arrays:" << endl;
+    const auto arrays = smbios.physical_memory_arrays_info();
+    for (std::size_t i{}; i < arrays.size(); ++i) {
+      const auto& array = arrays[i];
+      cout << "  Physical Memory Array " << i << ":" << endl;
+      cout << "    Location: " << static_cast<int>(array.location) << endl;
+      cout << "    Use: " << static_cast<int>(array.use) << endl;
+      cout << "    Error Correction: " 
+            << static_cast<int>(array.memory_error_correction) << endl;
+      cout << "    Maximum Capacity: ";
+      if (array.maximum_capacity == 0x80000000) {
+          cout << array.extended_maximum_capacity << " bytes" << endl;
+      } else {
+          cout << array.maximum_capacity << " KB" << endl;
+      }
+      cout << "    Error Information Handle: " 
+            << array.memory_error_information_handle << endl;
+      cout << "    Number of Memory Devices: " 
+            << array.number_of_memory_devices << endl;
+      cout << "    Extended Maximum Capacity: " 
+            << array.extended_maximum_capacity << endl;
+    }
+}
 
   } catch (const std::exception& e) {
     std::clog << "error: " << e.what() << std::endl;
