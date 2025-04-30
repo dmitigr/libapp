@@ -31,7 +31,9 @@
 #include <algorithm>
 #include <memory>
 #include <optional>
+#include <exception>
 #include <stdexcept>
+#include <utility>
 
 namespace dmitigr::wincom::rdp {
 
@@ -502,8 +504,13 @@ public:
       const auto err = com().api().Disconnect();
       if (err != S_OK)
         throw Win_error{"cannot close RDP client", err};
-      is_open_ = false;
+      is_open_ = is_authenticated_ = false;
     }
+  }
+
+  bool is_authenticated() const
+  {
+    return is_authenticated_;
   }
 
   /**
@@ -567,6 +574,7 @@ public:
 private:
   friend detail::Viewer_event_dispatcher;
   bool is_open_{};
+  bool is_authenticated_{};
   mutable std::optional<long> attendee_id_;
 };
 
@@ -595,27 +603,85 @@ HRESULT Viewer_event_dispatcher::Invoke(const DISPID disp_id,
   UNREFERENCED_PARAMETER(result);
   UNREFERENCED_PARAMETER(excep_info);
   UNREFERENCED_PARAMETER(arg_err);
+
+  // Handle events before rep_->Invoke(). (May throw.)
   switch (disp_id) {
   case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_CONNECTED: {
-    IDispatch* const dispatcher{disp_params->rgvarg[0].pdispVal};
-    auto attendee = Attendee::query(dispatcher);
+    // IDispatch* const dispatcher{disp_params->rgvarg[0].pdispVal};
+    // auto attendee = Attendee::query(dispatcher);
     break;
   }
+  case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_UPDATE:
+    break;
   case DISPID_RDPSRAPI_EVENT_ON_ERROR:
-    [[fallthrough]];
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_APPLICATION_OPEN:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_APPLICATION_UPDATE:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_WINDOW_OPEN:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_WINDOW_UPDATE:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_CTRLLEVEL_CHANGE_REQUEST:
+    break;
   case DISPID_RDPSRAPI_EVENT_ON_VIEWER_CONNECTED:
-    [[fallthrough]];
-  case DISPID_RDPSRAPI_EVENT_ON_VIEWER_DISCONNECTED:
-    [[fallthrough]];
-  case DISPID_RDPSRAPI_EVENT_ON_VIEWER_AUTHENTICATED:
-    [[fallthrough]];
+    break;
   case DISPID_RDPSRAPI_EVENT_ON_VIEWER_CONNECTFAILED:
-    [[fallthrough]];
-  default:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_VIEWER_AUTHENTICATED:
+    client_->is_authenticated_ = true;
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_APPFILTER_UPDATE:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_GRAPHICS_STREAM_PAUSED:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_GRAPHICS_STREAM_RESUMED:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_VIRTUAL_CHANNEL_DATARECEIVED:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_VIRTUAL_CHANNEL_SENDCOMPLETED:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_SHARED_RECT_CHANGED:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_FOCUSRELEASED:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_SHARED_DESKTOP_SETTINGS_CHANGED:
+    break;
+  case DISPID_RDPAPI_EVENT_ON_BOUNDING_RECT_CHANGED:
     break;
   }
-  return rep_ ? rep_->Invoke(disp_id, riid, cid, flags, disp_params, result,
-    excep_info, arg_err) : S_OK;
+
+  // Call rep_->Invoke() if provided. (May throw.)
+  const auto [retval, rep_invoke_exception] = [&]
+  {
+    using std::make_pair;
+    try {
+      return make_pair(rep_ ? rep_->Invoke(disp_id, riid, cid, flags,
+        disp_params, result, excep_info, arg_err) : S_OK, std::exception_ptr{});
+    } catch (...) {
+      return make_pair(S_OK, std::current_exception());
+    }
+  }();
+
+  // Handle events after rep_->Invoke(). (Must not throw.)
+  switch (disp_id) {
+  case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_DISCONNECTED:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_APPLICATION_CLOSE:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_WINDOW_CLOSE:
+    break;
+  case DISPID_RDPSRAPI_EVENT_ON_VIEWER_DISCONNECTED:
+    if (client_->is_authenticated_)
+      client_->is_authenticated_ = false;
+    client_->is_open_ = false;
+    break;
+  }
+
+  if (rep_invoke_exception)
+    rethrow_exception(rep_invoke_exception);
+  return retval;
 }
 } // namespace detail
 

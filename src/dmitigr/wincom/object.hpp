@@ -209,6 +209,7 @@ public:
     : Basic_com_object{CLSCTX_INPROC_SERVER, nullptr}
   {}
 
+  // The instance takes ownership of `api`, so `api->AddRef()` not called.
   explicit Basic_com_object(ObjectInterface* const api)
     : api_{api}
   {}
@@ -389,6 +390,17 @@ public:
       throw std::runtime_error{errmsg};
 
     sink_->set_owner(sink_owner);
+  }
+
+  const AdviseSink& sink() const noexcept
+  {
+    return *sink_;
+  }
+
+  AdviseSink& sink() noexcept
+  {
+    return const_cast<AdviseSink&>(
+      static_cast<const Advise_sink_connection*>(this)->sink());
   }
 
 private:
