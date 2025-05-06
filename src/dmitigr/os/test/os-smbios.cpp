@@ -150,11 +150,6 @@ int main()
         cout << "    Volatile Size: " << mem.volatile_size << endl;
         cout << "    Cache Size: " << mem.cache_size << endl;
         cout << "    Logical Size: " << mem.logical_size << endl;
-
-        // SMBIOS 3.3+ fields
-        cout << "    Extended Speed: " << mem.extended_speed << endl;
-        cout << "    Extended Configured Memory Speed: "
-             << mem.extended_configured_memory_speed << endl;
       }
     }
 
