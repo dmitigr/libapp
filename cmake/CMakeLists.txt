@@ -63,6 +63,8 @@ set(BUILD_SHARED_LIBS Off CACHE BOOL
   "Build shared libraries?")
 set(CMAKE_VERBOSE_MAKEFILE On CACHE BOOL
   "Verbose output upon build?")
+set(DMITIGR_LIBS_INCLUDE "" CACHE STRING
+  "A list of libraries to include (empty value means \"all available\")")
 set(DMITIGR_LIBS_EXCLUDE "" CACHE STRING
   "A list of libraries to exclude")
 
@@ -149,6 +151,9 @@ file(GLOB dmitigr_libs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subr
   LIST_DIRECTORIES True "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/[a-z]*")
 foreach(lib ${dmitigr_libs})
   string(REGEX MATCH "^[a-z][a-z0-9]+$" valid_lib_name "${lib}")
+  if(NOT DMITIGR_LIBS_INCLUDE STREQUAL "" AND NOT "${lib}" IN_LIST DMITIGR_LIBS_INCLUDE)
+    list(REMOVE_ITEM dmitigr_libs "${lib}")
+  endif()
   if(NOT valid_lib_name OR "${lib}" IN_LIST DMITIGR_LIBS_EXCLUDE)
     list(REMOVE_ITEM dmitigr_libs "${lib}")
   endif()
