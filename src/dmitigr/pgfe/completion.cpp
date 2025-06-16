@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2023 Dmitry Igrishin
+// Copyright 2025 Dmitry Igrishin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,13 +56,13 @@ DMITIGR_PGFE_INLINE Completion::Completion(const std::string_view tag)
 
       errno = 0;
       char* p{};
-      const long number = std::strtol(word.c_str(), &p, 10);
-      if (const int err = errno)
-        throw Generic_exception{"cannot parse command completion tag:"
-          " " + os::error_message(err)};
+      const auto number = std::strtol(word.c_str(), &p, 10);
       if (p == word.c_str())
         // The word is not a number.
         break;
+      else if (errno)
+        throw Generic_exception{"cannot parse command completion tag:"
+          " " + os::error_message(errno)};
       else if (row_count_ < 0)
         row_count_ = number;
 
