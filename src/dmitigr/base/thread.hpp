@@ -20,6 +20,7 @@
 #include "assert.hpp"
 #include "exceptions.hpp"
 
+#include <chrono>
 #include <condition_variable>
 #include <cstddef>
 #include <functional>
@@ -214,11 +215,11 @@ private:
 // Affinity
 // -----------------------------------------------------------------------------
 
-#ifdef __linux__
 /// Sets the CPU affinity of the thread `handle` to the `cpu`.
 inline std::error_code set_affinity(const pthread_t handle,
   const unsigned int cpu) noexcept
 {
+#ifdef __linux__
   if (!(handle && cpu < std::thread::hardware_concurrency()))
     return std::make_error_code(std::errc::invalid_argument);
 
@@ -227,20 +228,32 @@ inline std::error_code set_affinity(const pthread_t handle,
   CPU_SET(cpu, &set);
   const int err{pthread_setaffinity_np(handle, sizeof(cpu_set_t), &set)};
   return std::error_code{err, std::generic_category()};
-}
+#else
+  (void)handle;
+  (void)cpu;
+  return make_error_code(std::errc::not_supported);
 #endif
+}
 
 /// @overload
 inline std::error_code set_affinity(std::thread& thread,
   const unsigned int cpu) noexcept
 {
-#ifdef __linux__
   return set_affinity(thread.native_handle(), cpu);
-#else
-  (void)thread;
-  (void)cpu;
-  return make_error_code(std::errc::not_supported);
-#endif
+}
+
+// -----------------------------------------------------------------------------
+// Sleep
+// -----------------------------------------------------------------------------
+
+template<class Clock, class Rep, class Period>
+void sleep_for_remaining(const std::chrono::time_point<Clock> started,
+  const std::chrono::duration<Rep, Period> max_timeout)
+{
+  const auto elapsed = Clock::now() - started;
+  const auto timeout = max_timeout - elapsed;
+  if (timeout.count() > 0)
+    std::this_thread::sleep_for(timeout);
 }
 
 } // namespace dmitigr::thread
