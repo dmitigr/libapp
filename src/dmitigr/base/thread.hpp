@@ -246,14 +246,17 @@ inline std::error_code set_affinity(std::thread& thread,
 // Sleep
 // -----------------------------------------------------------------------------
 
+/**
+ * @brief Blocks the execution of the current thread for
+ * `max_timeout - (Clock::now() - started)`.
+ */
 template<class Clock, class Rep, class Period>
 void sleep_for_remaining(const std::chrono::time_point<Clock> started,
   const std::chrono::duration<Rep, Period> max_timeout)
 {
   const auto elapsed = Clock::now() - started;
   const auto timeout = max_timeout - elapsed;
-  if (timeout.count() > 0)
-    std::this_thread::sleep_for(timeout);
+  std::this_thread::sleep_for(timeout);
 }
 
 } // namespace dmitigr::thread
