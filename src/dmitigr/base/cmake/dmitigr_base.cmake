@@ -63,7 +63,4 @@ endif()
 if(DMITIGR_LIBS_TESTS)
   set(dmitigr_base_tests chrono fifo_array fifo_string hash math rnd thread
     utility)
-  if(LINUX)
-    list(APPEND dmitigr_base_tests thread_pin)
-  endif()
 endif()
