@@ -20,6 +20,7 @@
 #include "assert.hpp"
 #include "exceptions.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <cstddef>
@@ -159,6 +160,12 @@ public:
     return pool_.threads.size();
   }
 
+  /// @returns The number of currently running tasks.
+  std::size_t usage() const noexcept
+  {
+    return pool_.usage;
+  }
+
 private:
   struct {
     mutable std::mutex mutex;
@@ -170,6 +177,7 @@ private:
   struct {
     mutable std::mutex mutex;
     std::vector<std::thread> threads;
+    std::atomic<std::size_t> usage;
   } pool_;
 
   Logger logger_;
@@ -177,21 +185,24 @@ private:
   void wait_and_run() noexcept
   {
     while (true) {
+      bool is_pool_usage_incremented{};
       try {
         Task task;
         {
           std::unique_lock lk{queue_.mutex};
-          queue_.changed.wait(lk, [this]
+          queue_.changed.wait(lk, [this]() noexcept
           {
             return !queue_.tasks.empty() || !queue_.is_started;
           });
+          pool_.usage++;
+          is_pool_usage_incremented = true;
           if (queue_.is_started) {
             DMITIGR_ASSERT(!queue_.tasks.empty());
             task = std::move(queue_.tasks.front());
             DMITIGR_ASSERT(task);
             queue_.tasks.pop();
           } else
-            return;
+            break;
         }
         task();
       } catch (const std::exception& e) {
@@ -199,7 +210,10 @@ private:
       } catch (...) {
         log_error("unknown error");
       }
+      if (is_pool_usage_incremented)
+        pool_.usage--;
     }
+    pool_.usage--;
   }
 
   void log_error(const std::string_view what) const noexcept
