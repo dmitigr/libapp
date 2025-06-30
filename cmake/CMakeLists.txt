@@ -68,6 +68,10 @@ set(DMITIGR_LIBS_INCLUDE "" CACHE STRING
 set(DMITIGR_LIBS_EXCLUDE "" CACHE STRING
   "A list of libraries to exclude")
 
+foreach(suff INCLUDE EXCLUDE)
+  list(REMOVE_DUPLICATES DMITIGR_LIBS_${suff})
+endforeach()
+
 # Enable linking with libc++ if requested.
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   if (DMITIGR_LIBS_CLANG_USE_LIBCPP)
