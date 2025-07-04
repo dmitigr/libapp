@@ -133,7 +133,7 @@ inline const Generic_error_category& generic_error_category() noexcept
 /**
  * @ingroup errors
  *
- * @returns `std::error_code(int(errc), generic_error_category())`.
+ * @returns `std::error_code{(int)errc, generic_error_category()}`.
  */
 inline std::error_code make_error_code(const Errc errc) noexcept
 {
