@@ -1,6 +1,6 @@
 # -*- cmake -*-
 #
-# Copyright 2023 Dmitry Igrishin
+# Copyright 2025 Dmitry Igrishin
 
 # ------------------------------------------------------------------------------
 # Info

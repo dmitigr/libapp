@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2023 Dmitry Igrishin
+// Copyright 2025 Dmitry Igrishin
 
 #include "../../lisp/parser.hpp"
 
