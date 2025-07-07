@@ -229,6 +229,7 @@ private:
 // Affinity
 // -----------------------------------------------------------------------------
 
+#ifndef _WIN32
 /// Sets the CPU affinity of the thread `handle` to the `cpu`.
 inline std::error_code set_affinity(const pthread_t handle,
   const unsigned int cpu) noexcept
@@ -255,6 +256,7 @@ inline std::error_code set_affinity(std::thread& thread,
 {
   return set_affinity(thread.native_handle(), cpu);
 }
+#endif
 
 // -----------------------------------------------------------------------------
 // Sleep

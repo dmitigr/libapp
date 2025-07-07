@@ -29,10 +29,12 @@ int main()
     // Affinity
     // -------------------------------------------------------------------------
 
+#ifndef _WIN32
     {
       const auto err = thread::set_affinity(pthread_self(), 0);
       DMITIGR_ASSERT(!err || err == std::errc::not_supported);
     }
+#endif
 
     // -------------------------------------------------------------------------
     // Pool

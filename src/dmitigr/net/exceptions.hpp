@@ -52,7 +52,7 @@ public:
 
   /// @overload
   Wsa_exception(const int ev, const std::string& what)
-    : Exception{std::error_condition{ev, wsa_error_category()}, what}
+    : Exception{std::error_code{ev, wsa_error_category()}, what}
   {}
 };
 #endif
