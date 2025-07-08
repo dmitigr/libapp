@@ -164,22 +164,8 @@ foreach(lib ${dmitigr_libs})
 endforeach()
 unset(valid_lib_name)
 message("dmitigr_libs: ${dmitigr_libs}")
-
-# ------------------------------------------------------------------------------
-# Third-party dependencies
-# ------------------------------------------------------------------------------
-
-if ("rajson" IN_LIST dmitigr_libs)
-  include("${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/3rdparty/rapidjson/cmake/dmitigr_3rdparty_rapidjson.cmake")
-endif()
-
-if ("ws" IN_LIST dmitigr_libs)
-  include("${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/3rdparty/usockets/cmake/dmitigr_3rdparty_usockets.cmake")
-  include("${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/3rdparty/uwebsockets/cmake/dmitigr_3rdparty_uwebsockets.cmake")
-endif()
-
-if ("wscl" IN_LIST dmitigr_libs)
-  include("${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/3rdparty/uwsc/cmake/dmitigr_3rdparty_uwsc.cmake")
+if(DMITIGR_LIBS_EXCLUDE)
+  message("dmitigr_libs: exlicitly excluded: ${DMITIGR_LIBS_EXCLUDE}")
 endif()
 
 # ------------------------------------------------------------------------------
@@ -234,17 +220,29 @@ function(dmitigr_install_lib_includes file_list)
   endforeach()
 endfunction()
 
-foreach(lib ${dmitigr_libs})
+# @param lib A library name.
+#
+# @effects The dependency list of `lib` appended to the list `dmitigr_libs_deps`.
+function(dmitigr_process_lib lib)
   string(TOUPPER "${lib}" LIB)
 
   set(dmlib dmitigr_${lib})
   set(DMLIB DMITIGR_${LIB})
 
-  include(
-    "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/cmake/${dmlib}.cmake")
+  string(FIND "${lib}" "3rdparty_" pos)
+  if (pos EQUAL 0)
+    set(is_3rdparty_lib True)
+    string(REGEX REPLACE "^3rdparty_(.*)" "3rdparty/\\1" lib_path "${dep}")
+  else()
+    set(is_3rdparty_lib False)
+    set(lib_path "${lib}")
+  endif()
 
-  if(${dmlib}_not_available)
-    continue()
+  include(
+    "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib_path}/cmake/${dmlib}.cmake")
+
+  if(${dmlib}_not_available OR is_3rdparty_lib)
+    return()
   endif()
 
   dmitigr_libs_set_library_info_lib_variables(${lib})
@@ -411,7 +409,7 @@ foreach(lib ${dmitigr_libs})
   endif()
 
   # ------------------------------------
-  # Dependencies
+  # Dependency linkage
   # ------------------------------------
 
   if(NOT ${${dmlib}_header_only})
@@ -474,37 +472,41 @@ foreach(lib ${dmitigr_libs})
     COMMAND cmake -E rm -rf ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_INCLUDE_INSTALL_DIR}/dmitigr/${lib}*
     COMMAND cmake -E rm -rf ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_INCLUDE_INSTALL_DIR}/dmitigr/${lib})
 
+  # ------------------------------------
+  # Dependencies
+  # ------------------------------------
+
   dmitigr_libs_get_deps(res ${lib})
   foreach(dep ${res})
     string(FIND "${dep}" "3rdparty_" pos)
     if (pos EQUAL 0)
-      string(SUBSTRING "${dep}" 11 -1 dep)
-      add_custom_command(TARGET dmitigr_libs_uninstall PRE_BUILD
-        COMMAND cmake -E rm -rf ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_INCLUDE_INSTALL_DIR}/dmitigr/3rdparty/*${dep}*)
-    endif()
-  endforeach()
-endforeach()
-
-# ------------------------------------------------------------------------------
-# Check the dependencies
-# ------------------------------------------------------------------------------
-
-foreach(lib ${dmitigr_libs})
-  dmitigr_libs_get_deps(lib_deps "${lib}")
-  foreach(dep ${lib_deps})
-    # Check that the dependency is present
-    string(FIND "${dep}" "3rdparty_" pos)
-    if(pos EQUAL 0)
       string(REGEX REPLACE "^3rdparty_(.*)" "3rdparty/\\1" dep_path "${dep}")
+
+      string(SUBSTRING "${dep}" 9 -1 dep_wo_pref)
+      add_custom_command(TARGET dmitigr_libs_uninstall PRE_BUILD
+        COMMAND cmake -E rm -rf ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_INCLUDE_INSTALL_DIR}/dmitigr/3rdparty/*${dep_wo_pref}*)
     else()
       set(dep_path "${dep}")
     endif()
+
+    # Check that the dependency is present.
     set(pref "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${dep_path}")
     if((NOT EXISTS "${pref}") AND (NOT EXISTS "${pref}.hpp"))
       message(FATAL_ERROR "dmitigr_libs: ${lib} is depends on ${dep} which is not present")
     endif()
+
+    if(NOT "${dep}" IN_LIST dmitigr_libs AND NOT "${dep}" IN_LIST dmitigr_libs_deps)
+      dmitigr_process_lib("${dep}")
+      list(APPEND dmitigr_libs_deps "${dep}")
+      set(dmitigr_libs_deps "${dmitigr_libs_deps}" PARENT_SCOPE)
+    endif()
   endforeach()
+endfunction()
+
+foreach(lib ${dmitigr_libs})
+  dmitigr_process_lib("${lib}")
 endforeach()
+message("dmitigr_libs: dependencies: ${dmitigr_libs_deps}")
 
 # ------------------------------------------------------------------------------
 # Tests
