@@ -50,6 +50,9 @@ set(dmitigr_ws_implementations
 # ------------------------------------------------------------------------------
 
 set(dmitigr_libs_ws_deps base http net 3rdparty_uwebsockets)
+if(DMITIGR_LIBS_TESTS)
+  list(APPEND dmitigr_libs_ws_deps uv)
+endif()
 
 if (NOT DMITIGR_LIBS_HEADER_ONLY)
   set(suffix "public")

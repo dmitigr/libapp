@@ -221,9 +221,7 @@ function(dmitigr_install_lib_includes file_list)
 endfunction()
 
 # @param lib A library name.
-#
-# @effects The dependency list of `lib` appended to the list `dmitigr_libs_deps`.
-function(dmitigr_process_lib lib)
+macro(dmitigr_process_lib lib)
   string(TOUPPER "${lib}" LIB)
 
   set(dmlib dmitigr_${lib})
@@ -241,245 +239,245 @@ function(dmitigr_process_lib lib)
   include(
     "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib_path}/cmake/${dmlib}.cmake")
 
-  if(${dmlib}_not_available OR is_3rdparty_lib)
-    return()
-  endif()
+  IF(NOT ${dmlib}_not_available AND NOT is_3rdparty_lib)
 
-  dmitigr_libs_set_library_info_lib_variables(${lib})
+    dmitigr_libs_set_library_info_lib_variables(${lib})
 
-  # -------------
-  # Documentation
-  # -------------
+    # -------------
+    # Documentation
+    # -------------
 
-  if(DMITIGR_LIBS_DOXYGEN)
-    configure_file(Doxyfile.in
-      "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/${lib}/Doxyfile" @ONLY
-      NEWLINE_STYLE UNIX)
-
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/doxyfile.specific")
-      file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/doxyfile.specific"
-        DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/${lib}")
-    else()
-      file(TOUCH "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/${lib}/doxyfile.specific")
-    endif()
-  endif()
-
-  # -------------------------------------
-  # Conditional preprocessing and sources
-  # -------------------------------------
-
-  # Length of 0 means that the library is header-only anyway.
-  list(LENGTH ${dmlib}_implementations ${dmlib}_implementations_length)
-  if(NOT ${${dmlib}_implementations_length} EQUAL 0)
-    # Some preprocessed headers (like dll.hpp) must be included for every
-    # library with implementation files.
-    foreach(file dll.hpp)
-      configure_file("src/${file}.in"
-        "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/${file}" @ONLY
+    if(DMITIGR_LIBS_DOXYGEN)
+      configure_file(Doxyfile.in
+        "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/${lib}/Doxyfile" @ONLY
         NEWLINE_STYLE UNIX)
-      list(APPEND ${dmlib}_headers ${file})
-    endforeach()
 
-    set(${dmlib}_header_only ${DMITIGR_LIBS_HEADER_ONLY})
-  else()
-    set(${dmlib}_header_only TRUE)
-  endif()
-
-  if(NOT ${dmlib}_header_only)
-    if(BUILD_SHARED_LIBS)
-      set(export_file_suffix "shared")
-    else()
-      set(export_file_suffix "static")
-    endif()
-  else() # header-only
-    set(export_file_suffix "interface")
-  endif()
-
-  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/${lib}.hpp")
-    # Headers
-    list(APPEND ${dmlib}_headers ${lib}.hpp)
-  endif()
-
-  if(NOT ${${dmlib}_header_only})
-    # Transunits
-    configure_file("src/lib.cpp.in"
-      "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/${lib}.cpp" @ONLY
-      NEWLINE_STYLE UNIX)
-    list(APPEND ${dmlib}_transunits "${lib}.cpp")
-  endif()
-
-  # Both major and minor versions of 0 means that the library handles
-  # versioning by itself, so no version.* files needs to be configured.
-  if(DEFINED ${dmlib}_version_major)
-    if((${${dmlib}_version_major} GREATER 0) OR (${${dmlib}_version_minor} GREATER 0))
-      # Preprocessing
-      configure_file("src/version.hpp.in"
-        "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/version.hpp" @ONLY
-        NEWLINE_STYLE UNIX)
-      list(APPEND ${dmlib}_headers version.hpp)
-
-      if(NOT ${${dmlib}_header_only})
-        configure_file("src/lib_version.cpp.in"
-          "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/lib_version.cpp" @ONLY
-          NEWLINE_STYLE UNIX)
-        list(APPEND ${dmlib}_implementations lib_version.cpp)
-        configure_file("src/lib_version.hpp.in"
-          "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/lib_version.hpp" @ONLY
-          NEWLINE_STYLE UNIX)
-        list(APPEND ${dmlib}_headers lib_version.hpp)
-
-        if(WIN32)
-          configure_file("src/version.rc.in"
-            "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/version.rc" @ONLY
-            NEWLINE_STYLE UNIX)
-          list(APPEND ${dmlib}_build_only_sources version.rc)
-        endif()
+      if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/doxyfile.specific")
+        file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/doxyfile.specific"
+          DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/${lib}")
+      else()
+        file(TOUCH "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/${lib}/doxyfile.specific")
       endif()
     endif()
-  else()
-    message(FATAL_ERROR "dmitigr_libs: variable ${dmlib}_version_major is not defined")
-  endif()
 
-  foreach(st ${dmitigr_libs_source_types})
-    list(TRANSFORM ${dmlib}_${st} PREPEND "${dmitigr_libs_subroot}/${lib}/")
-    list(APPEND ${dmlib}_sources ${${dmlib}_${st}})
-  endforeach()
+    # -------------------------------------
+    # Conditional preprocessing and sources
+    # -------------------------------------
 
-  set_source_files_properties(
-    ${${dmlib}_implementations}
-    ${${dmlib}_cmake_sources}
-    ${${dmlib}_cmake_unpreprocessed}
+    # Length of 0 means that the library is header-only anyway.
+    list(LENGTH ${dmlib}_implementations ${dmlib}_implementations_length)
+    if(NOT ${${dmlib}_implementations_length} EQUAL 0)
+      # Some preprocessed headers (like dll.hpp) must be included for every
+      # library with implementation files.
+      foreach(file dll.hpp)
+        configure_file("src/${file}.in"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/${file}" @ONLY
+          NEWLINE_STYLE UNIX)
+        list(APPEND ${dmlib}_headers ${file})
+      endforeach()
 
-    PROPERTIES
-    HEADER_FILE_ONLY ON)
-
-  # ------------------------------------
-  # Targets
-  # ------------------------------------
-
-  if(NOT ${${dmlib}_header_only})
-    add_library(${dmlib} ${${dmlib}_sources})
-  else()
-    add_library(${dmlib} INTERFACE)
-  endif()
-  add_library(dmitigr::${lib} ALIAS ${dmlib})
-
-  if(NOT ${${dmlib}_header_only})
-    set(output_name "${dmlib}")
-    target_compile_definitions(${dmlib} PUBLIC ${DMLIB}_NOT_HEADER_ONLY)
-    if(BUILD_SHARED_LIBS)
-      target_compile_definitions(${dmlib}
-        PRIVATE ${DMLIB}_DLL_BUILDING
-        PUBLIC  ${DMLIB}_DLL)
-    elseif(WIN32)
-      set(output_name "${dmlib}_static")
+      set(${dmlib}_header_only ${DMITIGR_LIBS_HEADER_ONLY})
+    else()
+      set(${dmlib}_header_only TRUE)
     endif()
 
-    set_target_properties(${dmlib}
-      PROPERTIES
-      OUTPUT_NAME "${output_name}"
-      LINKER_LANGUAGE "CXX"
-      POSITION_INDEPENDENT_CODE True
-      VERSION ${${dmlib}_version_major}.${${dmlib}_version_minor}
-      # DEBUG_POSTFIX "d"
-      )
+    if(NOT ${dmlib}_header_only)
+      if(BUILD_SHARED_LIBS)
+        set(export_file_suffix "shared")
+      else()
+        set(export_file_suffix "static")
+      endif()
+    else() # header-only
+      set(export_file_suffix "interface")
+    endif()
 
-    dmitigr_target_compile_options(${dmlib})
-  endif()
-
-  if(NOT DMITIGR_LIBS_INSTALL AND DMITIGR_LIBS_TARGET_INCLUDE_ROOT)
-    list(APPEND ${dmlib}_target_include_directories_public "${DMITIGR_LIBS_ROOT}")
-    list(APPEND ${dmlib}_target_include_directories_interface "${DMITIGR_LIBS_ROOT}")
-  endif()
-
-  if(NOT ${${dmlib}_header_only})
-    target_compile_definitions(${dmlib}
-      PRIVATE ${${dmlib}_target_compile_definitions_private}
-      PUBLIC  ${${dmlib}_target_compile_definitions_public})
-
-    target_include_directories(${dmlib}
-      PRIVATE ${${dmlib}_target_include_directories_private}
-      PUBLIC  ${${dmlib}_target_include_directories_public})
-  else() # header-only
-    target_compile_definitions(${dmlib}
-      INTERFACE ${${dmlib}_target_compile_definitions_interface})
-
-    target_include_directories(${dmlib}
-      INTERFACE ${${dmlib}_target_include_directories_interface})
-  endif()
-
-  # ------------------------------------
-  # Dependency linkage
-  # ------------------------------------
-
-  if(NOT ${${dmlib}_header_only})
-    foreach(dep ${dmitigr_libs_${lib}_deps})
-      target_link_libraries(${dmlib} PUBLIC dmitigr_${dep})
-    endforeach()
-
-    # Link with manually specified dependencies in ${lib}/CMakeLists.txt (if any)
-    target_link_libraries(${dmlib}
-      PRIVATE ${${dmlib}_target_link_libraries_private}
-      PUBLIC  ${${dmlib}_target_link_libraries_public})
-  else() # header-only
-    foreach(dep ${dmitigr_libs_${lib}_deps})
-      target_link_libraries(${dmlib} INTERFACE dmitigr_${dep})
-    endforeach()
-
-    # Link with manually specified dependencies in ${lib}/CMakeLists.txt (if any)
-    target_link_libraries(${dmlib}
-      INTERFACE ${${dmlib}_target_link_libraries_interface})
-  endif()
-
-  # ------------------------------------
-  # Installing
-  # ------------------------------------
-
-  if(DMITIGR_LIBS_INSTALL)
-    dmitigr_install_lib_includes(${dmlib}_headers)
-    if(${${dmlib}_header_only})
-      dmitigr_install_lib_includes(${dmlib}_implementations)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/${lib}.hpp")
+      # Headers
+      list(APPEND ${dmlib}_headers ${lib}.hpp)
     endif()
 
     if(NOT ${${dmlib}_header_only})
-      install(TARGETS ${dmlib}
-        EXPORT ${dmlib}_export
-        ARCHIVE  DESTINATION ${DMITIGR_LIBS_LIB_INSTALL_DIR}
-        LIBRARY  DESTINATION ${DMITIGR_LIBS_LIB_INSTALL_DIR}
-        RUNTIME  DESTINATION ${DMITIGR_LIBS_LIB_INSTALL_DIR})
-    else()
-      install(TARGETS ${dmlib}
-        EXPORT ${dmlib}_export
-        INCLUDES DESTINATION ${DMITIGR_LIBS_INCLUDE_INSTALL_DIR})
+      # Transunits
+      configure_file("src/lib.cpp.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/${lib}.cpp" @ONLY
+        NEWLINE_STYLE UNIX)
+      list(APPEND ${dmlib}_transunits "${lib}.cpp")
     endif()
 
-    # Don't use NAMESPACE, since ${dmlib} contains "dmitigr_" prefix already
-    # and it seems there is no way to omit it in order to use NAMESPACE...
-    install(EXPORT ${dmlib}_export
-      # NAMESPACE dmitigr::
-      DESTINATION ${DMITIGR_LIBS_CMAKE_INSTALL_DIR}
-      FILE ${dmlib}_${export_file_suffix}-config.cmake)
-  endif()
+    # Both major and minor versions of 0 means that the library handles
+    # versioning by itself, so no version.* files needs to be configured.
+    if(DEFINED ${dmlib}_version_major)
+      if((${${dmlib}_version_major} GREATER 0) OR (${${dmlib}_version_minor} GREATER 0))
+        # Preprocessing
+        configure_file("src/version.hpp.in"
+          "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/version.hpp" @ONLY
+          NEWLINE_STYLE UNIX)
+        list(APPEND ${dmlib}_headers version.hpp)
 
-  # ------------------------------------
-  # Uninstalling
-  # ------------------------------------
+        if(NOT ${${dmlib}_header_only})
+          configure_file("src/lib_version.cpp.in"
+            "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/lib_version.cpp" @ONLY
+            NEWLINE_STYLE UNIX)
+          list(APPEND ${dmlib}_implementations lib_version.cpp)
+          configure_file("src/lib_version.hpp.in"
+            "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/lib_version.hpp" @ONLY
+            NEWLINE_STYLE UNIX)
+          list(APPEND ${dmlib}_headers lib_version.hpp)
 
-  add_custom_command(TARGET dmitigr_libs_uninstall PRE_BUILD
-    COMMAND cmake -E rm -f ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_CMAKE_INSTALL_DIR}/${dmlib}*
-    COMMAND cmake -E rm -f ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_LIB_INSTALL_DIR}/${dmlib}*
-    COMMAND cmake -E rm -f ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_LIB_INSTALL_DIR}/lib${dmlib}*
-    COMMAND cmake -E rm -rf ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_INCLUDE_INSTALL_DIR}/dmitigr/${lib}*
-    COMMAND cmake -E rm -rf ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_INCLUDE_INSTALL_DIR}/dmitigr/${lib})
+          if(WIN32)
+            configure_file("src/version.rc.in"
+              "${CMAKE_CURRENT_SOURCE_DIR}/${dmitigr_libs_subroot}/${lib}/version.rc" @ONLY
+              NEWLINE_STYLE UNIX)
+            list(APPEND ${dmlib}_build_only_sources version.rc)
+          endif()
+        endif()
+      endif()
+    else()
+      message(FATAL_ERROR "dmitigr_libs: variable ${dmlib}_version_major is not defined")
+    endif()
 
-  # ------------------------------------
-  # Dependencies
-  # ------------------------------------
+    foreach(st ${dmitigr_libs_source_types})
+      list(TRANSFORM ${dmlib}_${st} PREPEND "${dmitigr_libs_subroot}/${lib}/")
+      list(APPEND ${dmlib}_sources ${${dmlib}_${st}})
+    endforeach()
+
+    set_source_files_properties(
+      ${${dmlib}_implementations}
+      ${${dmlib}_cmake_sources}
+      ${${dmlib}_cmake_unpreprocessed}
+
+      PROPERTIES
+      HEADER_FILE_ONLY ON)
+
+    # ------------------------------------
+    # Targets
+    # ------------------------------------
+
+    if(NOT ${${dmlib}_header_only})
+      add_library(${dmlib} ${${dmlib}_sources})
+    else()
+      add_library(${dmlib} INTERFACE)
+    endif()
+    add_library(dmitigr::${lib} ALIAS ${dmlib})
+
+    if(NOT ${${dmlib}_header_only})
+      set(output_name "${dmlib}")
+      target_compile_definitions(${dmlib} PUBLIC ${DMLIB}_NOT_HEADER_ONLY)
+      if(BUILD_SHARED_LIBS)
+        target_compile_definitions(${dmlib}
+          PRIVATE ${DMLIB}_DLL_BUILDING
+          PUBLIC  ${DMLIB}_DLL)
+      elseif(WIN32)
+        set(output_name "${dmlib}_static")
+      endif()
+
+      set_target_properties(${dmlib}
+        PROPERTIES
+        OUTPUT_NAME "${output_name}"
+        LINKER_LANGUAGE "CXX"
+        POSITION_INDEPENDENT_CODE True
+        VERSION ${${dmlib}_version_major}.${${dmlib}_version_minor}
+        # DEBUG_POSTFIX "d"
+      )
+
+      dmitigr_target_compile_options(${dmlib})
+    endif()
+
+    if(NOT DMITIGR_LIBS_INSTALL AND DMITIGR_LIBS_TARGET_INCLUDE_ROOT)
+      list(APPEND ${dmlib}_target_include_directories_public "${DMITIGR_LIBS_ROOT}")
+      list(APPEND ${dmlib}_target_include_directories_interface "${DMITIGR_LIBS_ROOT}")
+    endif()
+
+    if(NOT ${${dmlib}_header_only})
+      target_compile_definitions(${dmlib}
+        PRIVATE ${${dmlib}_target_compile_definitions_private}
+        PUBLIC  ${${dmlib}_target_compile_definitions_public})
+
+      target_include_directories(${dmlib}
+        PRIVATE ${${dmlib}_target_include_directories_private}
+        PUBLIC  ${${dmlib}_target_include_directories_public})
+    else() # header-only
+      target_compile_definitions(${dmlib}
+        INTERFACE ${${dmlib}_target_compile_definitions_interface})
+
+      target_include_directories(${dmlib}
+        INTERFACE ${${dmlib}_target_include_directories_interface})
+    endif()
+
+    # ------------------------------------
+    # Dependency linkage
+    # ------------------------------------
+
+    if(NOT ${${dmlib}_header_only})
+      foreach(dep ${dmitigr_libs_${lib}_deps})
+        target_link_libraries(${dmlib} PUBLIC dmitigr_${dep})
+      endforeach()
+
+      # Link with manually specified dependencies in ${lib}/CMakeLists.txt (if any)
+      target_link_libraries(${dmlib}
+        PRIVATE ${${dmlib}_target_link_libraries_private}
+        PUBLIC  ${${dmlib}_target_link_libraries_public})
+    else() # header-only
+      foreach(dep ${dmitigr_libs_${lib}_deps})
+        target_link_libraries(${dmlib} INTERFACE dmitigr_${dep})
+      endforeach()
+
+      # Link with manually specified dependencies in ${lib}/CMakeLists.txt (if any)
+      target_link_libraries(${dmlib}
+        INTERFACE ${${dmlib}_target_link_libraries_interface})
+    endif()
+
+    # ------------------------------------
+    # Installing
+    # ------------------------------------
+
+    if(DMITIGR_LIBS_INSTALL)
+      dmitigr_install_lib_includes(${dmlib}_headers)
+      if(${${dmlib}_header_only})
+        dmitigr_install_lib_includes(${dmlib}_implementations)
+      endif()
+
+      if(NOT ${${dmlib}_header_only})
+        install(TARGETS ${dmlib}
+          EXPORT ${dmlib}_export
+          ARCHIVE  DESTINATION ${DMITIGR_LIBS_LIB_INSTALL_DIR}
+          LIBRARY  DESTINATION ${DMITIGR_LIBS_LIB_INSTALL_DIR}
+          RUNTIME  DESTINATION ${DMITIGR_LIBS_LIB_INSTALL_DIR})
+      else()
+        install(TARGETS ${dmlib}
+          EXPORT ${dmlib}_export
+          INCLUDES DESTINATION ${DMITIGR_LIBS_INCLUDE_INSTALL_DIR})
+      endif()
+
+      # Don't use NAMESPACE, since ${dmlib} contains "dmitigr_" prefix already
+      # and it seems there is no way to omit it in order to use NAMESPACE...
+      install(EXPORT ${dmlib}_export
+        # NAMESPACE dmitigr::
+        DESTINATION ${DMITIGR_LIBS_CMAKE_INSTALL_DIR}
+        FILE ${dmlib}_${export_file_suffix}-config.cmake)
+    endif()
+
+    # ------------------------------------
+    # Uninstalling
+    # ------------------------------------
+
+    add_custom_command(TARGET dmitigr_libs_uninstall PRE_BUILD
+      COMMAND cmake -E rm -f ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_CMAKE_INSTALL_DIR}/${dmlib}*
+      COMMAND cmake -E rm -f ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_LIB_INSTALL_DIR}/${dmlib}*
+      COMMAND cmake -E rm -f ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_LIB_INSTALL_DIR}/lib${dmlib}*
+      COMMAND cmake -E rm -rf ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_INCLUDE_INSTALL_DIR}/dmitigr/${lib}*
+      COMMAND cmake -E rm -rf ${CMAKE_INSTALL_PREFIX}/${DMITIGR_LIBS_INCLUDE_INSTALL_DIR}/dmitigr/${lib})
+
+  ENDIF()
+endmacro()
+
+macro(dmitigr_process_lib_and_deps lib)
+  dmitigr_process_lib("${lib}")
 
   dmitigr_libs_get_deps(res ${lib})
   foreach(dep ${res})
     string(FIND "${dep}" "3rdparty_" pos)
-    if (pos EQUAL 0)
+    if(pos EQUAL 0)
       string(REGEX REPLACE "^3rdparty_(.*)" "3rdparty/\\1" dep_path "${dep}")
 
       string(SUBSTRING "${dep}" 9 -1 dep_wo_pref)
@@ -496,16 +494,17 @@ function(dmitigr_process_lib lib)
     endif()
 
     if(NOT "${dep}" IN_LIST dmitigr_libs AND NOT "${dep}" IN_LIST dmitigr_libs_deps)
-      dmitigr_process_lib("${dep}")
+      dmitigr_process_lib_and_deps("${dep}")
       list(APPEND dmitigr_libs_deps "${dep}")
       set(dmitigr_libs_deps "${dmitigr_libs_deps}" PARENT_SCOPE)
     endif()
   endforeach()
-endfunction()
+endmacro()
 
 foreach(lib ${dmitigr_libs})
-  dmitigr_process_lib("${lib}")
+  dmitigr_process_lib_and_deps(${lib})
 endforeach()
+
 message("dmitigr_libs: dependencies: ${dmitigr_libs_deps}")
 
 # ------------------------------------------------------------------------------
