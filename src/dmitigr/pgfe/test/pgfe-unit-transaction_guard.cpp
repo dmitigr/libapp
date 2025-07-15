@@ -37,10 +37,10 @@ try {
   ASSERT(!conn->is_transaction_uncommitted());
 
   {
-    Transaction_guard tg{*conn, true};
+    Transaction_guard tg{*conn};
     ASSERT(conn->is_transaction_uncommitted());
     {
-      Transaction_guard tg{*conn, true, "p2"};
+      Transaction_guard tg{*conn, "p2"};
     } // rollback to savepoint p2
     ASSERT(conn->is_transaction_uncommitted());
   } // rollback
@@ -64,12 +64,6 @@ try {
     ASSERT(conn->is_transaction_uncommitted());
   } // rollback
   ASSERT(!conn->is_transaction_uncommitted());
-
-  {
-    ASSERT(!conn->is_transaction_uncommitted());
-    Transaction_guard tg{*conn, false};
-    ASSERT(!conn->is_transaction_uncommitted());
-  }
 
   {
     ASSERT(!conn->is_transaction_uncommitted());
