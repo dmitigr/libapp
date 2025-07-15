@@ -32,7 +32,7 @@ DMITIGR_PGFE_INLINE std::string Generic_error_category::message(const int ev) co
 
 DMITIGR_PGFE_INLINE std::string Sqlstate_error_category::message(const int ev) const
 {
-  const char* const desc{to_literal_anyway(static_cast<Errc>(ev))};
+  const char* const desc{to_literal_anyway(static_cast<Sqlstate>(ev))};
   constexpr const char* const sep{": "};
   const auto sqlstate = Problem::sqlstate_int_to_string(ev);
   std::string result;
