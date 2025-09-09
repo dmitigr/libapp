@@ -14,21 +14,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DMITIGR_NIX_NIX_HPP
-#define DMITIGR_NIX_NIX_HPP
+extern "C" {
+int add(int, int) noexcept;
+int sub(int, int) noexcept;
+}
 
-#if defined(__linux__) || defined(__APPLE__)
-#include "detach.hpp"
-#include "ifaddrs.hpp"
-#endif
+inline int add(const int lhs, const int rhs) noexcept
+{
+  return lhs + rhs;
+}
 
-#if defined(__FreeBSD__) || defined(__APPLE__)
-#include "sysctl.hpp"
-#endif
-
-#include "dl.hpp"
-#include "error.hpp"
-#include "ipc_pipe.hpp"
-#include "process.hpp"
-
-#endif  // DMITIGR_NIX_NIX_HPP
+inline int sub(const int lhs, const int rhs) noexcept
+{
+  return lhs - rhs;
+}

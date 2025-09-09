@@ -25,6 +25,7 @@ dmitigr_libs_set_library_info(nix 0 0 0 "Unix specific")
 # ------------------------------------------------------------------------------
 
 set(dmitigr_nix_headers
+  dl.hpp
   error.hpp
   ipc_pipe.hpp
   process.hpp
@@ -53,7 +54,7 @@ set(dmitigr_libs_nix_deps base str)
 
 if(DMITIGR_LIBS_TESTS)
   if(UNIX AND NOT CMAKE_SYSTEM_NAME MATCHES MSYS|MinGW|Cygwin)
-    set(dmitigr_nix_tests detach ifaddrs)
+    set(dmitigr_nix_tests detach dl ifaddrs)
   endif()
   if(UNIX AND NOT LINUX)
     list(APPEND dmitigr_nix_tests sysctl)
@@ -61,4 +62,7 @@ if(DMITIGR_LIBS_TESTS)
  if(LINUX)
     list(APPEND dmitigr_nix_tests pipe pipe2 slow_write)
   endif()
+
+  add_library(dmitigr_nix_dl SHARED
+    ${dmitigr_libs_subroot}/nix/test/nix-dl-lib.cpp)
 endif()
