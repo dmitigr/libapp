@@ -19,12 +19,12 @@ int add(int, int) noexcept;
 int sub(int, int) noexcept;
 }
 
-inline int add(const int lhs, const int rhs) noexcept
+int add(const int lhs, const int rhs) noexcept
 {
   return lhs + rhs;
 }
 
-inline int sub(const int lhs, const int rhs) noexcept
+int sub(const int lhs, const int rhs) noexcept
 {
   return lhs - rhs;
 }

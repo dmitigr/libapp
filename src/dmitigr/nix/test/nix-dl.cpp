@@ -27,8 +27,10 @@ int main()
     dl::Object obj{"./libdmitigr_nix_dl.so", RTLD_NOW};
     const auto add = obj.symbol("add");
     const auto sub = obj.symbol("sub");
+    const auto mul = obj.symbol("mul");
     DMITIGR_ASSERT(add);
     DMITIGR_ASSERT(sub);
+    DMITIGR_ASSERT(!mul);
     DMITIGR_ASSERT(add.invoke<int>(10, 20) == 10 + 20);
     DMITIGR_ASSERT(sub.invoke<int>(10, 20) == 10 - 20);
   } catch (const std::exception& e) {

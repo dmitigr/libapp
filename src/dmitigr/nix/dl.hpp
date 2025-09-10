@@ -152,6 +152,12 @@ public:
 
   Symbol symbol(const char* const name) const
   {
+    void* const addr = dlsym(handle_, name);
+    return addr ? Symbol{addr} : Symbol{};
+  }
+
+  Symbol symbol_or_throw(const char* const name) const
+  {
     if (void* const addr = dlsym(handle_, name))
       return Symbol{addr};
     else
