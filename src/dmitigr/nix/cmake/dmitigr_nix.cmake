@@ -48,6 +48,8 @@ set(dmitigr_nix_implementations
 
 set(dmitigr_libs_nix_deps base str)
 
+list(APPEND dmitigr_nix_target_link_libraries_interface dl)
+
 # ------------------------------------------------------------------------------
 # Tests
 # ------------------------------------------------------------------------------
