@@ -91,10 +91,10 @@ public:
     return info_;
   }
 
-  template<typename R, typename ... Types>
+  template<typename F, typename ... Types>
   auto invoke(Types&& ... args) const
   {
-    R(*f)(Types...){reinterpret_cast<decltype(f)>(address())};
+    const auto f = reinterpret_cast<F>(address());
     return f(std::forward<Types>(args)...);
   }
 
