@@ -96,10 +96,15 @@ public:
     return info_;
   }
 
+  auto* typed_ptr() const
+  {
+    return reinterpret_cast<Type>(address());;
+  }
+
   template<typename ... Types>
   decltype(auto) invoke(Types&& ... args) const
   {
-    const auto f = reinterpret_cast<Type>(address());
+    auto* const f = typed_ptr();
     return f(std::forward<Types>(args)...);
   }
 
