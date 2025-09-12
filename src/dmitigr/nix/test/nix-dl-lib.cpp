@@ -17,6 +17,9 @@
 extern "C" {
 int add(int, int) noexcept;
 int sub(int, int) noexcept;
+int num;
+int* number{&num};
+const char* name = "nix-dl-lib";
 }
 
 int add(const int lhs, const int rhs) noexcept

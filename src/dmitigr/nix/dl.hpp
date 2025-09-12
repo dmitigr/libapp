@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 #include <dlfcn.h>
@@ -40,8 +41,12 @@ namespace detail {
 
 } // namespace detail
 
+template<typename T>
 class Symbol final {
+  static_assert(std::is_pointer_v<T>);
 public:
+  using Type = T;
+
   Symbol() = default;
 
   explicit Symbol(void* const addr)
@@ -91,11 +96,27 @@ public:
     return info_;
   }
 
-  template<typename F, typename ... Types>
-  auto invoke(Types&& ... args) const
+  template<typename ... Types>
+  decltype(auto) invoke(Types&& ... args) const
   {
-    const auto f = reinterpret_cast<F>(address());
+    const auto f = reinterpret_cast<Type>(address());
     return f(std::forward<Types>(args)...);
+  }
+
+  template<typename ... Types>
+  decltype(auto) operator()(Types&& ... args) const
+  {
+    return invoke(std::forward<Types>(args)...);
+  }
+
+  decltype(auto) value() const
+  {
+    return *static_cast<Type*>(address());
+  }
+
+  decltype(auto) operator*() const
+  {
+    return *value();
   }
 
 private:
@@ -150,16 +171,18 @@ public:
       detail::throw_error("dlclose() failed");
   }
 
-  Symbol symbol(const char* const name) const
+  template<typename T>
+  Symbol<T> symbol(const char* const name) const
   {
     void* const addr = dlsym(handle_, name);
-    return addr ? Symbol{addr} : Symbol{};
+    return addr ? Symbol<T>{addr} : Symbol<T>{};
   }
 
-  Symbol symbol_or_throw(const char* const name) const
+  template<typename T>
+  Symbol<T> symbol_or_throw(const char* const name) const
   {
     if (void* const addr = dlsym(handle_, name))
-      return Symbol{addr};
+      return Symbol<T>{addr};
     else
       detail::throw_error("symbol not found");
   }

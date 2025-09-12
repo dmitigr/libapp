@@ -18,6 +18,7 @@
 #include "../../nix/dl.hpp"
 
 #include <iostream>
+#include <string_view>
 
 int main()
 {
@@ -26,14 +27,24 @@ int main()
 
     using Op = int(*)(int, int);
     dl::Object obj{"./libdmitigr_nix_dl.so", RTLD_NOW};
-    const auto add = obj.symbol("add");
-    const auto sub = obj.symbol("sub");
-    const auto mul = obj.symbol("mul");
+    const auto add = obj.symbol<Op>("add");
+    const auto sub = obj.symbol<Op>("sub");
+    const auto mul = obj.symbol<Op>("mul");
+    const auto name = obj.symbol<const char*>("name");
+    const auto number = obj.symbol<int*>("number");
+
     DMITIGR_ASSERT(add);
     DMITIGR_ASSERT(sub);
     DMITIGR_ASSERT(!mul);
-    DMITIGR_ASSERT(add.invoke<Op>(10, 20) == 10 + 20);
-    DMITIGR_ASSERT(sub.invoke<Op>(10, 20) == 10 - 20);
+    DMITIGR_ASSERT(number);
+    DMITIGR_ASSERT(name);
+
+    DMITIGR_ASSERT(add(10, 20) == 10 + 20);
+    DMITIGR_ASSERT(sub(10, 20) == 10 - 20);
+    DMITIGR_ASSERT(*number == 0);
+    *number = 1;
+    DMITIGR_ASSERT(*number == 1);
+    DMITIGR_ASSERT(std::string_view{name.value()} == "nix-dl-lib");
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;
     return 1;
