@@ -32,7 +32,7 @@ namespace dmitigr::nix::dl {
 
 namespace detail {
 
-[[noreturn]] void throw_error(const char* const alt)
+[[noreturn]] inline void throw_error(const char* const alt)
 {
   DMITIGR_ASSERT(alt);
   const char* const msg = dlerror();
