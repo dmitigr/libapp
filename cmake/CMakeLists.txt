@@ -26,7 +26,9 @@ if (NOT (UNIX OR WIN32))
   message(FATAL_ERROR "dmitigr_libs: unsupported platform")
 endif()
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH
+  "${CMAKE_CURRENT_SOURCE_DIR}"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/src")
 include(dmitigr)
 include(dmitigr_libs)
 
@@ -201,8 +203,8 @@ if(DMITIGR_LIBS_INSTALL)
   install(FILES LICENSE.txt
     DESTINATION "${DMITIGR_LIBS_SHARE_INSTALL_DIR}")
   install(FILES
-    cmake/dmitigr_libs.cmake
-    cmake/dmitigr_libs-config.cmake
+    dmitigr_libs.cmake
+    dmitigr_libs-config.cmake
     DESTINATION "${DMITIGR_LIBS_CMAKE_INSTALL_DIR}")
 endif()
 
