@@ -37,10 +37,8 @@ include(dmitigr_libs)
 # ------------------------------------------------------------------------------
 
 set(DMITIGR_LIBS_ROOT "../src" CACHE PATH
-  "The libraries source root directory")
+  "The libraries source root directory relative to ${CMAKE_CURRENT_SOURCE_DIR}")
 set(dmitigr_libs_subroot "${DMITIGR_LIBS_ROOT}/dmitigr")
-set(DMITIGR_LIBS_TARGET_INCLUDE_ROOT On CACHE BOOL
-  "Include DMITIGR_LIBS_ROOT to the include directories list for each library (DMITIGR_LIBS_INSTALL must be Off for this option to take effect)?")
 set(DMITIGR_LIBS_CLANG_USE_LIBCPP On CACHE BOOL
   "Use libc++ with Clang?")
 set(DMITIGR_LIBS_HEADER_ONLY Off CACHE BOOL
@@ -385,11 +383,6 @@ macro(dmitigr_process_lib lib)
       dmitigr_target_compile_options(${dmlib})
     endif()
 
-    if(NOT DMITIGR_LIBS_INSTALL AND DMITIGR_LIBS_TARGET_INCLUDE_ROOT)
-      list(APPEND ${dmlib}_target_include_directories_public "${DMITIGR_LIBS_ROOT}")
-      list(APPEND ${dmlib}_target_include_directories_interface "${DMITIGR_LIBS_ROOT}")
-    endif()
-
     if(NOT ${${dmlib}_header_only})
       target_compile_definitions(${dmlib}
         PRIVATE ${${dmlib}_target_compile_definitions_private}
@@ -397,13 +390,17 @@ macro(dmitigr_process_lib lib)
 
       target_include_directories(${dmlib}
         PRIVATE ${${dmlib}_target_include_directories_private}
-        PUBLIC  ${${dmlib}_target_include_directories_public})
+        PUBLIC  ${${dmlib}_target_include_directories_public}
+        PUBLIC  $<BUILD_INTERFACE:${${dmlib}_target_include_directories_public}>
+        PUBLIC  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${DMITIGR_LIBS_ROOT}>)
     else() # header-only
       target_compile_definitions(${dmlib}
         INTERFACE ${${dmlib}_target_compile_definitions_interface})
 
       target_include_directories(${dmlib}
-        INTERFACE ${${dmlib}_target_include_directories_interface})
+        INTERFACE ${${dmlib}_target_include_directories_interface}
+        INTERFACE $<BUILD_INTERFACE:${${dmlib}_target_include_directories_interface}>
+        INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${DMITIGR_LIBS_ROOT}>)
     endif()
 
     # ------------------------------------
