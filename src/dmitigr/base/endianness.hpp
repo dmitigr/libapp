@@ -17,6 +17,16 @@
 #ifndef DMITIGR_BASE_ENDIANNESS_HPP
 #define DMITIGR_BASE_ENDIANNESS_HPP
 
+#ifdef _WIN32
+#pragma comment(lib, "Ws2_32")
+
+#include <Winsock2.h>
+#else
+#include <arpa/inet.h>
+#endif
+
+#include <cstdint>
+
 namespace dmitigr {
 
 /// An endianness.
@@ -37,6 +47,30 @@ inline Endianness endianness() noexcept
     (reinterpret_cast<const unsigned char*>(&number)[0] == 1)
     ? Endianness::little : Endianness::big;
   return result;
+}
+
+/// @returns `value` in network byte order converted from host byte order.
+inline auto host_to_net(const std::uint16_t value) noexcept
+{
+  return htons(value);
+}
+
+/// @overload
+inline auto host_to_net(const std::uint32_t value) noexcept
+{
+  return htonl(value);
+}
+
+/// @returns `value` in host byte order converted from network byte order.
+inline auto net_to_host(const std::uint16_t value) noexcept
+{
+  return ntohs(value);
+}
+
+/// @overload
+inline auto net_to_host(const std::uint32_t value) noexcept
+{
+  return ntohl(value);
 }
 
 } // namespace dmitigr
