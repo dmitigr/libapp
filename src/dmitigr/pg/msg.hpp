@@ -133,7 +133,8 @@ inline void serialize(char* const message, const Parse_view& pv)
     return;
 
   message[0] = static_cast<char>(Type::parse);
-  *reinterpret_cast<std::uint32_t*>(message + 1) = host_to_net(serialized_size(pv));
+  const std::uint32_t message_size{host_to_net(serialized_size(pv))};
+  std::memcpy(message + 1, &message_size, sizeof(message_size));
 
   auto* const ps_name = message + data_offset;
   std::memcpy(ps_name, pv.ps_name.data(), pv.ps_name.size());
@@ -144,12 +145,11 @@ inline void serialize(char* const message, const Parse_view& pv)
   query[pv.query.size()] = 0;
 
   auto* const ptc = query + pv.query.size() + 1;
-  *reinterpret_cast<std::uint16_t*>(ptc) = pv.param_type_count;
+  std::memcpy(ptc, &pv.param_type_count, sizeof(pv.param_type_count));
 
   auto* const pto = ptc + 2;
   const auto param_type_count = net_to_host(pv.param_type_count);
-  for (std::uint16_t i{}; i < param_type_count; ++i)
-    *reinterpret_cast<std::uint32_t*>(pto + i*4) = pv.param_type_oids[i];
+  std::memcpy(pto, pv.param_type_oids, sizeof(*pv.param_type_oids)*param_type_count);
 }
 
 /// Prints `pv` into `os`.
