@@ -110,7 +110,7 @@ private:
 };
 
 // -----------------------------------------------------------------------------
-// Proxy implementations
+// Proxy implementation
 // -----------------------------------------------------------------------------
 
 inline void Proxy::handle_accept(dmitigr::io::Connection conn_cl) noexcept
@@ -163,10 +163,10 @@ inline void Proxy::finish(const std::error_code& /*err*/) noexcept
 int main()
 {
   boost::asio::io_context loop;
-  Proxy_options so;
-  so.listen_endpoint = {boost::asio::ip::make_address("127.0.0.1"), 2345};
-  so.server_endpoint = {boost::asio::ip::make_address("192.168.56.2"), 5432};
-  auto proxy = Proxy::make(loop, std::move(so));
+  Proxy_options po;
+  po.listen_endpoint = {boost::asio::ip::make_address("127.0.0.1"), 2345};
+  po.server_endpoint = {boost::asio::ip::make_address("192.168.56.2"), 5432};
+  auto proxy = Proxy::make(loop, std::move(po));
   proxy->async_accept();
   loop.run();
 }
