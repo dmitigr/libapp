@@ -55,7 +55,9 @@ inline const char* data(const char* const message) noexcept
 inline std::uint32_t serialized_size(const char* const message) noexcept
 {
   assert(message);
-  return net_to_host(*reinterpret_cast<const std::uint32_t*>(message + 1));
+  std::uint32_t result;
+  std::memcpy(&result, message + 1, sizeof(result));
+  return net_to_host(result);
 }
 
 // -----------------------------------------------------------------------------
@@ -67,7 +69,14 @@ struct Parse_view final {
   std::string_view ps_name;
   std::string_view query;
   std::uint16_t param_type_count{};
-  const std::uint32_t* param_type_oids{};
+  std::string_view param_type_oids;
+
+  std::uint32_t param_type_oid(const std::uint16_t idx) const noexcept
+  {
+    std::uint32_t result;
+    std::memcpy(&result, param_type_oids.data() + idx*sizeof(result), sizeof(result));
+    return result;
+  }
 };
 
 /// @returns `true` if `lhs` equals to `rhs`.
@@ -77,7 +86,7 @@ inline bool operator==(const Parse_view& lhs, const Parse_view& rhs) noexcept
     return false;
   else if (const auto ptc = net_to_host(lhs.param_type_count)) {
     for (std::uint16_t i{}; i < ptc; ++i)
-      if (lhs.param_type_oids[i] != rhs.param_type_oids[i])
+      if (lhs.param_type_oid(i) != rhs.param_type_oid(i))
         return false;
   }
   return lhs.ps_name == rhs.ps_name && lhs.query == rhs.query;
@@ -103,8 +112,7 @@ inline std::uint32_t serialized_size(const Parse_view& pv) noexcept
 
   return data_offset +
     pv.ps_name.size() + 1 + pv.query.size() + 1 +
-    sizeof(pv.param_type_count) +
-    pv.param_type_count*sizeof(*pv.param_type_oids);
+    sizeof(pv.param_type_count) + pv.param_type_oids.size();
 }
 
 /// @returns An instance of Parse_view from `message`.
@@ -118,9 +126,9 @@ inline Parse_view to_parse_view(const char* const message) noexcept
   result.query = {result.ps_name.data() + result.ps_name.size() + 1};
 
   const auto ptc_offset = result.query.data() + result.query.size() + 1;
-  result.param_type_count = *reinterpret_cast<const std::uint16_t*>(ptc_offset);
+  std::memcpy(&result.param_type_count, ptc_offset, sizeof(result.param_type_count));
   if (result.param_type_count)
-    result.param_type_oids = reinterpret_cast<const std::uint32_t*>(ptc_offset + 2);
+    result.param_type_oids = {ptc_offset + 2, result.param_type_count*sizeof(std::uint32_t)};
   return result;
 }
 
@@ -152,7 +160,7 @@ inline void serialize(char* const message, const Parse_view& pv)
 
   auto* const pto = ptc + 2;
   const auto param_type_count = net_to_host(pv.param_type_count);
-  std::memcpy(pto, pv.param_type_oids, sizeof(*pv.param_type_oids)*param_type_count);
+  std::memcpy(pto, pv.param_type_oids.data(), pv.param_type_oids.size());
 }
 
 /// Prints `pv` into `os`.
@@ -168,8 +176,8 @@ inline std::ostream& operator<<(std::ostream& os, const Parse_view& pv)
        << '{';
     if (const auto ptc = net_to_host(pv.param_type_count)) {
       for (std::uint16_t i{}; i < ptc - 1; ++i)
-        os << net_to_host(pv.param_type_oids[i]) << ',';
-      os << net_to_host(pv.param_type_oids[ptc - 1]);
+        os << net_to_host(pv.param_type_oid(i)) << ',';
+      os << net_to_host(pv.param_type_oid(ptc - 1));
     }
     os << '}';
     os << '}';

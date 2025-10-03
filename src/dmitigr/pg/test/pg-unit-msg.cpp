@@ -29,9 +29,11 @@ int main()
       std::vector<std::uint32_t> oids{dmitigr::host_to_net(std::uint32_t{17}),
         dmitigr::host_to_net(std::uint32_t{1983})};
 
-      msg::Parse_view pv1{ps_name, query,
+      msg::Parse_view pv1{
+        ps_name,
+        query,
         dmitigr::host_to_net(static_cast<std::uint16_t>(oids.size())),
-        oids.data()};
+        {reinterpret_cast<const char*>(oids.data()), oids.size()*sizeof(oids[0])}};
 
       std::string message;
       message.resize(serialized_size(pv1));
