@@ -64,7 +64,11 @@ inline std::uint32_t serialized_size(const char* const message) noexcept
 // Parse(F) message
 // -----------------------------------------------------------------------------
 
-/// A Parse message view.
+/**
+ * @brief A Parse message view.
+ *
+ * @warning Numbers in network byte order.
+ */
 struct Parse_view final {
   std::string_view ps_name;
   std::string_view query;
@@ -128,7 +132,8 @@ inline Parse_view to_parse_view(const char* const message) noexcept
   const auto ptc_offset = result.query.data() + result.query.size() + 1;
   std::memcpy(&result.param_type_count, ptc_offset, sizeof(result.param_type_count));
   if (result.param_type_count)
-    result.param_type_oids = {ptc_offset + 2, result.param_type_count*sizeof(std::uint32_t)};
+    result.param_type_oids = {ptc_offset + 2,
+      net_to_host(result.param_type_count)*sizeof(std::uint32_t)};
   return result;
 }
 
@@ -159,7 +164,6 @@ inline void serialize(char* const message, const Parse_view& pv)
   std::memcpy(ptc, &pv.param_type_count, sizeof(pv.param_type_count));
 
   auto* const pto = ptc + 2;
-  const auto param_type_count = net_to_host(pv.param_type_count);
   std::memcpy(pto, pv.param_type_oids.data(), pv.param_type_oids.size());
 }
 
@@ -169,6 +173,8 @@ inline std::ostream& operator<<(std::ostream& os, const Parse_view& pv)
   if (is_valid(pv)) {
     os << static_cast<char>(Type::parse)
        << '{'
+       << serialized_size(pv)
+       << ','
        << '"' << pv.ps_name << '"'
        << ','
        << '"' << pv.query << '"'
@@ -189,7 +195,11 @@ inline std::ostream& operator<<(std::ostream& os, const Parse_view& pv)
 // Query(F) message
 // -----------------------------------------------------------------------------
 
-/// A Query message view.
+/**
+ * @brief A Query message view.
+ *
+ * @warning Numbers in network byte order.
+ */
 struct Query_view final {
   std::string_view query;
 };
@@ -255,6 +265,8 @@ inline std::ostream& operator<<(std::ostream& os, const Query_view& qv)
   if (is_valid(qv)) {
     os << static_cast<char>(Type::query)
        << '{'
+       << serialized_size(qv)
+       << ','
        << '"' << qv.query << '"'
        << '}';
   }
