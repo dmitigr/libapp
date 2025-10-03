@@ -22,25 +22,45 @@ int main()
   try {
     namespace msg = dmitigr::pg::msg;
 
-    std::string ps_name{"ps1"};
-    std::string query{"select * from table where id = $1"};
-    std::vector<std::uint32_t> oids{dmitigr::host_to_net(std::uint32_t{17}),
-      dmitigr::host_to_net(std::uint32_t{1983})};
+    // Parse
+    {
+      std::string ps_name{"ps1"};
+      std::string query{"select * from table where id = $1"};
+      std::vector<std::uint32_t> oids{dmitigr::host_to_net(std::uint32_t{17}),
+        dmitigr::host_to_net(std::uint32_t{1983})};
 
-    msg::Parse_view pv1{ps_name, query,
-      dmitigr::host_to_net(static_cast<std::uint16_t>(oids.size())),
-      oids.data()};
+      msg::Parse_view pv1{ps_name, query,
+        dmitigr::host_to_net(static_cast<std::uint16_t>(oids.size())),
+        oids.data()};
 
-    std::string message;
-    message.resize(serialized_size(pv1));
-    serialize(message.data(), pv1);
+      std::string message;
+      message.resize(serialized_size(pv1));
+      serialize(message.data(), pv1);
 
-    const auto pv2 = msg::to_parse_view(message.c_str());
+      const auto pv2 = msg::to_parse_view(message.c_str());
 
-    std::cout << pv1 << std::endl;
-    std::cout << pv2 << std::endl;
+      std::cout << pv1 << std::endl;
+      std::cout << pv2 << std::endl;
 
-    DMITIGR_ASSERT(pv1 == pv2);
+      DMITIGR_ASSERT(pv1 == pv2);
+    }
+
+    // Query
+    {
+      std::string query{"select 1; select 2; select 3"};
+      msg::Query_view qv1{query};
+
+      std::string message;
+      message.resize(serialized_size(qv1));
+      serialize(message.data(), qv1);
+
+      const auto qv2 = msg::to_query_view(message.c_str());
+
+      std::cout << qv1 << std::endl;
+      std::cout << qv2 << std::endl;
+
+      DMITIGR_ASSERT(qv1 == qv2);
+    }
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;
     return 1;

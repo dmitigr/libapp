@@ -30,7 +30,8 @@ namespace dmitigr::pg::msg {
 
 /// A message type.
 enum class Type : char {
-  parse = 'P'
+  parse = 'P',
+  query = 'Q'
 };
 
 /// A message data offset.
@@ -57,6 +58,8 @@ inline std::uint32_t serialized_size(const char* const message) noexcept
   return net_to_host(*reinterpret_cast<const std::uint32_t*>(message + 1));
 }
 
+// -----------------------------------------------------------------------------
+// Parse(F) message
 // -----------------------------------------------------------------------------
 
 /// A Parse message view.
@@ -170,6 +173,82 @@ inline std::ostream& operator<<(std::ostream& os, const Parse_view& pv)
     }
     os << '}';
     os << '}';
+  }
+  return os;
+}
+
+// -----------------------------------------------------------------------------
+// Query(F) message
+// -----------------------------------------------------------------------------
+
+/// A Query message view.
+struct Query_view final {
+  std::string_view query;
+};
+
+/// @returns `true` if `lhs` equals to `rhs`.
+inline bool operator==(const Query_view& lhs, const Query_view& rhs) noexcept
+{
+  return lhs.query == rhs.query;
+}
+
+/// @returns `true` if `lhs` differs from `rhs`.
+inline bool operator!=(const Query_view& lhs, const Query_view& rhs) noexcept
+{
+  return !(lhs == rhs);
+}
+
+/// @returns `true` if `qv` is valid.
+inline bool is_valid(const Query_view& qv) noexcept
+{
+  return qv.query.data();
+}
+
+/// @returns The size of serialized Query message.
+inline std::uint32_t serialized_size(const Query_view& qv) noexcept
+{
+  return is_valid(qv) ? data_offset + qv.query.size() + 1 : 0;
+}
+
+/// @returns An instance of Query_view from `message`.
+inline Query_view to_query_view(const char* const message) noexcept
+{
+  if (!message || type(message) != Type::query)
+    return Query_view{};
+
+  Query_view result;
+  result.query = data(message);
+  return result;
+}
+
+/**
+ * @brief Serializes `qv` into `message`.
+ *
+ * @par Requires
+ * `message` must point to a memory space of size at least serialized_size(qv).
+ */
+inline void serialize(char* const message, const Query_view& qv)
+{
+  if (!message || !is_valid(qv))
+    return;
+
+  message[0] = static_cast<char>(Type::query);
+  const std::uint32_t message_size{host_to_net(serialized_size(qv))};
+  std::memcpy(message + 1, &message_size, sizeof(message_size));
+
+  auto* const query = message + data_offset;
+  std::memcpy(query, qv.query.data(), qv.query.size());
+  query[qv.query.size()] = 0;
+}
+
+/// Prints `qv` into `os`.
+inline std::ostream& operator<<(std::ostream& os, const Query_view& qv)
+{
+  if (is_valid(qv)) {
+    os << static_cast<char>(Type::query)
+       << '{'
+       << '"' << qv.query << '"'
+       << '}';
   }
   return os;
 }
