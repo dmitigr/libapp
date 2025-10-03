@@ -44,6 +44,27 @@ bool is_begins_with(const Container& input, const Container& pattern) noexcept
     std::equal(cbegin(input), cend(input), cbegin(pattern));
 }
 
+/**
+ * @returns A pair of `{i, container.end()}`, where `i` is the iterator which
+ * points to `value`, or `container.end()` if no such a `value` found.
+ */
+template<class Container, typename Value>
+auto find(Container&& container, const Value& value) noexcept
+{
+  const auto b = container.begin();
+  const auto e = container.end();
+  const auto i = find(b, e, value);
+  return std::make_pair(i, e);
+}
+
+/// Erases `value` from `container` if found.
+template<class Container, typename Value>
+void erase(Container&& container, const Value& value)
+{
+  if (const auto [i, e] = find(container, value); i != e)
+    container.erase(i);
+}
+
 // -----------------------------------------------------------------------------
 // Tuple
 // -----------------------------------------------------------------------------
