@@ -22,47 +22,47 @@ namespace pgfe = dmitigr::pgfe;
 
 int main() try {
   // Making the connection.
-  pgfe::Connection conn{pgfe::Connection_options{}
+  const auto conn = pgfe::Connection::make(pgfe::Connection_options{}
     .set(pgfe::Communication_mode::net)
     .set_hostname("localhost")
     .set_database("pgfe_test")
     .set_username("pgfe_test")
     .set_password("pgfe_test")
     .set_wait_response_timeout(std::chrono::seconds{10})
-  };
+  );
 
   // Connecting.
-  conn.connect();
+  conn->connect();
 
   // Using Pgfe's helpers.
   using pgfe::a;  // for named arguments
   using pgfe::to; // for data conversions
 
   // Executing statement with positional parameters.
-  conn.execute([](auto&& r)
+  conn->execute([](auto&& r)
   {
     std::printf("Number %i\n", to<int>(r.data()));
   }, "select generate_series($1::int, $2::int)", 1, 3);
 
   // Execute statement with named parameters.
-  conn.execute([](auto&& r)
+  conn->execute([](auto&& r)
   {
     std::printf("Range [%i, %i]\n", to<int>(r["b"]), to<int>(r["e"]));
   },"select :begin b, :end e", a{"end", 1}, a{"begin", 0});
 
   // Prepare and execute the statement.
-  auto ps = conn.prepare("select $1::int i");
+  auto ps = conn->prepare("select $1::int i");
   for (int i{}; i < 3; ++i)
     ps.execute([](auto&& r){std::printf("%i\n", to<int>(r["i"]));}, i);
 
   // Invoking the function.
-  conn.invoke([](auto&& r)
+  conn->invoke([](auto&& r)
   {
     std::printf("cos(%f) = %f\n", .5f, to<float>(r.data()));
   }, "cos", .5f);
 
   // Provoking the syntax error.
-  conn.execute("provoke syntax error");
+  conn->execute("provoke syntax error");
  } catch (const pgfe::Sqlstate_exception& e) {
   assert(e.error()->condition() == pgfe::Sqlstate::c42_syntax_error);
   std::printf("Error %s is handled as expected.\n", e.error()->code());

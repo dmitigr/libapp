@@ -85,15 +85,15 @@ void test_pq()
 void test_pgfe()
 {
   namespace pgfe = dmitigr::pgfe;
-  pgfe::Connection conn{pgfe::Connection_options{}
+  const auto conn = pgfe::Connection::make(pgfe::Connection_options{}
     .set(pgfe::Communication_mode::net)
     .set_address("127.0.0.1")
     .set_username("pgfe_test")
     .set_password("pgfe_test")
     .set_database("pgfe_test")
-    .set_connect_timeout(std::chrono::seconds{7})};
-  conn.connect();
-  conn.execute([](auto&& r) { auto d = r.data(); }, query);
+    .set_connect_timeout(std::chrono::seconds{7}));
+  conn->connect();
+  conn->execute([](auto&& r) { auto d = r.data(); }, query);
 }
 
 int main()

@@ -30,43 +30,43 @@ try {
 
   // Initial state test
   {
-    pgfe::Connection conn;
-    DMITIGR_ASSERT(conn.options() == Connection_options{});
-    DMITIGR_ASSERT(!conn.is_ssl_secured());
-    DMITIGR_ASSERT(conn.status() == Connection_status::disconnected);
-    DMITIGR_ASSERT(!conn.is_connected());
-    DMITIGR_ASSERT(!conn.transaction_status());
-    DMITIGR_ASSERT(!conn.is_transaction_uncommitted());
-    DMITIGR_ASSERT(!conn.server_pid());
-    DMITIGR_ASSERT(!conn.session_start_time());
-    DMITIGR_ASSERT(!conn.pop_notification());
-    DMITIGR_ASSERT(conn.notice_handler()); // by default handler is set
-    conn.set_notice_handler({});
-    DMITIGR_ASSERT(!conn.notice_handler());
-    DMITIGR_ASSERT(!conn.notification_handler());
-    conn.set_notification_handler([](auto&&){});
-    DMITIGR_ASSERT(conn.notification_handler());
-    DMITIGR_ASSERT(!conn.has_uncompleted_request());
-    DMITIGR_ASSERT(!conn.has_response());
-    DMITIGR_ASSERT(!conn.wait_response());
-    DMITIGR_ASSERT(!conn.wait_response_throw());
-    DMITIGR_ASSERT(!conn.error());
-    DMITIGR_ASSERT(!conn.row());
-    DMITIGR_ASSERT(!conn.completion());
-    DMITIGR_ASSERT(!conn.prepared_statement());
-    DMITIGR_ASSERT(!conn.is_ready_for_nio_request());
-    DMITIGR_ASSERT(!conn.is_ready_for_request());
-    DMITIGR_ASSERT(conn.result_format() == pgfe::Data_format::text);
+    const auto conn = pgfe::Connection::make();
+    DMITIGR_ASSERT(conn->options() == Connection_options{});
+    DMITIGR_ASSERT(!conn->is_ssl_secured());
+    DMITIGR_ASSERT(conn->status() == Connection_status::disconnected);
+    DMITIGR_ASSERT(!conn->is_connected());
+    DMITIGR_ASSERT(!conn->transaction_status());
+    DMITIGR_ASSERT(!conn->is_transaction_uncommitted());
+    DMITIGR_ASSERT(!conn->server_pid());
+    DMITIGR_ASSERT(!conn->session_start_time());
+    DMITIGR_ASSERT(!conn->pop_notification());
+    DMITIGR_ASSERT(conn->notice_handler()); // by default handler is set
+    conn->set_notice_handler({});
+    DMITIGR_ASSERT(!conn->notice_handler());
+    DMITIGR_ASSERT(!conn->notification_handler());
+    conn->set_notification_handler([](auto&&){});
+    DMITIGR_ASSERT(conn->notification_handler());
+    DMITIGR_ASSERT(!conn->has_uncompleted_request());
+    DMITIGR_ASSERT(!conn->has_response());
+    DMITIGR_ASSERT(!conn->wait_response());
+    DMITIGR_ASSERT(!conn->wait_response_throw());
+    DMITIGR_ASSERT(!conn->error());
+    DMITIGR_ASSERT(!conn->row());
+    DMITIGR_ASSERT(!conn->completion());
+    DMITIGR_ASSERT(!conn->prepared_statement());
+    DMITIGR_ASSERT(!conn->is_ready_for_nio_request());
+    DMITIGR_ASSERT(!conn->is_ready_for_request());
+    DMITIGR_ASSERT(conn->result_format() == pgfe::Data_format::text);
   }
 
   // Connect with empty connection options test and disconnect
   {
-    pgfe::Connection conn;
+    const auto conn = pgfe::Connection::make();
     try {
-      conn.connect();
+      conn->connect();
     } catch (const std::exception&) {}
-    conn.disconnect();
-    DMITIGR_ASSERT(conn.status() == Connection_status::disconnected);
+    conn->disconnect();
+    DMITIGR_ASSERT(conn->status() == Connection_status::disconnected);
   }
 
   // Ping
@@ -86,7 +86,7 @@ try {
 
   // Connect to the pgfe_test database test
   {
-    std::unique_ptr<pgfe::Connection> conn;
+    std::shared_ptr<pgfe::Connection> conn;
 
     // After connect UDS connection state test
     {

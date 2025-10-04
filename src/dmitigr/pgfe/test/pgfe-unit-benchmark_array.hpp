@@ -26,7 +26,8 @@
 
 namespace dmitigr::pgfe::test::arraybench {
 
-inline std::tuple<std::ofstream, std::unique_ptr<dmitigr::pgfe::Connection>> prepare(int argc, char* argv[])
+inline std::tuple<std::ofstream, std::shared_ptr<dmitigr::pgfe::Connection>>
+prepare(int argc, char* argv[])
 {
   namespace pgfe = dmitigr::pgfe;
 

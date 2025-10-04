@@ -47,12 +47,12 @@ template<typename ... Types>
 auto make_connection(Types&& ... args)
 {
   const auto conn_opts = connection_options();
-  return std::make_unique<pgfe::Connection>(std::forward<Types>(args)..., conn_opts);
+  return pgfe::Connection::make(std::forward<Types>(args)..., conn_opts);
 }
 
 inline auto make_uds_connection()
 {
-  return std::make_unique<pgfe::Connection>(
+  return pgfe::Connection::make(
     connection_options()
     .set(pgfe::Communication_mode::uds)
 #ifdef _WIN32
@@ -84,7 +84,7 @@ inline auto make_ssl_connection()
     .set_ssl_certificate_file(certs_dir / "postgresql.crt")
     .set_ssl_server_hostname_verification_enabled(true);
 
-  return std::make_unique<pgfe::Connection>(conn_opts);
+  return pgfe::Connection::make(conn_opts);
 }
 
 inline auto service_file_path()

@@ -19,6 +19,7 @@
 
 #include "../base/assert.hpp"
 #include "../base/error.hpp"
+#include "../base/noncopymove.hpp"
 // #include "aio.hpp"
 #include "basics.hpp"
 #include "completion.hpp"
@@ -63,7 +64,9 @@ DMITIGR_PGFE_API Server_status ping(const Connection_options& options);
  *
  * @brief A connection to a PostgreSQL server.
  */
-class Connection final {
+class Connection final : public std::enable_shared_from_this<Connection>
+                       , Noncopymove {
+  struct Must_be_shared_ptr final {};
 public:
   /// An alias of Connection_options.
   using Options = Connection_options;
@@ -76,7 +79,7 @@ public:
 
   /// @NEW
 #ifdef DMITIGR_LIBS_AIO_ASIO
-  explicit DMITIGR_PGFE_API Connection(
+  explicit DMITIGR_PGFE_API Connection(Must_be_shared_ptr,
     DMITIGR_LIBS_AIO_ASIO_NAMESPACE::io_context& loop, Options options = {});
 #endif
 
@@ -88,22 +91,15 @@ public:
    *
    * @see connect().
    */
-  explicit DMITIGR_PGFE_API Connection(Options options = {});
+  explicit DMITIGR_PGFE_API Connection(Must_be_shared_ptr, Options options = {});
 
-  /// Not copy-constructible.
-  Connection(const Connection&) = delete;
-
-  /// Move-constructible.
-  DMITIGR_PGFE_API Connection(Connection&& rhs) noexcept;
-
-  /// Not copy-assignable.
-  Connection& operator=(const Connection&) = delete;
-
-  /// Move-assignable.
-  DMITIGR_PGFE_API Connection& operator=(Connection&& rhs) noexcept;
-
-  /// Swaps this instance with `rhs`.
-  DMITIGR_PGFE_API void swap(Connection& rhs) noexcept;
+  /// @see Connection().
+  template<typename ... Types>
+  static std::shared_ptr<Connection> make(Types&& ... args)
+  {
+    return std::make_shared<Connection>(Must_be_shared_ptr{},
+      std::forward<Types>(args)...);
+  }
 
   /// @name General observers
   /// @{
@@ -1581,16 +1577,6 @@ Prepared_statement::execute(F&& callback, Types&& ... parameters)
   assert(is_invariant_ok());
   return Connection::completion_or_throw(
     connection().process_responses<on_exception>(std::forward<F>(callback)));
-}
-
-/**
- * @ingroup main
- *
- * @brief Connection is swappable.
- */
-inline void swap(Connection& lhs, Connection& rhs) noexcept
-{
-  lhs.swap(rhs);
 }
 
 } // namespace dmitigr::pgfe

@@ -80,7 +80,7 @@ DMITIGR_PGFE_INLINE void Connection_pool::Handle::release() noexcept
 
 DMITIGR_PGFE_INLINE Connection_pool::Handle::Handle(
   std::shared_ptr<Connection_pool*> pool,
-  std::unique_ptr<Connection>&& connection,
+  std::shared_ptr<Connection>&& connection,
   const std::size_t state_index)
   : pool_{pool}
   , connection_{std::move(connection)}
@@ -114,7 +114,7 @@ DMITIGR_PGFE_INLINE Connection_pool::Connection_pool(std::size_t count,
 {
   const auto self = std::make_shared<Connection_pool*>(this);
   for (; count > 0; --count)
-    states_.emplace_back(std::make_unique<Connection>(options), self);
+    states_.emplace_back(Connection::make(options), self);
 }
 
 DMITIGR_PGFE_INLINE bool Connection_pool::is_valid() const noexcept

@@ -25,9 +25,9 @@ int main() try {
   if (!exists(pgfe::test::service_file_path()))
     return 0;
 
-  pgfe::Connection conn{pgfe::Connection_options{}
-    .set_service_name("pgfe_test")};
-  conn.connect();
+  const auto conn = pgfe::Connection::make(pgfe::Connection_options{}
+    .set_service_name("pgfe_test"));
+  conn->connect();
  } catch (const std::exception& e) {
   std::printf("Oops: %s\n", e.what());
   return 1;

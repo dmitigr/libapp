@@ -105,7 +105,7 @@ public:
     friend Connection_pool;
 
     std::shared_ptr<Connection_pool*> pool_;
-    std::unique_ptr<Connection> connection_;
+    std::shared_ptr<Connection> connection_;
     std::size_t state_index_{};
 
     /// Default-constructible. (Constructs invalid instance.)
@@ -113,7 +113,7 @@ public:
 
     /// The constructor.
     Handle(std::shared_ptr<Connection_pool*> pool,
-      std::unique_ptr<Connection>&& connection,
+      std::shared_ptr<Connection>&& connection,
       std::size_t state_index);
   };
 
@@ -250,7 +250,7 @@ private:
   friend Handle;
 
   using State = std::pair<
-    std::unique_ptr<Connection>,
+    std::shared_ptr<Connection>,
     std::shared_ptr<Connection_pool*>>;
 
   mutable std::mutex mutex_;
