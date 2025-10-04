@@ -78,7 +78,9 @@ Ret<Parse_result> parse(const std::string_view input)
     {
       errno = 0;
       const auto val = std::strtoll(data.c_str(), &end, 10);
-      if (const auto err = errno)
+      if (end == data.c_str())
+        ; // data does not starts with an integer.
+      else if (errno)
         return Ret::make_error(Errc::parse_num_invalid, pos);
       else if (data.c_str() + data.size() == end)
         return Ret::make_result(pos, make_expr<Integer_expr>(val));
@@ -86,7 +88,7 @@ Ret<Parse_result> parse(const std::string_view input)
     {
       errno = 0;
       const auto val = std::strtold(data.c_str(), &end);
-      if (const auto err = errno; err || data.c_str() + data.size() != end)
+      if (end == data.c_str() || errno || data.c_str() + data.size() != end)
         return Ret::make_error(Errc::parse_num_invalid, pos);
       else
         return Ret::make_result(pos, make_expr<Float_expr>(val));
