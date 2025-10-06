@@ -143,7 +143,7 @@ inline Parse_view to_parse_view(const char* const message) noexcept
  * @par Requires
  * `message` must point to a memory space of size at least serialized_size(pv).
  */
-inline void serialize(char* const message, const Parse_view& pv)
+inline void serialize(char* const message, const Parse_view& pv) noexcept
 {
   if (!message || !is_valid(pv))
     return;
@@ -245,7 +245,7 @@ inline Query_view to_query_view(const char* const message) noexcept
  * @par Requires
  * `message` must point to a memory space of size at least serialized_size(qv).
  */
-inline void serialize(char* const message, const Query_view& qv)
+inline void serialize(char* const message, const Query_view& qv) noexcept
 {
   if (!message || !is_valid(qv))
     return;
