@@ -38,10 +38,16 @@ enum class Type : char {
 constexpr const std::size_t data_offset{1 + 4};
 
 /// @returns The type of `message`.
+inline Type type(const char ch) noexcept
+{
+  return static_cast<Type>(ch);
+}
+
+/// @overload
 inline Type type(const char* const message) noexcept
 {
   assert(message);
-  return static_cast<Type>(message[0]);
+  return type(message[0]);
 }
 
 /// @returns The data part of `message`.
@@ -51,13 +57,13 @@ inline const char* data(const char* const message) noexcept
   return message + data_offset;
 }
 
-/// @returns The size of serialized `message`.
-inline std::uint32_t serialized_size(const char* const message) noexcept
+/// @returns The size of the data part of `message`.
+inline std::uint32_t data_size(const char* const message) noexcept
 {
   assert(message);
   std::uint32_t result;
   std::memcpy(&result, message + 1, sizeof(result));
-  return net_to_host(result);
+  return net_to_host(result) - sizeof(result);
 }
 
 // -----------------------------------------------------------------------------
