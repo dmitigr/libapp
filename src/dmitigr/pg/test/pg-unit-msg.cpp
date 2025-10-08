@@ -22,7 +22,7 @@ int main()
   try {
     namespace msg = dmitigr::pg::msg;
 
-    // Parse
+    // Parse(F)
     {
       std::string ps_name{"ps1"};
       std::string query{"select * from table where id = $1"};
@@ -47,7 +47,7 @@ int main()
       DMITIGR_ASSERT(pv1 == pv2);
     }
 
-    // Query
+    // Query(F)
     {
       std::string query{"select 1; select 2; select 3"};
       msg::Query_view qv1{query};
@@ -62,6 +62,22 @@ int main()
       std::cout << qv2 << std::endl;
 
       DMITIGR_ASSERT(qv1 == qv2);
+    }
+
+    // ReadyForQuery(B)
+    {
+      msg::Ready_for_query_view rqv1{msg::Tx_status::idle};
+
+      std::string message;
+      message.resize(serialized_size(rqv1));
+      serialize(message.data(), rqv1);
+
+      const auto rqv2 = msg::to_ready_for_query_view(message.c_str());
+
+      std::cout << rqv1 << std::endl;
+      std::cout << rqv2 << std::endl;
+
+      DMITIGR_ASSERT(rqv1 == rqv2);
     }
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;

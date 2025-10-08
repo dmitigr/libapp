@@ -31,19 +31,20 @@ namespace dmitigr::pg::msg {
 /// A message type.
 enum class Type : char {
   parse = 'P',
-  query = 'Q'
+  query = 'Q',
+  ready_for_query = 'Z'
 };
 
 /// A message data offset.
 constexpr const std::size_t data_offset{1 + 4};
 
-/// @returns The type of `message`.
+/// @returns The type of message by `ch`.
 inline Type type(const char ch) noexcept
 {
   return static_cast<Type>(ch);
 }
 
-/// @overload
+/// @returns The type of `message`.
 inline Type type(const char* const message) noexcept
 {
   assert(message);
@@ -274,6 +275,98 @@ inline std::ostream& operator<<(std::ostream& os, const Query_view& qv)
        << serialized_size(qv)
        << ','
        << '"' << qv.query << '"'
+       << '}';
+  }
+  return os;
+}
+
+// -----------------------------------------------------------------------------
+// ReadyForQuery(B) message
+// -----------------------------------------------------------------------------
+
+/// A transaction status.
+enum class Tx_status : char {
+  idle = 'I',
+  in_tx_ok = 'T',
+  in_tx_error = 'E'
+};
+
+/// @returns The transaction status by `ch`.
+inline Tx_status tx_status(const char ch) noexcept
+{
+  return static_cast<Tx_status>(ch);
+}
+
+/// A Ready_for_query message view.
+struct Ready_for_query_view final {
+  Tx_status tx_status{};
+};
+
+/// @returns `true` if `lhs` equals to `rhs`.
+inline bool operator==(const Ready_for_query_view& lhs,
+  const Ready_for_query_view& rhs) noexcept
+{
+  return lhs.tx_status == rhs.tx_status;
+}
+
+/// @returns `true` if `lhs` differs from `rhs`.
+inline bool operator!=(const Ready_for_query_view& lhs,
+  const Ready_for_query_view& rhs) noexcept
+{
+  return !(lhs == rhs);
+}
+
+/// @returns `true` if `qv` is valid.
+inline bool is_valid(const Ready_for_query_view& rqv) noexcept
+{
+  return rqv.tx_status != Tx_status{};
+}
+
+/// @returns The size of serialized ReadyForQuery message.
+inline std::uint32_t serialized_size(const Ready_for_query_view& rqv) noexcept
+{
+  return is_valid(rqv) ? data_offset + 1 : 0;
+}
+
+/// @returns An instance of Ready_for_query_view from `message`.
+inline Ready_for_query_view to_ready_for_query_view(const char* const message) noexcept
+{
+  if (!message || type(message) != Type::ready_for_query)
+    return Ready_for_query_view{};
+
+  Ready_for_query_view result;
+  result.tx_status = tx_status(data(message)[0]);
+  return result;
+}
+
+/**
+ * @brief Serializes `rqv` into `message`.
+ *
+ * @par Requires
+ * `message` must point to a memory space of size at least serialized_size(rqv).
+ */
+inline void serialize(char* const message, const Ready_for_query_view& rqv) noexcept
+{
+  if (!message || !is_valid(rqv))
+    return;
+
+  message[0] = static_cast<char>(Type::ready_for_query);
+  const std::uint32_t message_size{host_to_net(serialized_size(rqv))};
+  std::memcpy(message + 1, &message_size, sizeof(message_size));
+
+  auto* const data = message + data_offset;
+  std::memcpy(data, &rqv.tx_status, sizeof(rqv.tx_status));
+}
+
+/// Prints `rqv` into `os`.
+inline std::ostream& operator<<(std::ostream& os, const Ready_for_query_view& rqv)
+{
+  if (is_valid(rqv)) {
+    os << static_cast<char>(Type::ready_for_query)
+       << '{'
+       << serialized_size(rqv)
+       << ','
+       << static_cast<char>(rqv.tx_status)
        << '}';
   }
   return os;
