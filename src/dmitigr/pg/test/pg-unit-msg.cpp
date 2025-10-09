@@ -22,6 +22,24 @@ int main()
   try {
     namespace msg = dmitigr::pg::msg;
 
+    // StartupMessage(F)
+    {
+      msg::Startup_message_view smv1;
+      smv1.protocol = dmitigr::host_to_net(std::uint32_t{196610}); // 3.2
+      smv1.params = {{"user", "dmitigr"},{"database","dmitigr"}};
+
+      std::string message;
+      message.resize(serialized_size(smv1));
+      serialize(message.data(), smv1);
+
+      const auto smv2 = msg::to_startup_message_view(message.c_str());
+
+      std::cout << smv1 << std::endl;
+      std::cout << smv2 << std::endl;
+
+      DMITIGR_ASSERT(smv1 == smv2);
+    }
+
     // Parse(F)
     {
       std::string ps_name{"ps1"};

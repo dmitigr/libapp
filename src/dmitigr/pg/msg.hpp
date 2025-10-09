@@ -21,10 +21,13 @@
 #include "../str/sequence.hpp"
 
 #include <cassert>
+#include <climits>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <ostream>
 #include <string_view>
+#include <vector>
 
 namespace dmitigr::pg::msg {
 
@@ -65,6 +68,141 @@ inline std::uint32_t data_size(const char* const message) noexcept
   std::uint32_t result;
   std::memcpy(&result, message + 1, sizeof(result));
   return net_to_host(result) - sizeof(result);
+}
+
+/**
+ * @returns The pair of the most significant 16 bits and the least significant
+ * 16 bits from input converted to the host byte ordering.
+ */
+inline std::pair<std::uint16_t, std::uint16_t>
+most_least_significants(const char* const input) noexcept
+{
+  if (!input)
+    return {0, 0};
+  std::uint32_t value;
+  std::memcpy(&value, input, sizeof(value));
+  value = net_to_host(value);
+  const std::uint16_t msign = value >> CHAR_BIT*(sizeof(value) - sizeof(msign));
+  const std::uint16_t lsign = value & std::numeric_limits<decltype(lsign)>::max();
+  return {msign, lsign};
+}
+
+// -----------------------------------------------------------------------------
+// StartupMessage(F) message
+// -----------------------------------------------------------------------------
+
+/// A StartupMessage message view.
+struct Startup_message_view final {
+  std::uint32_t protocol{};
+  std::vector<std::pair<std::string_view, std::string_view>> params;
+};
+
+/// @returns `true` if `lhs` equals to `rhs`.
+inline bool operator==(const Startup_message_view& lhs,
+  const Startup_message_view& rhs) noexcept
+{
+  return lhs.protocol == rhs.protocol && lhs.params == rhs.params;
+}
+
+/// @returns `true` if `lhs` differs from `rhs`.
+inline bool operator!=(const Startup_message_view& lhs,
+  const Startup_message_view& rhs) noexcept
+{
+  return !(lhs == rhs);
+}
+
+/// @returns `true` if `smv` is valid.
+inline bool is_valid(const Startup_message_view& smv) noexcept
+{
+  return smv.protocol;
+}
+
+/// @returns The size of serialized StartupMessage message.
+inline std::uint32_t serialized_size(const Startup_message_view& smv) noexcept
+{
+  return is_valid(smv) ?
+    4 + 4 + [&smv]
+    {
+      std::uint32_t result{1};
+      for (const auto& p : smv.params)
+        result += (p.first.size() + 1) + (p.second.size() + 1);
+      return result;
+    }() : 0;
+}
+
+/// @returns An instance of Startup_message_view from `message`.
+inline Startup_message_view
+to_startup_message_view(const char* const message) noexcept
+{
+  if (!message || most_least_significants(message + 4).first != 3)
+    return Startup_message_view{};
+
+  Startup_message_view result;
+  std::memcpy(&result.protocol, message + 4, sizeof(result.protocol));
+  for (const char* name_offset{message + 4 + sizeof(result.protocol)};
+       *name_offset != 0;) {
+    const std::string_view name{name_offset};
+    const std::string_view value{name.data() + name.size() + 1};
+    result.params.emplace_back(name, value);
+    name_offset = value.data() + value.size() + 1;
+  }
+  return result;
+}
+
+/**
+ * @brief Serializes `smv` into `message`.
+ *
+ * @par Requires
+ * `message` must point to a memory space of size at least serialized_size(smv).
+ */
+inline void serialize(char* const message, const Startup_message_view& smv) noexcept
+{
+  if (!message || !is_valid(smv))
+    return;
+
+  const std::uint32_t message_size{host_to_net(serialized_size(smv))};
+  std::memcpy(message, &message_size, sizeof(message_size));
+  std::memcpy(message + sizeof(message_size), &smv.protocol, sizeof(smv.protocol));
+
+  auto* name = message + sizeof(message_size) + sizeof(smv.protocol);
+  for (const auto& p : smv.params) {
+    std::memcpy(name, p.first.data(), p.first.size());
+    name[p.first.size()] = 0;
+
+    auto* value = name + p.first.size() + 1;
+    std::memcpy(value, p.second.data(), p.second.size());
+    value[p.second.size()] = 0;
+
+    name = value + p.second.size() + 1;
+  }
+  *name = 0;
+}
+
+/// Prints `smv` into `os`.
+inline std::ostream& operator<<(std::ostream& os, const Startup_message_view& smv)
+{
+  if (is_valid(smv)) {
+    os << "StartupMessage"
+       << '{'
+       << serialized_size(smv)
+       << ','
+       << smv.protocol
+       << ',';
+    os << '{';
+    if (!smv.params.empty()) {
+      const auto psz = smv.params.size();
+      for (std::size_t i{}; i < psz; ++i) {
+        os << '{' << smv.params[i].first
+           << '=' << smv.params[i].second
+           << '}';
+        if (i + 1 < psz)
+          os << ',';
+      }
+    }
+    os << '}';
+    os << '}';
+  }
+  return os;
 }
 
 // -----------------------------------------------------------------------------
