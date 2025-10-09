@@ -72,10 +72,10 @@ inline std::uint32_t data_size(const char* const message) noexcept
 
 /**
  * @returns The pair of the most significant 16 bits and the least significant
- * 16 bits from input converted to the host byte ordering.
+ * 16 bits from `input` converted to the host byte ordering.
  */
 inline std::pair<std::uint16_t, std::uint16_t>
-most_least_significants(const char* const input) noexcept
+significant_16_bits(const char* const input) noexcept
 {
   if (!input)
     return {0, 0};
@@ -134,7 +134,7 @@ inline std::uint32_t serialized_size(const Startup_message_view& smv) noexcept
 inline Startup_message_view
 to_startup_message_view(const char* const message) noexcept
 {
-  if (!message || most_least_significants(message + 4).first != 3)
+  if (!message || significant_16_bits(message + 4).first != 3)
     return Startup_message_view{};
 
   Startup_message_view result;
