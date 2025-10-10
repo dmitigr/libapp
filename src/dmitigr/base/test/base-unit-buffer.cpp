@@ -68,6 +68,17 @@ int main()
       ASSERT(buf.size() == 10);
       ASSERT(buf.capacity() == 10);
     }
+
+    {
+      int nums[] = {1,2,3,4,5,6,7};
+      constexpr auto sz = sizeof(nums)/sizeof(*nums);
+      Buffer buf{nums, sz};
+      ASSERT(buf);
+      ASSERT(buf.size() == sz);
+      ASSERT(buf.capacity() == sz);
+      for (std::size_t i{}; i < buf.size(); ++i)
+        ASSERT(buf.data()[i] == static_cast<int>(i + 1));
+    }
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;
     return 1;

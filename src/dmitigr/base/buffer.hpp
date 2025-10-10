@@ -91,10 +91,14 @@ struct Buffer_traits final {
    * the memory of the specified `capacity`, copies `data->data` to this newly
    * allocated memory, deallocates the `buf->data` and  assigns the new memory
    * space and `capacity` to the `buf->data` and `buf->capacity` accordingly.
+   *
+   * @returns `0` on success.
    */
-  static void reserve(Buffer* const buf, const std::size_t capacity) noexcept
+  static int reserve(Buffer* const buf, const std::size_t capacity) noexcept
   {
-    if (buf && buf->capacity < capacity) {
+    if (buf) {
+      if (buf->data && buf->capacity >= capacity)
+        return 0;
       Buffer new_buffer;
       initialize(&new_buffer, capacity);
       if (new_buffer.data) {
@@ -102,30 +106,47 @@ struct Buffer_traits final {
         deallocate(buf->data);
         buf->data = new_buffer.data;
         buf->capacity = new_buffer.capacity;
+        DMITIGR_ASSERT(buf->capacity >= capacity);
+        return 0;
       }
-      DMITIGR_ASSERT(buf->capacity >= capacity);
     }
+    return -1;
   }
 
-  /// Calls reserve(size) and assigns `size` to the `buf->size`.
-  static void resize(Buffer* const buf, const std::size_t size) noexcept
+  /**
+   * @brief Calls reserve(size) and assigns `size` to the `buf->size`.
+   *
+   * @returns `0` on success.
+   */
+  static int resize(Buffer* const buf, const std::size_t size) noexcept
   {
     if (buf) {
-      reserve(buf, size);
-      buf->size = size;
+      if (!reserve(buf, size)) {
+        buf->size = size;
+        return 0;
+      }
     }
+    return -1;
   }
 
   /**
    * @brief If `buf->capacity >= capacity` does nothing. Otherwise, reallocates
    * the memory of `buf->data` to fit the required capacity.
+   *
+   * @returns `0` on success.
    */
-  static void destructive_reserve(Buffer* const buf, const std::size_t capacity) noexcept
+  static int destructive_reserve(Buffer* const buf, const std::size_t capacity) noexcept
   {
-    if (buf && buf->capacity < capacity) {
+    if (buf) {
+      if (buf->data && buf->capacity >= capacity)
+        return 0;
       reallocate(buf, capacity);
-      DMITIGR_ASSERT(buf->capacity >= capacity);
+      if (buf->data) {
+        DMITIGR_ASSERT(buf->capacity >= capacity);
+        return 0;
+      }
     }
+    return -1;
   }
 
   /**
@@ -134,12 +155,34 @@ struct Buffer_traits final {
    *
    * @remarks This is useful for effictivelly preparing the `buf` to store `size`
    * elements without copying the current content into a newly allocated memory.
+   *
+   * @returns `0` on success.
    */
-  static void destructive_resize(Buffer* const buf, const std::size_t size) noexcept
+  static int destructive_resize(Buffer* const buf, const std::size_t size) noexcept
   {
-    destructive_reserve(buf, size);
-    if (buf && buf->data)
+    if (!destructive_reserve(buf, size)) {
       buf->size = size;
+      return 0;
+    }
+    return -1;
+  }
+
+  /**
+   * @brief Copies `data` into `buf->data` and assigns the `size` to `buf->size`.
+   *
+   * @returns `0` on success.
+   */
+  static int copy(Buffer* const buf,
+    const Data* const data, const std::size_t size) noexcept
+  {
+    if (buf) {
+      if (buf->data && buf->capacity >= size) {
+        std::memcpy(buf->data, data, sizeof(Data)*size);
+        buf->size = size;
+        return 0;
+      }
+    }
+    return -1;
   }
 
   /// @returns The size of `buf`.
@@ -193,6 +236,13 @@ public:
       throw std::bad_alloc{};
   }
 
+  /// Allocates the memory for the underlying buffer and copies `data` into it.
+  Basic_buffer(const typename Traits::Data* const data, const std::size_t size)
+    : Basic_buffer{size}
+  {
+    Traits::copy(&buffer_, data, size);
+  }
+
   /// Movable.
   Basic_buffer(Basic_buffer&& rhs) noexcept
     : buffer_{rhs.buffer}
@@ -237,32 +287,28 @@ public:
   /// @see Traits::reserve().
   void reserve(const std::size_t capacity)
   {
-    Traits::reserve(&buffer_, capacity);
-    if (buffer_.capacity < capacity)
+    if (Traits::reserve(&buffer_, capacity))
       throw std::bad_alloc{};
   }
 
   /// @see Traits::resize().
   void resize(const std::size_t size)
   {
-    Traits::resize(&buffer_, size);
-    if (buffer_.capacity < size)
+    if (Traits::resize(&buffer_, size))
       throw std::bad_alloc{};
   }
 
   /// @see Traits::destructive_reserve().
   void destructive_reserve(const std::size_t capacity)
   {
-    Traits::destructive_reserve(&buffer_, capacity);
-    if (buffer_.capacity < capacity)
+    if (Traits::destructive_reserve(&buffer_, capacity))
       throw std::bad_alloc{};
   }
 
   /// @see Traits::destructive_resize().
   void destructive_resize(const std::size_t size)
   {
-    Traits::destructive_resize(&buffer_, size);
-    if (buffer_.capacity < size)
+    if (Traits::destructive_resize(&buffer_, size))
       throw std::bad_alloc{};
   }
 
