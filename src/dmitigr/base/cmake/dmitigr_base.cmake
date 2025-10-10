@@ -61,6 +61,6 @@ endif()
 # ------------------------------------------------------------------------------
 
 if(DMITIGR_LIBS_TESTS)
-  set(dmitigr_base_tests chrono fifo_array fifo_string hash math rnd thread
-    utility)
+  set(dmitigr_base_tests buffer chrono fifo_array fifo_string hash math rnd
+    thread utility)
 endif()
