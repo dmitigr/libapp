@@ -294,7 +294,7 @@ inline void serialize(char* const message, const Parse_view& pv) noexcept
     return;
 
   message[0] = static_cast<char>(Type::parse);
-  const std::uint32_t message_size{host_to_net(serialized_size(pv))};
+  const std::uint32_t message_size{host_to_net(serialized_size(pv) - 1)};
   std::memcpy(message + 1, &message_size, sizeof(message_size));
 
   auto* const ps_name = message + data_offset;
@@ -318,7 +318,7 @@ inline std::ostream& operator<<(std::ostream& os, const Parse_view& pv)
   if (is_valid(pv)) {
     os << static_cast<char>(Type::parse)
        << '{'
-       << serialized_size(pv)
+       << serialized_size(pv) - 1
        << ','
        << '"' << pv.ps_name << '"'
        << ','
@@ -396,7 +396,7 @@ inline void serialize(char* const message, const Query_view& qv) noexcept
     return;
 
   message[0] = static_cast<char>(Type::query);
-  const std::uint32_t message_size{host_to_net(serialized_size(qv))};
+  const std::uint32_t message_size{host_to_net(serialized_size(qv) - 1)};
   std::memcpy(message + 1, &message_size, sizeof(message_size));
 
   auto* const query = message + data_offset;
@@ -410,7 +410,7 @@ inline std::ostream& operator<<(std::ostream& os, const Query_view& qv)
   if (is_valid(qv)) {
     os << static_cast<char>(Type::query)
        << '{'
-       << serialized_size(qv)
+       << serialized_size(qv) - 1
        << ','
        << '"' << qv.query << '"'
        << '}';
@@ -489,7 +489,7 @@ inline void serialize(char* const message, const Ready_for_query_view& rqv) noex
     return;
 
   message[0] = static_cast<char>(Type::ready_for_query);
-  const std::uint32_t message_size{host_to_net(serialized_size(rqv))};
+  const std::uint32_t message_size{host_to_net(serialized_size(rqv) - 1)};
   std::memcpy(message + 1, &message_size, sizeof(message_size));
 
   auto* const data = message + data_offset;
@@ -502,7 +502,7 @@ inline std::ostream& operator<<(std::ostream& os, const Ready_for_query_view& rq
   if (is_valid(rqv)) {
     os << static_cast<char>(Type::ready_for_query)
        << '{'
-       << serialized_size(rqv)
+       << serialized_size(rqv) - 1
        << ','
        << static_cast<char>(rqv.tx_status)
        << '}';
