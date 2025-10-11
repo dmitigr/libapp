@@ -87,7 +87,7 @@ struct Buffer_traits final {
   }
 
   /**
-   * @brief If `buf->capacity >= capacity` does nothing. Otherwise, allocates
+   * @brief If `(buf->capacity >= capacity)` does nothing. Otherwise, allocates
    * the memory of the specified `capacity`, copies `data->data` to this newly
    * allocated memory, deallocates the `buf->data` and  assigns the new memory
    * space and `capacity` to the `buf->data` and `buf->capacity` accordingly.
@@ -130,8 +130,8 @@ struct Buffer_traits final {
   }
 
   /**
-   * @brief If `buf->capacity >= capacity` does nothing. Otherwise, reallocates
-   * the memory of `buf->data` to fit the required capacity.
+   * @brief If `(buf->capacity >= capacity)` does nothing. Otherwise,
+   * reallocates the memory of `buf->data` to fit the required capacity.
    *
    * @returns `0` on success.
    */
@@ -168,7 +168,8 @@ struct Buffer_traits final {
   }
 
   /**
-   * @brief Copies `data` into `buf->data` and assigns the `size` to `buf->size`.
+   * @brief Overwrites the `buf->data` with `data` and `buf->size` with `size`,
+   * reallocating the memory if `(buf->capacity < size)`.
    *
    * @returns `0` on success.
    */
@@ -225,7 +226,11 @@ public:
     : buffer_{buf}
   {}
 
-  /// Allocates the memory for the underlying buffer.
+  /**
+   * @brief Allocates the memory for the underlying buffer.
+   *
+   * @see reserve(), destructive_reserve().
+   */
   explicit Basic_buffer(const std::size_t capacity)
   {
     Traits::initialize(&buffer_, capacity);
@@ -233,7 +238,12 @@ public:
       throw std::bad_alloc{};
   }
 
-  /// Allocates the memory for the underlying buffer and copies `data` into it.
+  /**
+   * @brief Allocates the memory for the underlying buffer and copies `data`
+   * into it.
+   *
+   * @see assign().
+   */
   Basic_buffer(const typename Traits::Data* const data, const std::size_t size)
   {
     assign(data, size);
@@ -267,7 +277,7 @@ public:
     return static_cast<bool>(Traits::data(&buffer_));
   }
 
-  /// Allocates the memory for the underlying buffer and copies `data` into it.
+  /// @see Traits::assign().
   void assign(const typename Traits::Data* const data, const std::size_t size)
   {
     if (Traits::assign(&buffer_, data, size))
