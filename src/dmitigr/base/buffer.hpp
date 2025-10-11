@@ -172,15 +172,12 @@ struct Buffer_traits final {
    *
    * @returns `0` on success.
    */
-  static int copy(Buffer* const buf,
+  static int assign(Buffer* const buf,
     const Data* const data, const std::size_t size) noexcept
   {
-    if (buf) {
-      if (buf->data && buf->capacity >= size) {
-        std::memcpy(buf->data, data, sizeof(Data)*size);
-        buf->size = size;
-        return 0;
-      }
+    if (!destructive_resize(buf, size)) {
+      std::memcpy(buf->data, data, sizeof(Data)*size);
+      return 0;
     }
     return -1;
   }
@@ -238,9 +235,8 @@ public:
 
   /// Allocates the memory for the underlying buffer and copies `data` into it.
   Basic_buffer(const typename Traits::Data* const data, const std::size_t size)
-    : Basic_buffer{size}
   {
-    Traits::copy(&buffer_, data, size);
+    assign(data, size);
   }
 
   /// Movable.
@@ -269,6 +265,13 @@ public:
   explicit operator bool() const noexcept
   {
     return static_cast<bool>(Traits::data(&buffer_));
+  }
+
+  /// Allocates the memory for the underlying buffer and copies `data` into it.
+  void assign(const typename Traits::Data* const data, const std::size_t size)
+  {
+    if (Traits::assign(&buffer_, data, size))
+      throw std::bad_alloc{};
   }
 
   /**

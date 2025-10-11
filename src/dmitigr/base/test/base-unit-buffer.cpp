@@ -33,6 +33,15 @@ int main()
     {
       Buffer buf;
       ASSERT(!buf);
+
+      const int numbers[] = {1,2,3,4,5,6,7,8,9,10};
+      constexpr auto size = sizeof(numbers)/sizeof(*numbers);
+      buf.assign(numbers, size);
+      ASSERT(buf);
+      ASSERT(buf.size() == size);
+      ASSERT(buf.capacity() == size);
+      for (std::size_t i{}; i < buf.size(); ++i)
+        ASSERT(buf.data()[i] == static_cast<int>(i + 1));
     }
 
     {
@@ -70,12 +79,21 @@ int main()
     }
 
     {
-      int nums[] = {1,2,3,4,5,6,7};
+      const int nums[] = {1,2,3,4,5,6,7};
       constexpr auto sz = sizeof(nums)/sizeof(*nums);
       Buffer buf{nums, sz};
       ASSERT(buf);
       ASSERT(buf.size() == sz);
       ASSERT(buf.capacity() == sz);
+      for (std::size_t i{}; i < buf.size(); ++i)
+        ASSERT(buf.data()[i] == static_cast<int>(i + 1));
+
+      const int numbers[] = {1,2,3,4,5,6,7,8,9,10};
+      constexpr auto size = sizeof(numbers)/sizeof(*numbers);
+      buf.assign(numbers, size);
+      ASSERT(buf);
+      ASSERT(buf.size() == size);
+      ASSERT(buf.capacity() == size);
       for (std::size_t i{}; i < buf.size(); ++i)
         ASSERT(buf.data()[i] == static_cast<int>(i + 1));
     }
