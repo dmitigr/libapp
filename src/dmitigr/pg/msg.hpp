@@ -189,15 +189,13 @@ inline std::ostream& operator<<(std::ostream& os, const Startup_message_view& sm
        << smv.protocol
        << ',';
     os << '{';
-    if (!smv.params.empty()) {
-      smv.enum_params([&os, called = false](const auto nm, const auto val)mutable
-      {
-        if (called)
-          os << ',';
-        os << '{'<< nm<<'='<< val<<'}';
-        called = true;
-      });
-    }
+    smv.enum_params([&os, called = false](const auto nm, const auto val)mutable
+    {
+      if (called)
+        os << ',';
+      os << '{'<< nm<<'='<< val<<'}';
+      called = true;
+    });
     os << '}';
     os << '}';
   }
