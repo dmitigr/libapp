@@ -26,7 +26,8 @@ int main()
     {
       msg::Startup_message_view smv1;
       smv1.protocol = dmitigr::host_to_net(std::uint32_t{196610}); // 3.2
-      smv1.params = {{"user", "dmitigr"},{"database","dmitigr"}};
+      const auto& params = "user\0dmitigr\0database\0dmitigr\0\0";
+      smv1.params = {params, std::size(params) - 1};
 
       std::string message;
       message.resize(serialized_size(smv1));

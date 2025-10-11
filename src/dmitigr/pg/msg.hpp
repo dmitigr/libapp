@@ -27,7 +27,6 @@
 #include <limits>
 #include <ostream>
 #include <string_view>
-#include <vector>
 
 namespace dmitigr::pg::msg {
 
@@ -61,13 +60,14 @@ inline const char* data(const char* const message) noexcept
   return message + data_offset;
 }
 
-/// @returns The size of the data part of `message`.
-inline std::uint32_t data_size(const char* const message) noexcept
+/// @returns The 4-byte value from `input`.
+inline std::uint32_t uint32_value(const char* const input) noexcept
 {
-  assert(message);
+  if (!input)
+    return 0;
   std::uint32_t result;
-  std::memcpy(&result, message + 1, sizeof(result));
-  return net_to_host(result) - sizeof(result);
+  std::memcpy(&result, input, sizeof(result));
+  return net_to_host(result);
 }
 
 /**
@@ -94,7 +94,18 @@ uint16_pair(const char* const input) noexcept
 /// A StartupMessage message view.
 struct Startup_message_view final {
   std::uint32_t protocol{};
-  std::vector<std::pair<std::string_view, std::string_view>> params;
+  std::string_view params;
+
+  template<class F>
+  void enum_params(F&& callback) const noexcept
+  {
+    for (const char* name_offset{params.data()}; *name_offset != 0;) {
+      const std::string_view name{name_offset};
+      const std::string_view value{name.data() + name.size() + 1};
+      callback(name, value);
+      name_offset = value.data() + value.size() + 1;
+    }
+  }
 };
 
 /// @returns `true` if `lhs` equals to `rhs`.
@@ -120,14 +131,7 @@ inline bool is_valid(const Startup_message_view& smv) noexcept
 /// @returns The size of serialized StartupMessage message.
 inline std::uint32_t serialized_size(const Startup_message_view& smv) noexcept
 {
-  return is_valid(smv) ?
-    4 + 4 + [&smv]
-    {
-      std::uint32_t result{1};
-      for (const auto& p : smv.params)
-        result += (p.first.size() + 1) + (p.second.size() + 1);
-      return result;
-    }() : 0;
+  return is_valid(smv) ? 4 + sizeof(smv.protocol) + smv.params.size() : 0;
 }
 
 /// @returns An instance of Startup_message_view from `message`.
@@ -139,13 +143,8 @@ to_startup_message_view(const char* const message) noexcept
 
   Startup_message_view result;
   std::memcpy(&result.protocol, message + 4, sizeof(result.protocol));
-  for (const char* name_offset{message + 4 + sizeof(result.protocol)};
-       *name_offset != 0;) {
-    const std::string_view name{name_offset};
-    const std::string_view value{name.data() + name.size() + 1};
-    result.params.emplace_back(name, value);
-    name_offset = value.data() + value.size() + 1;
-  }
+  const auto params_size = uint32_value(message) - 4 - sizeof(result.protocol);
+  result.params = {message + 4 + sizeof(result.protocol), params_size};
   return result;
 }
 
@@ -165,16 +164,17 @@ inline void serialize(char* const message, const Startup_message_view& smv) noex
   std::memcpy(message + sizeof(message_size), &smv.protocol, sizeof(smv.protocol));
 
   auto* name = message + sizeof(message_size) + sizeof(smv.protocol);
-  for (const auto& p : smv.params) {
-    std::memcpy(name, p.first.data(), p.first.size());
-    name[p.first.size()] = 0;
+  smv.enum_params([&name](const std::string_view nm, const std::string_view val)
+  {
+    std::memcpy(name, nm.data(), nm.size());
+    name[nm.size()] = 0;
 
-    auto* value = name + p.first.size() + 1;
-    std::memcpy(value, p.second.data(), p.second.size());
-    value[p.second.size()] = 0;
+    auto* value = name + nm.size() + 1;
+    std::memcpy(value, val.data(), val.size());
+    value[val.size()] = 0;
 
-    name = value + p.second.size() + 1;
-  }
+    name = value + val.size() + 1;
+  });
   *name = 0;
 }
 
@@ -190,14 +190,13 @@ inline std::ostream& operator<<(std::ostream& os, const Startup_message_view& sm
        << ',';
     os << '{';
     if (!smv.params.empty()) {
-      const auto psz = smv.params.size();
-      for (std::size_t i{}; i < psz; ++i) {
-        os << '{' << smv.params[i].first
-           << '=' << smv.params[i].second
-           << '}';
-        if (i + 1 < psz)
+      smv.enum_params([&os, called = false](const auto nm, const auto val)mutable
+      {
+        if (called)
           os << ',';
-      }
+        os << '{'<< nm<<'='<< val<<'}';
+        called = true;
+      });
     }
     os << '}';
     os << '}';
