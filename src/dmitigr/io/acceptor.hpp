@@ -50,26 +50,26 @@ public:
           boost::asio::ip::tcp::socket peer)
         {
           if (error) {
-            self->finish(error);
+            self->handle_error(error);
             return;
           }
 
           try {
             self->handle_accept(Connection{std::move(peer)});
           } catch (const boost::system::system_error& e) {
-            self->finish(e.code());
+            self->handle_error(e.code());
           } catch (const std::system_error& e) {
-            self->finish(e.code());
+            self->handle_error(e.code());
           } catch (...) {
-            self->finish(make_error_code(std::errc::operation_canceled));
+            self->handle_error(make_error_code(std::errc::operation_canceled));
           }
         });
     } catch (const boost::system::system_error& e) {
-      finish(e.code());
+      handle_error(e.code());
     } catch (const std::system_error& e) {
-      finish(e.code());
+      handle_error(e.code());
     } catch (...) {
-      finish(make_error_code(std::errc::operation_canceled));
+      handle_error(make_error_code(std::errc::operation_canceled));
     }
   }
 
@@ -84,12 +84,12 @@ protected:
   virtual void handle_accept(Connection connection) = 0;
 
   /**
-   * @brief Finish handler.
+   * @brief Error handler.
    *
    * @details This function is called every time the accepting is interrupted
    * by an `error`.
    */
-  virtual void finish(const std::error_code& error) noexcept = 0;
+  virtual void handle_error(const std::error_code& error) noexcept = 0;
 };
 
 } // namespace dmitigr::io
