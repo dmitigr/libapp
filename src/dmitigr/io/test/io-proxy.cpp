@@ -96,6 +96,9 @@ private:
     async_write_to_linked(buf);
   }
 
+  void handle_wrote_to_linked(const std::size_t /*byte_count*/) override
+  {}
+
   void finish(const std::error_code& /*error*/) noexcept override
   {
     const auto self = shared_from_this();

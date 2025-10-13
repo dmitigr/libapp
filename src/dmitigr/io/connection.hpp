@@ -125,14 +125,20 @@ public:
 
         async_write(linked->connection_.socket, buf,
           [self = shared_from_this()](const std::error_code& error,
-            const std::size_t /*written_byte_count*/)
+            const std::size_t byte_count)
           {
-            if (error) {
-              self->finish(error);
-              return;
-            }
+            if (error)
+              return self->finish(error);
 
-            self->async_wait_read_ready();
+            try {
+              self->handle_wrote_to_linked(byte_count);
+            } catch (const boost::system::system_error& e) {
+              self->finish(e.code());
+            } catch (const std::system_error& e) {
+              self->finish(e.code());
+            } catch (...) {
+              self->finish(make_error_code(std::errc::operation_canceled));
+            }
           });
       } else
         async_wait_read_ready();
@@ -153,6 +159,16 @@ protected:
    * state becomes read-ready.
    */
   virtual void handle_read_ready() = 0;
+
+  /**
+   * @brief async_write_to_linked() completion handler.
+   *
+   * @details This function is called every time the write operation
+   * initiated by async_write_to_linked() successfully completed.
+   *
+   * @param byte_count Number of bytes written.
+   */
+  virtual void handle_wrote_to_linked(std::size_t byte_count) = 0;
 
   /**
    * @brief Finish handler.
