@@ -17,6 +17,8 @@
 #ifndef DMITIGR_IO_CONNECTION_HPP
 #define DMITIGR_IO_CONNECTION_HPP
 
+#include "async_agent.hpp"
+
 #include <boost/asio.hpp>
 
 #include <cstddef>
@@ -33,14 +35,8 @@ struct Connection final {
 };
 
 /// A proxy connection to link with another one.
-class Proxy_connection : public std::enable_shared_from_this<Proxy_connection> {
-protected:
-  struct Must_be_shared_ptr final {};
-
+class Proxy_connection : public Async_agent {
 public:
-  /// The destructor.
-  virtual ~Proxy_connection() = default;
-
   /// Constructs new instance.
   Proxy_connection(Must_be_shared_ptr, Connection connection)
     : connection_{std::move(connection)}
@@ -53,7 +49,8 @@ public:
       throw std::logic_error{"cannot link Proxy_connection: already linked"};
     linked_connection_ = lconn;
     if (const auto llconn = linked_connection_.lock())
-      llconn->linked_connection_ = shared_from_this();
+      llconn->linked_connection_ =
+        std::static_pointer_cast<Proxy_connection>(shared_from_this());
   }
 
   /// @returns Connection.
@@ -83,72 +80,53 @@ public:
   /// Initiates to wait for connection read-ready state.
   void async_wait_read_ready() noexcept
   {
-    try {
+    with_handle_error([this]
+    {
       if (!connection_.socket.is_open())
         throw std::system_error{make_error_code(std::errc::not_connected)};
 
       connection_.socket.async_wait(boost::asio::ip::tcp::socket::wait_read,
-        [self = shared_from_this()](const std::error_code& error)
+        [self = std::static_pointer_cast<Proxy_connection>(shared_from_this())]
+        (const std::error_code& error)
         {
           if (error)
             return self->handle_error(error);
           else if (!self->connection_.socket.available())
             return self->handle_error(make_error_code(std::errc::connection_aborted));
 
-          try {
+          self->with_handle_error([&self]
+          {
             self->handle_read_ready();
-          } catch (const boost::system::system_error& e) {
-            self->handle_error(e.code());
-          } catch (const std::system_error& e) {
-            self->handle_error(e.code());
-          } catch (...) {
-            self->handle_error(make_error_code(std::errc::operation_canceled));
-          }
+          });
         });
-    } catch (const boost::system::system_error& e) {
-      handle_error(e.code());
-    } catch (const std::system_error& e) {
-      handle_error(e.code());
-    } catch (...) {
-      handle_error(make_error_code(std::errc::operation_canceled));
-    }
+    });
   }
 
   /// Initiates to write the `buf` contents to the `linked_connection()`.
   void async_write_to_linked(const boost::asio::const_buffer buf) noexcept
   {
-    try {
+    with_handle_error([&]
+    {
       if (buf.size()) {
         const auto linked = linked_connection_.lock();
         if (!linked)
           throw std::system_error{make_error_code(std::errc::owner_dead)};
 
         async_write(linked->connection_.socket, buf,
-          [self = shared_from_this()](const std::error_code& error,
-            const std::size_t byte_count)
+          [self = std::static_pointer_cast<Proxy_connection>(shared_from_this())]
+          (const std::error_code& error, const std::size_t byte_count)
           {
             if (error)
               return self->handle_error(error);
 
-            try {
+            self->with_handle_error([&self, byte_count]
+            {
               self->handle_wrote_to_linked(byte_count);
-            } catch (const boost::system::system_error& e) {
-              self->handle_error(e.code());
-            } catch (const std::system_error& e) {
-              self->handle_error(e.code());
-            } catch (...) {
-              self->handle_error(make_error_code(std::errc::operation_canceled));
-            }
+            });
           });
       } else
         async_wait_read_ready();
-    } catch (const boost::system::system_error& e) {
-      handle_error(e.code());
-    } catch (const std::system_error& e) {
-      handle_error(e.code());
-    } catch (...) {
-      handle_error(make_error_code(std::errc::operation_canceled));
-    }
+    });
   }
 
 protected:
@@ -169,14 +147,6 @@ protected:
    * @param byte_count Number of bytes written.
    */
   virtual void handle_wrote_to_linked(std::size_t byte_count) = 0;
-
-  /**
-   * @brief Error handler.
-   *
-   * @details This function is called every time the proxying is interrupted
-   * by an `error`.
-   */
-  virtual void handle_error(const std::error_code& error) noexcept = 0;
 
 private:
   Connection connection_;

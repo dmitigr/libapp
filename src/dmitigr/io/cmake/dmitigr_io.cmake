@@ -26,6 +26,7 @@ dmitigr_libs_set_library_info(io 0 0 0 "IO library")
 
 set(dmitigr_io_headers
   acceptor.hpp
+  async_agent.hpp
   connection.hpp
 )
 

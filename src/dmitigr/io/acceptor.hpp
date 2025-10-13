@@ -17,6 +17,7 @@
 #ifndef DMITIGR_IO_ACCEPTOR_HPP
 #define DMITIGR_IO_ACCEPTOR_HPP
 
+#include "async_agent.hpp"
 #include "connection.hpp"
 
 #include <boost/asio.hpp>
@@ -28,14 +29,8 @@
 namespace dmitigr::io {
 
 /// An acceptor.
-class Acceptor : public std::enable_shared_from_this<Acceptor> {
-protected:
-  struct Must_be_shared_ptr final {};
-
+class Acceptor : public Async_agent {
 public:
-  /// The destructor.
-  virtual ~Acceptor() = default;
-
   /// The constructor.
   Acceptor(Must_be_shared_ptr, boost::asio::ip::tcp::acceptor acceptor)
     : acceptor_{std::move(acceptor)}
@@ -44,33 +39,23 @@ public:
   /// Initiates to accept a connection.
   void async_accept()
   {
-    try {
+    with_handle_error([this]
+    {
       acceptor_.async_accept(
-        [self = shared_from_this()](const std::error_code& error,
-          boost::asio::ip::tcp::socket peer)
+        [self = std::static_pointer_cast<Acceptor>(shared_from_this())]
+        (const std::error_code& error, boost::asio::ip::tcp::socket peer)
         {
           if (error) {
             self->handle_error(error);
             return;
           }
 
-          try {
+          self->with_handle_error([&self, &peer]
+          {
             self->handle_accept(Connection{std::move(peer)});
-          } catch (const boost::system::system_error& e) {
-            self->handle_error(e.code());
-          } catch (const std::system_error& e) {
-            self->handle_error(e.code());
-          } catch (...) {
-            self->handle_error(make_error_code(std::errc::operation_canceled));
-          }
+          });
         });
-    } catch (const boost::system::system_error& e) {
-      handle_error(e.code());
-    } catch (const std::system_error& e) {
-      handle_error(e.code());
-    } catch (...) {
-      handle_error(make_error_code(std::errc::operation_canceled));
-    }
+    });
   }
 
 protected:
@@ -82,14 +67,6 @@ protected:
    * @details This function is called every time the `connection` accepted.
    */
   virtual void handle_accept(Connection connection) = 0;
-
-  /**
-   * @brief Error handler.
-   *
-   * @details This function is called every time the accepting is interrupted
-   * by an `error`.
-   */
-  virtual void handle_error(const std::error_code& error) noexcept = 0;
 };
 
 } // namespace dmitigr::io

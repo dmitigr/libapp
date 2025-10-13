@@ -101,7 +101,7 @@ private:
 
   void handle_error(const std::error_code& /*error*/) noexcept override
   {
-    const auto self = shared_from_this();
+    const auto self = std::static_pointer_cast<Proxy_connection>(shared_from_this());
     dmitigr::erase(proxy_->connections_, self);
     self->connection().socket.close();
     const auto linked_w = self->linked_connection();
