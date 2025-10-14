@@ -90,6 +90,9 @@ public:
   /// Non move-assignable.
   Pool& operator=(Pool&&) = delete;
 
+  /// Constructs invalid instance.
+  Pool() = default;
+
   /**
    * @brief Constructs the thread pool of size `std::thread::hardware_concurrency()`.
    *
@@ -135,6 +138,8 @@ public:
       throw Exception{"cannot submit invalid task to thread pool"};
 
     const std::lock_guard lg{queue_.mutex};
+    if (!queue_.is_started)
+      throw Exception{"cannot submit task to invalid thread pool"};
     queue_.tasks.push(std::move(task));
     queue_.changed.notify_one();
   }
