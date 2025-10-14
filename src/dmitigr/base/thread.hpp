@@ -93,13 +93,9 @@ public:
   /// Constructs invalid instance.
   Pool() = default;
 
-  /**
-   * @brief Constructs the thread pool of size `std::thread::hardware_concurrency()`.
-   *
-   * @see Pool(std::size_t, Logger)
-   */
-  Pool(Logger logger = {})
-    : Pool{std::thread::hardware_concurrency(), std::move(logger)}
+  /// Constructs the thread pool of the given `size` without logger.
+  explicit Pool(const std::size_t size)
+    : Pool{size, Logger{}}
   {}
 
   /**
@@ -109,14 +105,13 @@ public:
    * @param logger A logger to use to report a error message of an exception
    * thrown in a thread.
    *
-   * @par Requires
-   * `size > 0`.
+   * @remarks If the `size` is `0`, constructs invalid instance.
    */
-  explicit Pool(const std::size_t size, Logger logger = {})
+  Pool(const std::size_t size, Logger logger)
     : logger_{std::move(logger)}
   {
     if (!size)
-      throw Exception{"cannot create thread pool: empty pool is not allowed"};
+      return;
 
     queue_.is_started = true;
     pool_.threads.reserve(size);
