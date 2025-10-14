@@ -36,8 +36,8 @@ public:
     : acceptor_{std::move(acceptor)}
   {}
 
-  /// Initiates to accept a connection.
-  void async_accept()
+  /// Initiates connection acceptance.
+  void async_accept() noexcept
   {
     with_handle_error([this]
     {
@@ -45,10 +45,8 @@ public:
         [self = std::static_pointer_cast<Acceptor>(shared_from_this())]
         (const std::error_code& error, boost::asio::ip::tcp::socket peer)
         {
-          if (error) {
-            self->handle_error(error, "async acceptation error");
-            return;
-          }
+          if (error)
+            return self->handle_error(error, "async acceptation error");
 
           self->with_handle_error([&self, &peer]
           {
