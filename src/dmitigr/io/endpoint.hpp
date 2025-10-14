@@ -14,12 +14,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DMITIGR_IO_IO_HPP
-#define DMITIGR_IO_IO_HPP
+#ifndef DMITIGR_IO_ENDPOINT_HPP
+#define DMITIGR_IO_ENDPOINT_HPP
 
-#include "acceptor.hpp"
-#include "async_agent.hpp"
-#include "connection.hpp"
-#include "endpoint.hpp"
+#include <boost/asio.hpp>
 
-#endif  // DMITIGR_IO_IO_HPP
+#include <string>
+#include <sstream>
+
+namespace dmitigr::io {
+
+/// @returns The string representation of `endpoint`.
+inline std::string to_string(const boost::asio::ip::tcp::endpoint& endpoint)
+{
+  std::ostringstream os;
+  os << endpoint;
+  return os.str();
+}
+
+} // namespace dmitigr::io
+
+#endif  // DMITIGR_IO_ENDPOINT_HPP

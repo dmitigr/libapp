@@ -28,6 +28,7 @@ set(dmitigr_io_headers
   acceptor.hpp
   async_agent.hpp
   connection.hpp
+  endpoint.hpp
 )
 
 set(dmitigr_io_implementations
