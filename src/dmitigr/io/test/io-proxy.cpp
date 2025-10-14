@@ -60,7 +60,7 @@ private:
 
 private:
   void handle_accept(dmitigr::io::Connection) noexcept override;
-  void handle_error(const std::error_code&) noexcept override;
+  void handle_error(const std::error_code&, const char*) noexcept override;
 };
 
 class Proxy_connection final : public dmitigr::io::Proxy_connection {
@@ -99,7 +99,8 @@ private:
   void handle_wrote_to_linked(const std::size_t /*byte_count*/) override
   {}
 
-  void handle_error(const std::error_code& /*error*/) noexcept override
+  void handle_error(const std::error_code& /*error*/,
+    const char* /*what*/) noexcept override
   {
     const auto self = std::static_pointer_cast<Proxy_connection>(shared_from_this());
     dmitigr::erase(proxy_->connections_, self);
@@ -132,7 +133,7 @@ inline void Proxy::handle_accept(dmitigr::io::Connection conn_cl) noexcept
     (const std::error_code& error)
     {
       if (error) {
-        self->handle_error(error);
+        self->handle_error(error, "async connect error");
         return;
       }
 
@@ -151,12 +152,14 @@ inline void Proxy::handle_accept(dmitigr::io::Connection conn_cl) noexcept
         // Accept again.
         self->async_accept();
       } catch (...) {
-        self->handle_error(make_error_code(std::errc::operation_canceled));
+        self->handle_error(make_error_code(std::errc::operation_canceled),
+          "proxy session initiation error");
       }
     });
 }
 
-inline void Proxy::handle_error(const std::error_code& /*err*/) noexcept
+inline void Proxy::handle_error(const std::error_code& /*error*/,
+  const char* /*what*/) noexcept
 {
   async_accept();
 }

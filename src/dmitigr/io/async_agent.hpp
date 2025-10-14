@@ -39,7 +39,7 @@ protected:
    * @details This function is called every time the error occurred upon of
    * either asynchronous operation initiation or asynchronous operation continuation.
    */
-  virtual void handle_error(const std::error_code& error) noexcept = 0;
+  virtual void handle_error(const std::error_code& error, const char* what) noexcept = 0;
 
   /// Calls `callback` within the try-block to call handle_error() on exception.
   template<typename F>
@@ -48,11 +48,13 @@ protected:
     try {
       return callback();
     } catch (const boost::system::system_error& e) {
-      handle_error(e.code());
+      handle_error(e.code(), e.what());
     } catch (const std::system_error& e) {
-      handle_error(e.code());
+      handle_error(e.code(), e.what());
+    } catch (const std::exception& e) {
+      handle_error(make_error_code(std::errc::operation_canceled), e.what());
     } catch (...) {
-      handle_error(make_error_code(std::errc::operation_canceled));
+      handle_error(make_error_code(std::errc::operation_canceled), "unknown error");
     }
   }
 };

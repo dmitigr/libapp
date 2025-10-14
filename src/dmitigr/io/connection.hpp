@@ -90,9 +90,10 @@ public:
         (const std::error_code& error)
         {
           if (error)
-            return self->handle_error(error);
+            return self->handle_error(error, "async wait read error");
           else if (!self->connection_.socket.available())
-            return self->handle_error(make_error_code(std::errc::connection_aborted));
+            return self->handle_error(make_error_code(std::errc::connection_aborted),
+              "no data available on socket to read");
 
           self->with_handle_error([&self]
           {
@@ -117,7 +118,7 @@ public:
           (const std::error_code& error, const std::size_t byte_count)
           {
             if (error)
-              return self->handle_error(error);
+              return self->handle_error(error, "async write error");
 
             self->with_handle_error([&self, byte_count]
             {

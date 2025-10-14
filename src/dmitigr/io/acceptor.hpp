@@ -46,7 +46,7 @@ public:
         (const std::error_code& error, boost::asio::ip::tcp::socket peer)
         {
           if (error) {
-            self->handle_error(error);
+            self->handle_error(error, "async acceptation error");
             return;
           }
 
