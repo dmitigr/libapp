@@ -132,12 +132,11 @@ inline void Proxy::handle_accept(dmitigr::io::Connection conn_cl) noexcept
       conn_server, self]
     (const std::error_code& error)
     {
-      if (error) {
-        self->handle_error(error, "async connect error");
-        return;
-      }
+      if (error)
+        return self->handle_error(error, "async connect error");
 
-      try {
+      self->with_handle_error([&]
+      {
         // Link proxy connections.
         conn_client->link(conn_server);
 
@@ -151,10 +150,7 @@ inline void Proxy::handle_accept(dmitigr::io::Connection conn_cl) noexcept
 
         // Accept again.
         self->async_accept();
-      } catch (...) {
-        self->handle_error(make_error_code(std::errc::operation_canceled),
-          "proxy session initiation error");
-      }
+      });
     });
 }
 
