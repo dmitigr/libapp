@@ -251,9 +251,9 @@ public:
 
   /// Movable.
   Basic_buffer(Basic_buffer&& rhs) noexcept
-    : buffer_{rhs.buffer}
+    : buffer_{rhs.buffer_}
   {
-    rhs.buffer = {};
+    rhs.buffer_ = {};
   }
 
   /// Move-assignable.
