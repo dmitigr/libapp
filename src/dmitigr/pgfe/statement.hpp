@@ -38,7 +38,7 @@ namespace dmitigr::pgfe {
 /**
  * @ingroup utilities
  *
- * @brief A preparsed SQL strings.
+ * @brief A preparsed SQL string.
  *
  * @details A dollar sign ("$") followed by digits is used to denote a parameter
  * with explicitly specified position. A colon (":") followed by alphanumerics
@@ -317,9 +317,9 @@ public:
   ///
   /// @details An any data can be associated with an object of type Statement.
   /// The initial associations can be specified in the *related comments*. The
-  /// related comments - are comments that have no more than one newline
-  /// character in between themselves and the content following them. The
-  /// content following the related comments should be neither named parameter
+  /// related comment - is comment that have no more than one newline
+  /// character in between themself and the following content. The content
+  /// following the related comments should be neither named parameter
   /// nor positional parameter nor consisting only of spaces nor empty.
   ///
   /// Consider the example of the SQL input:
