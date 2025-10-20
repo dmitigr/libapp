@@ -1107,7 +1107,7 @@ Statement::is_quote_char(const unsigned char c) noexcept
  * - The colon (":") is used to select "slices" from arrays. In certain SQL
  * dialects (such as Embedded SQL), the colon is used to prefix variable
  * names.
- * [In Pgfe ":" is user to prefix named parameters and placeholders.]
+ * [In Pgfe ":" is used to prefix named parameters and placeholders.]
  *
  * - Brackets ([]) are used to select the elements of an array.
  */
@@ -1329,7 +1329,7 @@ Statement::parse_sql_input(const std::string_view text)
       if (current_char == quote_char) {
         quote_char = 0;
         continue;
-      } if (current_char != ';') {
+      } else if (current_char != ';') {
         fragment += current_char;
         continue;
       } else
