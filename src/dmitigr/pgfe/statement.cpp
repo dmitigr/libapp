@@ -1335,17 +1335,17 @@ Statement::parse_sql_input(const std::string_view text)
         state = top;
         result.push_named_parameter(fragment, quote_char);
         fragment.clear();
-        goto start;
-      }
-
-      if (current_char == quote_char) {
-        quote_char = 0;
-        continue;
-      } else if (current_char != ';') {
+        if (current_char == quote_char) {
+          quote_char = 0;
+          continue;
+        } else if (current_char == ';')
+          goto finish;
+        else
+          goto start;
+      } else {
         fragment += current_char;
         continue;
-      } else
-        goto finish;
+      }
 
     case quote:
       if (current_char == quote_char)
