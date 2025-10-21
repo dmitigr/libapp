@@ -1042,6 +1042,12 @@ Statement::is_ident_char(const unsigned char c) noexcept
 }
 
 DMITIGR_PGFE_INLINE bool
+Statement::is_named_param_char(const unsigned char c) noexcept
+{
+  return std::isalnum(c) || c == '_';
+}
+
+DMITIGR_PGFE_INLINE bool
 Statement::is_quote_char(const unsigned char c) noexcept
 {
   return c == '\'' || c == '\"';
@@ -1228,7 +1234,7 @@ Statement::parse_sql_input(const std::string_view text)
 
     case dollar:
       DMITIGR_ASSERT(previous_char == '$');
-      if (isdigit(static_cast<unsigned char>(current_char))) {
+      if (std::isdigit(static_cast<unsigned char>(current_char))) {
         state = positional_parameter;
         result.push_text(fragment);
         fragment.clear();
@@ -1300,7 +1306,8 @@ Statement::parse_sql_input(const std::string_view text)
 
     case colon:
       DMITIGR_ASSERT(previous_char == ':');
-      if (is_ident_char(current_char) || is_quote_char(current_char)) {
+      if (std::isalpha(static_cast<unsigned char>(current_char)) ||
+        is_quote_char(current_char)) {
         state = named_parameter;
         result.push_text(fragment);
         fragment.clear();
@@ -1320,10 +1327,10 @@ Statement::parse_sql_input(const std::string_view text)
         goto finish;
 
     case named_parameter:
-      DMITIGR_ASSERT(is_ident_char(previous_char) ||
+      DMITIGR_ASSERT(!previous_char || is_ident_char(previous_char) ||
         (is_quote_char(previous_char) && quote_char));
 
-      if (!is_ident_char(current_char)) {
+      if (!is_named_param_char(current_char)) {
         state = top;
         result.push_named_parameter(fragment, quote_char);
         fragment.clear();

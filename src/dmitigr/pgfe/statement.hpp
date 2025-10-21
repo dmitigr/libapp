@@ -41,8 +41,9 @@ namespace dmitigr::pgfe {
  * @brief A preparsed SQL string.
  *
  * @details A dollar sign ("$") followed by digits is used to denote a parameter
- * with explicitly specified position. A colon (":") followed by alphanumerics
- * is used to denote a named parameter with automatically assignable position.
+ * with explicitly specified position. A colon (":") followed by alphabetic
+ * character, followed by alphanumeric characters or underscore characters is
+ * used to denote a named parameter with automatically assignable position.
  * The valid parameter positions range is [1, max_parameter_count()].
  *
  * Quoting the name of named parameter with either single or double quotes will
@@ -482,6 +483,7 @@ private:
   static bool is_comment(const Fragment& f) noexcept;
   static bool is_text(const Fragment& f) noexcept;
   static bool is_ident_char(const unsigned char c) noexcept;
+  static bool is_named_param_char(const unsigned char c) noexcept;
   static bool is_quote_char(const unsigned char c) noexcept;
 
   // ---------------------------------------------------------------------------
