@@ -1315,6 +1315,7 @@ Statement::parse_sql_input(const std::string_view text)
       } else {
         state = top;
         fragment += previous_char;
+        goto start;
       }
 
       if (state == named_parameter && is_quote_char(current_char)) {
