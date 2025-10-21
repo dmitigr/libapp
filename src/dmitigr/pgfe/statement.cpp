@@ -879,8 +879,10 @@ DMITIGR_PGFE_INLINE bool Statement::is_invariant_ok() const noexcept
 DMITIGR_PGFE_INLINE void
 Statement::push_back_fragment(const Fragment::Type type, const std::string& str)
 {
-  fragments_.emplace_back(type, str);
-  assert(is_invariant_ok());
+  if (!str.empty()) {
+    fragments_.emplace_back(type, str);
+    assert(is_invariant_ok());
+  }
 }
 
 DMITIGR_PGFE_INLINE void
@@ -1156,6 +1158,7 @@ Statement::parse_sql_input(const std::string_view text)
   auto i = b;
   for (const auto e = cend(text); i != e; previous_char = current_char, ++i) {
     current_char = *i;
+  start:
     switch (state) {
     case top:
       switch (current_char) {
@@ -1324,6 +1327,7 @@ Statement::parse_sql_input(const std::string_view text)
         state = top;
         result.push_named_parameter(fragment, quote_char);
         fragment.clear();
+        goto start;
       }
 
       if (current_char == quote_char) {
