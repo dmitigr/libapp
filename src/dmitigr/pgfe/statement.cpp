@@ -1295,21 +1295,16 @@ Statement::parse_sql_input(const std::string_view text)
         state = named_parameter;
         result.push_text(fragment);
         fragment.clear();
-        // The 1st character of the named parameter (current_char) will be stored below.
+        if (is_quote_char(current_char))
+          quote_char = current_char;
+        else
+          fragment += current_char; // store 1st character of the named parameter
+        continue;
       } else {
         state = top;
         fragment += previous_char;
         goto start;
       }
-
-      if (state == named_parameter && is_quote_char(current_char)) {
-        quote_char = current_char;
-        continue;
-      } else if (current_char != ';') {
-        fragment += current_char;
-        continue;
-      } else
-        goto finish;
 
     case named_parameter:
       DMITIGR_ASSERT(!previous_char || is_ident_char(previous_char) ||
