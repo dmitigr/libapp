@@ -1169,11 +1169,7 @@ Statement::parse_sql_input(const std::string_view text)
     case top:
       switch (current_char) {
       case '\'':
-        state = quote;
-        quote_char = current_char;
-        fragment += current_char;
-        continue;
-
+        [[fallthrough]];
       case '"':
         state = quote;
         quote_char = current_char;
