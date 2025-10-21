@@ -1140,8 +1140,6 @@ Statement::parse_sql_input(const std::string_view text)
   enum {
     top,
 
-    bracket,
-
     colon,
     named_parameter,
 
@@ -1186,12 +1184,6 @@ Statement::parse_sql_input(const std::string_view text)
         fragment += current_char;
         continue;
 
-      case '[':
-        state = bracket;
-        depth = 1;
-        fragment += current_char;
-        continue;
-
       case '$':
         if (!is_ident_char(previous_char))
           state = dollar;
@@ -1223,20 +1215,6 @@ Statement::parse_sql_input(const std::string_view text)
         fragment += current_char;
         continue;
       } // switch (current_char)
-
-    case bracket:
-      if (current_char == ']')
-        --depth;
-      else if (current_char == '[')
-        ++depth;
-
-      if (depth == 0) {
-        DMITIGR_ASSERT(current_char == ']');
-        state = top;
-      }
-
-      fragment += current_char;
-      continue;
 
     case dollar:
       DMITIGR_ASSERT(previous_char == '$');
