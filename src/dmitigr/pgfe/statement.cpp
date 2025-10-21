@@ -331,6 +331,8 @@ DMITIGR_PGFE_INLINE std::string Statement::to_string() const
   for (const auto& fragment : fragments_) {
     switch (fragment.type) {
     case Ft::text:
+      [[fallthrough]];
+    case Ft::quoted_text:
       result += fragment.str;
       break;
     case Ft::one_line_comment:
@@ -402,6 +404,8 @@ Statement::to_query_string(const Connection& conn) const
   for (const auto& fragment : fragments_) {
     switch (fragment.type) {
     case Ft::text:
+      [[fallthrough]];
+    case Ft::quoted_text:
       result += fragment.str;
       break;
     case Ft::one_line_comment:
@@ -892,6 +896,12 @@ Statement::push_text(const std::string& str)
 }
 
 DMITIGR_PGFE_INLINE void
+Statement::push_quoted_text(const std::string& str)
+{
+  push_back_fragment(Fragment::Type::quoted_text, str);
+}
+
+DMITIGR_PGFE_INLINE void
 Statement::push_one_line_comment(const std::string& str)
 {
   push_back_fragment(Fragment::Type::one_line_comment, str);
@@ -1353,20 +1363,18 @@ Statement::parse_sql_input(const std::string_view text)
 
     case quote_quote:
       DMITIGR_ASSERT(previous_char == quote_char);
-      if (current_char == quote_char) {
-        state = quote;
-        // Skip previous quote.
-      } else {
+      if (current_char != quote_char) {
         state = top;
         quote_char = 0;
         fragment += previous_char; // store previous quote
-      }
-
-      if (current_char != ';') {
-        fragment += current_char;
+        result.push_quoted_text(fragment);
+        fragment.clear();
+        goto start;
+      } else {
+        state = quote;
+        fragment += current_char; // skip previous, store current quote
         continue;
-      } else
-        goto finish;
+      }
 
     case dash:
       DMITIGR_ASSERT(previous_char == '-');

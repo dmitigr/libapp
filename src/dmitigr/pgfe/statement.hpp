@@ -418,6 +418,7 @@ private:
   struct Fragment final {
     enum class Type {
       text,
+      quoted_text,
       one_line_comment,
       multi_line_comment,
       named_parameter,
@@ -456,6 +457,7 @@ private:
 
   void push_back_fragment(const Fragment::Type type, const std::string& str);
   void push_text(const std::string& str);
+  void push_quoted_text(const std::string& str);
   void push_one_line_comment(const std::string& str);
   void push_multi_line_comment(const std::string& str);
   void push_positional_parameter(const std::string& str);
