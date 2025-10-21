@@ -1472,7 +1472,7 @@ Statement::parse_sql_input(const std::string_view text)
   }
   }
 
-  return std::make_pair(result, i - b);
+  return {std::move(result), i - b};
 }
 
 } // namespace dmitigr::pgfe
