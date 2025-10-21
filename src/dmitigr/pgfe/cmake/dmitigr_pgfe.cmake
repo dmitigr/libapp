@@ -131,7 +131,6 @@ if(DMITIGR_LIBS_TESTS)
     benchmark_array_server
     benchmark_statement
     benchmark_statement_replace
-    bug
     composite
     connection
     connection_deferrable

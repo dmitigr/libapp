@@ -153,6 +153,19 @@ call adb_nsi.rmm_workstation_task_set_state(
     }
 
     {
+      const dmitigr::pgfe::Statement stmt{R"(
+update task_step_log
+  set end_date = now(), log_json = :output/*, error_text = :errtext*/
+  where id = :id
+  returning id
+)"};
+      DMITIGR_ASSERT(stmt.positional_parameter_count() == 0);
+      DMITIGR_ASSERT(stmt.named_parameter_count() == 2);
+      DMITIGR_ASSERT(stmt.parameter_count() == 2);
+      std::cout << stmt.to_query_string(*conn) << std::endl;
+    }
+
+    {
       pgfe::Statement s_orig{
         "-- Id: complex\n"
         "SELECT :last_name::text, /* comment */ :age, $2, f(:age),"
