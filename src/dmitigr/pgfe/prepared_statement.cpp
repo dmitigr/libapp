@@ -82,10 +82,8 @@ DMITIGR_PGFE_INLINE Prepared_statement::~Prepared_statement() noexcept
   if (is_registered_ && is_valid()) {
     auto* const conn = state_->connection_;
     auto [p, e] = conn->registered_ps(state_->id_);
-    DMITIGR_ASSERT(p != e);
-
     state_ = nullptr;
-    if ((*p).use_count() == 1)
+    if (p != e && (*p).use_count() == 1)
       conn->unregister_ps(p);
   }
 }
