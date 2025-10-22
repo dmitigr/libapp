@@ -1126,14 +1126,9 @@ Statement::is_quote_char(const unsigned char c) noexcept
  * dialects (such as Embedded SQL), the colon is used to prefix variable
  * names.
  * [In Pgfe ":" is used to prefix named parameters and placeholders.]
- *
- * - Brackets ([]) are used to select the elements of an array.
  */
 
-/**
- * @returns Preparsed SQL string in pair with the pointer to a character
- * that follows returned SQL string.
- */
+/// @returns Preparsed statement and the index of a character that follows it.
 DMITIGR_PGFE_INLINE std::pair<Statement, std::string_view::size_type>
 Statement::parse_sql_input(const std::string_view text)
 {
