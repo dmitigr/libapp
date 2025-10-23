@@ -25,7 +25,7 @@ try {
   pgfe::Statement s;
   for (unsigned long i{}; i < iteration_count; ++i)
     const pgfe::Statement s{
-      R"(SELECT column1, :list_ FROM :t1_ t1 JOIN :t2_ t2 ON (t1.t2 = t2.id) WHERE :where_)"};
+      R"(SELECT column1, :{list_} FROM :{t1_} t1 JOIN :{t2_} t2 ON (t1.t2 = t2.id) WHERE :{where_})"};
 } catch (const std::exception& e) {
   std::cerr << e.what() << std::endl;
   return 1;
