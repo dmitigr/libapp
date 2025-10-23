@@ -485,6 +485,7 @@ private:
 
   static bool is_comment(const Fragment& f) noexcept;
   static bool is_text(const Fragment& f) noexcept;
+  static bool is_named_param(const Fragment& f) noexcept;
   static bool is_ident_char(const unsigned char c) noexcept;
   static bool is_named_param_char(const unsigned char c) noexcept;
   static bool is_quote_char(const unsigned char c) noexcept;

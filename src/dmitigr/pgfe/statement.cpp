@@ -472,11 +472,11 @@ public:
   extract(const Fragment_list& fragments)
   {
     std::vector<std::pair<Key, Value>> result;
-    const auto iters = first_related_comments(fragments);
-    if (iters.first != cend(fragments)) {
-      const auto comments = joined_comments(iters.first, iters.second);
-      for (const auto& comment : comments) {
-        auto associations = extract(comment.first, comment.second);
+    const auto [begin, end] = first_related_comments(fragments);
+    if (begin != cend(fragments)) {
+      const auto comments = joined_comments(begin, end);
+      for (const auto& [comment, type] : comments) {
+        auto associations = extract(comment, type);
         result.reserve(result.capacity() + associations.size());
         for (auto& a : associations)
           result.push_back(std::move(a));
@@ -733,9 +733,9 @@ private:
     const auto e = cend(fragments);
     auto result = std::make_pair(e, e);
 
-    const auto is_nearby_string = [](const std::string_view str)
+    static const auto is_nearby_string = [](const std::string_view str)noexcept
     {
-      std::string::size_type count{};
+      int count{};
       for (const auto c : str) {
         if (c == '\n') {
           ++count;
@@ -751,7 +751,7 @@ private:
      * Stops lookup when either named parameter or positional parameter are found.
      * (Only fragments of type `text` can have related comments.)
      */
-    auto i = find_if(b, e, [&is_nearby_string](const Fragment& f)
+    auto i = find_if(b, e, [](const Fragment& f)noexcept
     {
       return (f.type == Ft::text &&
         is_nearby_string(f.str) && !str::is_blank(f.str)) ||
@@ -763,7 +763,7 @@ private:
       do {
         --i;
         DMITIGR_ASSERT(is_comment(*i) || (is_text(*i) && str::is_blank(i->str)));
-        if (i->type == Ft::text) {
+        if (is_text(*i)) {
           if (!is_nearby_string(i->str))
             break;
         }
@@ -825,7 +825,7 @@ private:
     while (i != e) {
       if (is_comment(*i)) {
         auto comments = joined_comments_of_same_type(i, e);
-        result.push_back(std::move(comments.first));
+        result.emplace_back(std::move(comments.first));
         i = comments.second;
       } else
         ++i;
@@ -1036,7 +1036,13 @@ Statement::is_comment(const Fragment& f) noexcept
 DMITIGR_PGFE_INLINE bool
 Statement::is_text(const Fragment& f) noexcept
 {
-  return (f.type == Fragment::Type::text);
+  return f.type == Fragment::Type::text;
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::is_named_param(const Fragment& f) noexcept
+{
+  return (f.type == Fragment::Type::named_param);
 }
 
 DMITIGR_PGFE_INLINE bool
