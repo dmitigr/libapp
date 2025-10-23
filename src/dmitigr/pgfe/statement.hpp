@@ -41,10 +41,13 @@ namespace dmitigr::pgfe {
  * @brief A preparsed SQL string.
  *
  * @details A dollar sign ("$") followed by digits is used to denote a parameter
- * with explicitly specified position. A colon (":") followed by alphabetic
- * character, followed by alphanumeric characters or underscore characters is
- * used to denote a named parameter with automatically assignable position.
- * The valid parameter positions range is [1, max_parameter_count()].
+ * with explicitly specified position. A colon (":") followed by an opening curly
+ * bracket, or single or double quote, followed by alphabetic character, followed
+ * by mix of alphabetic characters underscores and dashes is used to denote a
+ * named parameter with automatically assignable position, for example:
+ *   - `:{this-is-a-valid_name}` - denotes a valid name;
+ *   - `:{-this-is-an-invalid_name}` - denotes an invalid name.
+ * The valid parameter positions range is `[1, max_parameter_count()]`.
  *
  * Quoting the name of named parameter with either single or double quotes will
  * lead to automatically quoting the bound content of such a parameter as a
@@ -57,10 +60,10 @@ namespace dmitigr::pgfe {
  *     @code{sql} SELECT 1 @endcode
  *
  *   - the SQL string with the both positional and named parameters:
- *     @code{sql} SELECT 2, $1::int, :name::text @endcode
+ *     @code{sql} SELECT 2, $1::int, :{name}::text @endcode
  *
  *   - the SQL string with named parameter:
- *     @code{sql} WHERE :name = 'Dmitry Igrishin' @endcode
+ *     @code{sql} WHERE :{name} = 'Dmitry Igrishin' @endcode
  *
  *   - the SQL string with quoted named parameters:
  *     @code{sql} SELECT :'text' AS :"name" @endcode
@@ -150,7 +153,7 @@ public:
   /**
    * @returns `false` if the parameter at specified `index` is missing. For
    * example, the SQL string
-   * @code{sql} SELECT :p, $3 @endcode
+   * @code{sql} SELECT :{p}, $3 @endcode
    * has two missing parameters at indexes `0` and `1`.
    *
    * @par Requires
@@ -332,14 +335,14 @@ public:
   /// -- $id$select-all$id$
   /// /* $where$
   ///  * num > 0
-  ///  * AND num < :num
+  ///  * AND num < :{num}
   ///  * $where$
   ///  */
   ///  -- This is the related one line comment 2
-  /// SELECT * FROM table WHERE :where;
+  /// SELECT * FROM table WHERE :{where};
   /// @endcode
   /// The SQL code above contains just one actual query:
-  /// @code{sql}SELECT * FROM table WHERE :where@endcode
+  /// @code{sql}SELECT * FROM table WHERE :{where}@endcode
   /// This query has seven related comments and two unrelated comments (at the
   /// beginning) because there are two newline characters following them. Next,
   /// there are two data associations specified as a dollar-quoted string

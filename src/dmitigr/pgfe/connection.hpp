@@ -1541,7 +1541,7 @@ private:
 
   std::string routine_argument__(const Named_argument& na, const std::size_t)
   {
-    return std::string{na.name()}.append("=>:").append(na.name());
+    return std::string{na.name()}.append("=>:{").append(na.name()).append("}");
   }
 
   template<typename T = void>

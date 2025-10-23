@@ -14,10 +14,10 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- This query calculates :n + 1
+-- This query calculates :{n} + 1
 --
 -- $id$plus_one$id$
-SELECT :n::int + 1, 'semicolons in qoutes like these: ;;; are ignored';
+SELECT :{n}::int + 1, 'semicolons in qoutes like these: ;;; are ignored';
 
 /*
  * This query concatenates two strings
@@ -29,4 +29,4 @@ SELECT :n::int + 1, 'semicolons in qoutes like these: ;;; are ignored';
  *   AND n < 2
  * $cond$
  */
-SELECT n FROM (SELECT generate_series(1,9) n) foo WHERE :cond
+SELECT n FROM (SELECT generate_series(1,9) n) foo WHERE :{cond}

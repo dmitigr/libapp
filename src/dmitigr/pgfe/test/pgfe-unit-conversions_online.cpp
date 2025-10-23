@@ -107,7 +107,7 @@ try {
 
     // text
     {
-      static const pgfe::Statement st{"SELECT 'dima'::text, :nm1::varchar, :nm2::text"};
+      static const pgfe::Statement st{"SELECT 'dima'::text, :{nm1}::varchar, :{nm2}::text"};
       conn->prepare(st).bind("nm1", "olga").bind("nm2", "vika").execute([](auto&& row)
       {
         DMITIGR_ASSERT(to<std::string>(row[0]) == "dima");

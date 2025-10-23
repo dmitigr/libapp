@@ -48,7 +48,7 @@ int main() try {
   conn->execute([](auto&& r)
   {
     std::printf("Range [%i, %i]\n", to<int>(r["b"]), to<int>(r["e"]));
-  },"select :begin b, :end e", a{"end", 1}, a{"begin", 0});
+  },"select :{begin} b, :{end} e", a{"end", 1}, a{"begin", 0});
 
   // Prepare and execute the statement.
   auto ps = conn->prepare("select $1::int i");

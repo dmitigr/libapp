@@ -304,7 +304,7 @@ DMITIGR_PGFE_INLINE void
 Statement::replace(const std::string_view name, const Statement& replacement)
 {
   if (!(has_parameter(name) && (this != &replacement)))
-    throw Generic_exception{"cannot replace Statement parameter"};
+    throw Generic_exception{"cannot replace Statement parameter "+std::string{name}};
 
   // Update fragments.
   for (auto fi = begin(fragments_); fi != end(fragments_);) {
@@ -345,15 +345,19 @@ DMITIGR_PGFE_INLINE std::string Statement::to_string() const
       break;
     case Ft::named_parameter:
       result += ':';
+      result += '{';
       result += fragment.str;
+      result += '}';
       break;
     case Ft::named_parameter_literal:
-      result += ":'";
+      result += ":";
+      result += '\'';
       result += fragment.str;
       result += '\'';
       break;
     case Ft::named_parameter_identifier:
-      result += ":\"";
+      result += ":";
+      result += '"';
       result += fragment.str;
       result += '"';
       break;
@@ -1044,7 +1048,7 @@ Statement::is_ident_char(const unsigned char c) noexcept
 DMITIGR_PGFE_INLINE bool
 Statement::is_named_param_char(const unsigned char c) noexcept
 {
-  return std::isalnum(c) || c == '_';
+  return std::isalnum(c) || c == '_' || c == '-';
 }
 
 DMITIGR_PGFE_INLINE bool
@@ -1178,11 +1182,7 @@ Statement::parse_sql_input(const std::string_view text)
         continue;
 
       case ':':
-        if (previous_char != ':')
-          state = colon;
-        else
-          fragment += current_char;
-
+        state = colon;
         continue;
 
       case '-':
@@ -1275,15 +1275,12 @@ Statement::parse_sql_input(const std::string_view text)
 
     case colon:
       DMITIGR_ASSERT(previous_char == ':');
-      if (std::isalpha(static_cast<unsigned char>(current_char)) ||
-        is_quote_char(current_char)) {
+      if (current_char == '{' || is_quote_char(current_char)) {
         state = named_parameter;
         result.push_text(fragment);
         fragment.clear();
         if (is_quote_char(current_char))
           quote_char = current_char;
-        else
-          fragment += current_char; // store 1st character of the named parameter
         continue;
       } else {
         state = top;
@@ -1292,20 +1289,22 @@ Statement::parse_sql_input(const std::string_view text)
       }
 
     case named_parameter:
-      DMITIGR_ASSERT(!previous_char || is_ident_char(previous_char) ||
-        (is_quote_char(previous_char) && quote_char));
+      DMITIGR_ASSERT(!previous_char || previous_char == '{' ||
+        (is_quote_char(previous_char) && quote_char) ||
+        is_named_param_char(previous_char));
 
-      if (!is_named_param_char(current_char)) {
-        state = top;
-        result.push_named_parameter(fragment, quote_char);
-        fragment.clear();
-        if (current_char == quote_char) {
+      if (previous_char == '{' &&
+        !std::isalpha(static_cast<unsigned char>(current_char)))
+        goto finish;
+      else if (!is_named_param_char(current_char)) {
+        if (current_char == '}' || current_char == quote_char) {
+          state = top;
+          result.push_named_parameter(fragment, quote_char);
+          fragment.clear();
           quote_char = 0;
           continue;
-        } else if (current_char == ';')
+        } else
           goto finish;
-        else
-          goto start;
       } else {
         fragment += current_char;
         continue;
@@ -1439,10 +1438,6 @@ Statement::parse_sql_input(const std::string_view text)
     result.push_positional_parameter(fragment);
     break;
   case named_parameter:
-    if (!quote_char) {
-      result.push_named_parameter(fragment, quote_char);
-      break;
-    }
     [[fallthrough]];
   default: {
     std::string message{"invalid SQL input"};

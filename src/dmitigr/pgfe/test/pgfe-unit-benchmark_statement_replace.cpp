@@ -24,11 +24,11 @@ try {
   pgfe::Statement s;
   const unsigned long iteration_count{(argc >= 2) ? std::stoul(argv[1]) : 1};
   for (unsigned long i{}; i < iteration_count; ++i) {
-    s = "SELECT :list_ FROM :t1_ t1 JOIN :t2_ t2 ON (t1.t2 = t2.id) WHERE :where_";
+    s = "SELECT :{list_} FROM :{t1_} t1 JOIN :{t2_} t2 ON (t1.t2 = t2.id) WHERE :{where_}";
     s.replace("list_", "t1.id id, t1.age age, t2.dat dat");
     s.replace("t1_", "table1");
     s.replace("t2_", "table2");
-    s.replace("where_", "t1.nm = :nm AND t2.age = :age");
+    s.replace("where_", "t1.nm = :{nm} AND t2.age = :{age}");
   }
   const auto modified_string = s.to_string();
 } catch (const std::exception& e) {

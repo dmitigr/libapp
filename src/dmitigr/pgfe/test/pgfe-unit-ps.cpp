@@ -60,7 +60,7 @@ try {
 
   static const pgfe::Statement ss{
     "SELECT 1::integer AS const,"
-      " generate_series(:infinum::integer, :supremum::integer) AS var,"
+      " generate_series(:{infinum}::integer, :{supremum}::integer) AS var,"
       " 2::integer AS const"};
   auto ps2 = conn->prepare(ss, "ps2");
   DMITIGR_ASSERT(ps2 && ps2.name() == "ps2");

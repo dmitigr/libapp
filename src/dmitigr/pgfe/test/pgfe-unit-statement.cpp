@@ -28,9 +28,9 @@ void state_task(dmitigr::pgfe::Connection& dbconn, Types&& ... execute_args)
 {
   static const dmitigr::pgfe::Statement call_set_state{R"(
 select foo(
-  id := :id,
-  state := :state,
-  descr := :descr,
+  id := :{id},
+  state := :{state},
+  descr := :{descr},
   curuser := curuser())
 )"};
 
@@ -89,7 +89,7 @@ int main()
     }
 
     {
-      pgfe::Statement st{R"(SELECT :num, :num, :'txt', :'txt' FROM :"tab", :"tab")"};
+      pgfe::Statement st{R"(SELECT :{num}, :{num}, :'txt', :'txt' FROM :"tab", :"tab")"};
       DMITIGR_ASSERT(!st.is_empty());
       DMITIGR_ASSERT(st.positional_parameter_count() == 0);
       DMITIGR_ASSERT(st.named_parameter_count() == 3);
@@ -124,7 +124,7 @@ int main()
     }
 
     {
-      pgfe::Statement st{R"(SELECT 1 WHERE :condition and task_id = :task_id)"};
+      pgfe::Statement st{R"(SELECT 1 WHERE :{condition} and task_id = :{task_id})"};
       const auto quoted = conn->to_quoted_literal("SSH");
       st.bind("condition", "upper(code) = upper(" + quoted + ")");
       std::cout << st.to_string() << std::endl;
@@ -135,9 +135,9 @@ int main()
     {
       const pgfe::Statement call{R"(
 call adb_nsi.rmm_workstation_task_set_state(
-  p_workstation_task_id := :id,
-  p_state_code := :state,
-  p_description := :descr,
+  p_workstation_task_id := :{id},
+  p_state_code := :{state},
+  p_description := :{descr},
   p_current_user := adb_system.get_system_user_login())
 )"};
       std::cout << call.to_string() << std::endl;
@@ -155,8 +155,8 @@ call adb_nsi.rmm_workstation_task_set_state(
     {
       const dmitigr::pgfe::Statement stmt{R"(
 update task_step_log
-  set end_date = now(), log_json = :output/*, error_text = :errtext*/
-  where id = :id
+  set end_date = now(), log_json = :{output}/*, error_text = :{errtext}*/
+  where id = :{id}
   returning id
 )"};
       DMITIGR_ASSERT(stmt.positional_parameter_count() == 0);
@@ -168,7 +168,7 @@ update task_step_log
     {
       pgfe::Statement s_orig{
         "-- Id: complex\n"
-        "SELECT :last_name::text, /* comment */ :age, $2, f(:age),"
+        "SELECT :{last_name}::text, /* comment */ :{age}, $2, f(:{age}),"
         " 'simple string', $$dollar quoted$$, $tag$dollar quoted$tag$"};
       auto s_copy = s_orig;
 
@@ -199,7 +199,7 @@ update task_step_log
 
       for (auto& ref : {std::ref(s_orig), std::ref(s_copy)}) {
         auto& st = ref.get();
-        st.replace("age", "g(:first_name, :age, :p2) + 1");
+        st.replace("age", "g(:{first_name}, :{age}, :{p2}) + 1");
         DMITIGR_ASSERT(st.parameter_index("first_name") == 3);
         DMITIGR_ASSERT(st.parameter_index("age") == 4);
         DMITIGR_ASSERT(st.parameter_index("p2") == 5);

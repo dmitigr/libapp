@@ -61,14 +61,14 @@ int main() try {
     conn->execute([](auto&& row)
     {
       DMITIGR_ASSERT(pgfe::to<int>(row[0]) == 12345);
-    }, "select :id", id);
+    }, "select :{id}", id);
   }
 
   // Online test 2 (rvalue named argument).
   conn->execute([](auto&& row)
   {
     DMITIGR_ASSERT(pgfe::to<int>(row[0]) == 12345);
-  }, "select :id", a{"id", 12345});
+  }, "select :{id}", a{"id", 12345});
 } catch (const std::exception& e) {
   std::cerr << e.what() << std::endl;
   return 1;
