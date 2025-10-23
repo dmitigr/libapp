@@ -1191,12 +1191,6 @@ Connection::to_hex_data(const Data& data) const
   return Data::make(std::move(storage), size, Data_format::text);
 }
 
-DMITIGR_PGFE_INLINE std::string Connection::to_hex_string(const Data& data) const
-{
-  const auto [storage, size] = to_hex_storage(data);
-  return std::string{static_cast<const char*>(storage.get()), size};
-}
-
 // -----------------------------------------------------------------------------
 // private
 // -----------------------------------------------------------------------------
@@ -1426,7 +1420,7 @@ DMITIGR_PGFE_INLINE bool Connection::is_out_of_memory() const noexcept
 }
 
 DMITIGR_PGFE_INLINE std::pair<std::unique_ptr<void, void(*)(void*)>, std::size_t>
-Connection::to_hex_storage(const pgfe::Data& data) const
+Connection::to_hex_storage(const Data& data) const
 {
   if (!is_connected())
     throw Generic_exception{"cannot encode data to hex: not connected"};

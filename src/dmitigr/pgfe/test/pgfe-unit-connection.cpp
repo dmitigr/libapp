@@ -521,7 +521,7 @@ try {
         const auto data2 = hex_data->to_bytea();
         DMITIGR_ASSERT(data->size() == data2->size());
         DMITIGR_ASSERT(!std::memcmp(data->bytes(), data2->bytes(), data->size()));
-        DMITIGR_ASSERT(to<std::string_view>(*hex_data) == conn->to_hex_string(*data));
+        DMITIGR_ASSERT(to<std::string_view>(*hex_data) == to<std::string_view>(conn->to_hex_data(*data)));
       }
     }
 } catch (const std::exception& e) {

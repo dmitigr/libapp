@@ -1244,15 +1244,6 @@ public:
    */
   DMITIGR_PGFE_API std::unique_ptr<Data> to_hex_data(const Data& data) const;
 
-  /**
-   * @brief Similar to to_hex_data(const Data&).
-   *
-   * @returns The encoded string in the hex format.
-   *
-   * @see to_hex_data().
-   */
-  DMITIGR_PGFE_API std::string to_hex_string(const Data& data) const;
-
   ///@}
 private:
   friend Copier;
