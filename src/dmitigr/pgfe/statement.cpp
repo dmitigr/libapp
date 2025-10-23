@@ -331,6 +331,8 @@ DMITIGR_PGFE_INLINE std::string Statement::to_string() const
   for (const auto& fragment : fragments_) {
     switch (fragment.type) {
     case Ft::text:
+      [[fallthrough]];
+    case Ft::quoted_text:
       result += fragment.str;
       break;
     case Ft::one_line_comment:
@@ -406,6 +408,8 @@ Statement::to_query_string(const Connection& conn) const
   for (const auto& fragment : fragments_) {
     switch (fragment.type) {
     case Ft::text:
+      [[fallthrough]];
+    case Ft::quoted_text:
       result += fragment.str;
       break;
     case Ft::one_line_comment:
@@ -747,18 +751,12 @@ private:
       return true;
     };
 
-    /* An attempt to find the first commented out text fragment.
-     * Stops lookup when either named parameter or positional parameter are found.
-     * (Only fragments of type `text` can have related comments.)
-     */
+    // Try to find the first fragment with nearby comment.
     auto i = find_if(b, e, [](const Fragment& f)noexcept
     {
-      return (f.type == Ft::text &&
-        is_nearby_string(f.str) && !str::is_blank(f.str)) ||
-        f.type == Ft::named_parameter ||
-        f.type == Ft::positional_parameter;
+      return !is_comment(f) && is_nearby_string(f.str) && !str::is_blank(f.str);
     });
-    if (i != b && i != e && is_text(*i)) {
+    if (i != b && i != e) {
       result.second = i;
       do {
         --i;
@@ -893,6 +891,12 @@ DMITIGR_PGFE_INLINE void
 Statement::push_text(const std::string& str)
 {
   push_back_fragment(Fragment::Type::text, str);
+}
+
+DMITIGR_PGFE_INLINE void
+Statement::push_quoted_text(const std::string& str)
+{
+  push_back_fragment(Fragment::Type::quoted_text, str);
 }
 
 DMITIGR_PGFE_INLINE void
@@ -1042,7 +1046,7 @@ Statement::is_text(const Fragment& f) noexcept
 DMITIGR_PGFE_INLINE bool
 Statement::is_named_param(const Fragment& f) noexcept
 {
-  return (f.type == Fragment::Type::named_param);
+  return f.type == Fragment::Type::named_parameter;
 }
 
 DMITIGR_PGFE_INLINE bool
@@ -1176,6 +1180,8 @@ Statement::parse_sql_input(const std::string_view text)
       case '"':
         state = quote;
         quote_char = current_char;
+        result.push_text(fragment);
+        fragment.clear();
         fragment += current_char;
         continue;
 
@@ -1321,7 +1327,6 @@ Statement::parse_sql_input(const std::string_view text)
         state = quote_quote;
       else
         fragment += current_char;
-
       continue;
 
     case quote_quote:
@@ -1330,7 +1335,7 @@ Statement::parse_sql_input(const std::string_view text)
         state = top;
         quote_char = 0;
         fragment += previous_char; // store previous quote
-        result.push_text(fragment);
+        result.push_quoted_text(fragment);
         fragment.clear();
         goto start;
       } else {

@@ -323,8 +323,7 @@ public:
   /// The initial associations can be specified in the *related comments*. The
   /// related comment - is comment that have no more than one newline
   /// character in between themself and the following content. The content
-  /// following the related comments should be neither named parameter
-  /// nor positional parameter nor consisting only of spaces nor empty.
+  /// following the related comments must not be empty or consists only of spaces.
   ///
   /// Consider the example of the SQL input:
   /// @code{sql}
@@ -421,6 +420,7 @@ private:
   struct Fragment final {
     enum class Type {
       text,
+      quoted_text,
       one_line_comment,
       multi_line_comment,
       named_parameter,
@@ -459,6 +459,7 @@ private:
 
   void push_back_fragment(const Fragment::Type type, const std::string& str);
   void push_text(const std::string& str);
+  void push_quoted_text(const std::string& str);
   void push_one_line_comment(const std::string& str);
   void push_multi_line_comment(const std::string& str);
   void push_positional_parameter(const std::string& str);

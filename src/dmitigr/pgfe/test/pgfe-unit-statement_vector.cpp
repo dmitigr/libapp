@@ -54,18 +54,22 @@ try {
   const auto input = str::read_to_string(this_exe_dir_name /
     "pgfe-unit-statement_vector.sql");
   bunch = pgfe::Statement_vector{input};
-  DMITIGR_ASSERT(bunch.size() == 2);
+  DMITIGR_ASSERT(bunch.size() == 3);
   DMITIGR_ASSERT(bunch[0].extra().field_count() == 1);
   DMITIGR_ASSERT(bunch[1].extra().field_count() == 2);
+  DMITIGR_ASSERT(bunch[2].extra().field_count() == 1);
   //
   DMITIGR_ASSERT(bunch.statement_index("id", "plus_one") == 0);
   DMITIGR_ASSERT(bunch.statement_index("id", "digit") == 1);
+  DMITIGR_ASSERT(bunch.statement_index("id", "any-data") == 2);
   DMITIGR_ASSERT(bunch[0].extra().field_index("id") == 0);
   DMITIGR_ASSERT(bunch[1].extra().field_index("id") == 0);
   DMITIGR_ASSERT(bunch[1].extra().field_index("cond") == 1);
+  DMITIGR_ASSERT(bunch[1].extra().field_index("id") == 0);
 
-  auto& digit = bunch[1];
   const auto& plus_one = bunch[0];
+  auto& digit = bunch[1];
+  auto& any_data = bunch[2];
   const auto conn = pgfe::test::make_connection();
   conn->connect();
 
@@ -88,16 +92,25 @@ try {
     }, digit);
   }
 
+  // any-data
+  {
+    any_data.replace("data", "select :{num}");
+    conn->execute([](auto&& row)
+    {
+      DMITIGR_ASSERT(to<int>(row[0]) == 4);
+    }, any_data, 4);
+  }
+
   // -------------------------------------------------------------------------
   // Modifying the SQL vector
   // -------------------------------------------------------------------------
 
   bunch.insert(1, "SELECT 2");
-  DMITIGR_ASSERT(bunch.size() == 3);
+  DMITIGR_ASSERT(bunch.size() == 4);
   auto i = bunch.statement_index("id", "plus_one");
   DMITIGR_ASSERT(i != bunch.size());
   bunch.remove(i);
-  DMITIGR_ASSERT(bunch.size() == 2); // {"SELECT 2", digit} are still here
+  DMITIGR_ASSERT(bunch.size() == 3); // {"SELECT 2", digit} are still here
   DMITIGR_ASSERT(bunch.statement_index("id", "plus_one") == bunch.size());
   DMITIGR_ASSERT(bunch[0].to_string() == "SELECT 2"); // SELECT 2
   DMITIGR_ASSERT(bunch.statement_index("id", "digit") == 1);
