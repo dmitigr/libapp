@@ -61,6 +61,52 @@ Statement::Fragment::is_quoted_named_parameter(const std::string_view name) cons
   return is_quoted_named_parameter() && str == name;
 }
 
+DMITIGR_PGFE_INLINE bool
+Statement::Fragment::is_comment() const noexcept
+{
+  return type == Fragment::Type::one_line_comment ||
+    type == Fragment::Type::multi_line_comment;
+}
+
+DMITIGR_PGFE_INLINE
+const std::string& Statement::Fragment::norm_str() const
+{
+  if (type == Type::text) {
+    if (norm_.empty()) {
+      norm_.reserve(2 * str.size());
+      enum { word_char, spec_char, space_char } prev_char_type{space_char};
+      for (const unsigned char ch : str) {
+        if (std::isalnum(ch) || ch == '_' || ch == '$') {
+          if (prev_char_type == spec_char)
+            norm_ += ' ';
+          norm_ += std::tolower(ch);
+          prev_char_type = word_char;
+        } else if (std::isspace(ch)) {
+          if (prev_char_type != space_char) {
+            norm_ += ' ';
+            prev_char_type = space_char;
+          }
+        } else {
+          if (prev_char_type != space_char)
+            norm_ += ' ';
+          norm_ += ch;
+          prev_char_type = spec_char;
+        }
+      }
+      if (!norm_.empty() && norm_.back() == ' ')
+        norm_.pop_back();
+    }
+    return norm_;
+  }
+  return str;
+}
+
+DMITIGR_PGFE_INLINE
+bool Statement::Fragment::norm_equal(const Fragment& rhs) const
+{
+  return type == rhs.type && norm_str() == rhs.norm_str();
+}
+
 // =============================================================================
 
 DMITIGR_PGFE_INLINE Statement::Statement(const std::string_view text)
@@ -80,6 +126,7 @@ DMITIGR_PGFE_INLINE Statement::Statement(const char* const text)
 
 DMITIGR_PGFE_INLINE Statement::Statement(const Statement& rhs)
   : fragments_{rhs.fragments_}
+  , norm_fragments_{rhs.norm_fragments_}
   , bindings_{rhs.bindings_}
   , positional_parameters_{rhs.positional_parameters_}
   , is_extra_data_should_be_extracted_from_comments_{
@@ -100,6 +147,7 @@ DMITIGR_PGFE_INLINE Statement& Statement::operator=(const Statement& rhs)
 
 DMITIGR_PGFE_INLINE Statement::Statement(Statement&& rhs) noexcept
   : fragments_{std::move(rhs.fragments_)}
+  , norm_fragments_{std::move(rhs.norm_fragments_)}
   , bindings_{std::move(rhs.bindings_)}
   , positional_parameters_{std::move(rhs.positional_parameters_)}
   , is_extra_data_should_be_extracted_from_comments_{
@@ -122,6 +170,7 @@ DMITIGR_PGFE_INLINE void Statement::swap(Statement& rhs) noexcept
 {
   using std::swap;
   swap(fragments_, rhs.fragments_);
+  swap(norm_fragments_, rhs.norm_fragments_);
   swap(bindings_, rhs.bindings_);
   swap(positional_parameters_, rhs.positional_parameters_);
   swap(named_parameters_, rhs.named_parameters_);
@@ -848,6 +897,55 @@ DMITIGR_PGFE_INLINE Tuple& Statement::extra() noexcept
   return const_cast<Tuple&>(static_cast<const Statement*>(this)->extra());
 }
 
+DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const
+{
+  normalize();
+  rhs.normalize();
+  const auto& frags = norm_fragments_;
+  const auto& rhs_frags = rhs.norm_fragments_;
+  const auto le = frags.cend();
+  const auto re = rhs_frags.cend();
+  for (auto li = frags.cbegin(), ri = rhs_frags.cbegin();; ++li, ++ri) {
+    if (li != le && ri != re) {
+      if (!li->norm_equal(*ri))
+        return false;
+    } else
+      return li == le && ri == re;
+  }
+  return true;
+}
+
+DMITIGR_PGFE_INLINE Statement Statement::match(const Statement& pattern) const
+{
+  throw "not implemented yet";
+}
+
+DMITIGR_PGFE_INLINE std::unordered_map<std::string, std::string>
+Statement::matching_bindings(const Statement& pattern) const
+{
+  throw "not implemented yet";
+}
+
+DMITIGR_PGFE_INLINE void Statement::normalize() const
+{
+  if (!norm_fragments_.empty())
+    return;
+
+  Fragment_list norm_fragments;
+  for (const auto& fragment : fragments_) {
+    if (is_text(fragment) &&
+      !norm_fragments.empty() && is_text(norm_fragments.back()))
+      norm_fragments.back().str.append(fragment.str);
+    else if (!is_comment(fragment))
+      norm_fragments.push_back(fragment);
+  }
+
+  for (const auto& fragment : norm_fragments)
+    fragment.norm_str();
+
+  norm_fragments_.swap(norm_fragments);
+}
+
 DMITIGR_PGFE_INLINE bool Statement::is_invariant_ok() const noexcept
 {
   const bool positional_parameters_ok =
@@ -1259,14 +1357,12 @@ Statement::parse_sql_input(const std::string_view text)
         dollar_quote_leading_tag_name += current_char;
         fragment += current_char;
       } else
-        throw Generic_exception{"invalid dollar quote tag"};
-
+        goto finish;
       continue;
 
     case dollar_quote:
       if (current_char == '$')
         state = dollar_quote_dollar;
-
       fragment += current_char;
       continue;
 
@@ -1448,8 +1544,6 @@ Statement::parse_sql_input(const std::string_view text)
   case positional_parameter:
     result.push_positional_parameter(fragment);
     break;
-  case named_parameter:
-    [[fallthrough]];
   default: {
     std::string message{"invalid SQL input"};
     if (!result.fragments_.empty())

@@ -38,7 +38,7 @@ namespace dmitigr::pgfe {
 /**
  * @ingroup utilities
  *
- * @brief A preparsed SQL string.
+ * @brief A preparsed statement.
  *
  * @details A dollar sign ("$") followed by digits is used to denote a parameter
  * with explicitly specified position. A colon (":") followed by an opening curly
@@ -54,18 +54,18 @@ namespace dmitigr::pgfe {
  * literal or an identifier accordingly at the time of generating the resulting
  * query string with to_query_string().
  *
- * Examples of valid SQL strings:
+ * Examples of valid statements:
  *
- *   - the SQL string without parameter:
+ *   - the statement without parameter:
  *     @code{sql} SELECT 1 @endcode
  *
- *   - the SQL string with the both positional and named parameters:
+ *   - the statement with the both positional and named parameters:
  *     @code{sql} SELECT 2, $1::int, :{name}::text @endcode
  *
- *   - the SQL string with named parameter:
+ *   - the statement with named parameter:
  *     @code{sql} WHERE :{name} = 'Dmitry Igrishin' @endcode
  *
- *   - the SQL string with quoted named parameters:
+ *   - the statement with quoted named parameters:
  *     @code{sql} SELECT :'text' AS :"name" @endcode
  */
 class Statement final : public Parameterizable {
@@ -141,18 +141,18 @@ public:
   DMITIGR_PGFE_API std::size_t
   parameter_index(const std::string_view name) const noexcept override;
 
-  /// @returns `true` if this SQL string is empty.
+  /// @returns `true` if this statement is empty.
   DMITIGR_PGFE_API bool is_empty() const noexcept;
 
   /**
-   * @returns `true` if this SQL string is consists only of comments and blank
+   * @returns `true` if this statement is consists only of comments and blank
    * line(-s).
    */
   DMITIGR_PGFE_API bool is_query_empty() const noexcept;
 
   /**
    * @returns `false` if the parameter at specified `index` is missing. For
-   * example, the SQL string
+   * example, the statement
    * @code{sql} SELECT :{p}, $3 @endcode
    * has two missing parameters at indexes `0` and `1`.
    *
@@ -203,7 +203,7 @@ public:
   is_parameter_identifier(const std::string_view name) const;
 
   /**
-   * @returns `true` if this SQL string has a positional parameter with the
+   * @returns `true` if this statement has a positional parameter with the
    * index `i` such that `!is_parameter_missing(i)`.
    *
    * @see is_parameter_missing().
@@ -211,7 +211,7 @@ public:
   DMITIGR_PGFE_API bool has_missing_parameter() const noexcept;
 
   /**
-   * @brief Appends the specified SQL string.
+   * @brief Appends the specified statement.
    *
    * @par Effects
    * This instance contains the given `appendix`. If `is_query_empty()` before
@@ -413,6 +413,39 @@ public:
   /// @overload
   DMITIGR_PGFE_API Tuple& extra() noexcept;
 
+  /**
+   * @brief Tests instances on equivalency.
+   *
+   * @details Statements are equivalent if all theirs parts, except comments,
+   * being normalized are equal.
+   *
+   * @returns `true` if this instance equivalents to `rhs`.
+   */
+  DMITIGR_PGFE_API bool is_equal(const Statement& rhs) const;
+
+  /**
+   * @brief Matches this statement with `pattern`.
+   *
+   * @returns The statement with bindings according to the named parameters of
+   * the `pattern`, or empty statement if this statement is empty or not matches
+   * the `pattern`.
+   *
+   * @see bind().
+   */
+  DMITIGR_PGFE_API Statement match(const Statement& pattern) const;
+
+  /**
+   * @brief Matches this statement with `pattern`.
+   *
+   * @returns The map with bindings according to the named parameters of the
+   * `pattern`, or empty map if this statement is empty or not matches the
+   * `pattern`.
+   *
+   * @see bind().
+   */
+  DMITIGR_PGFE_API std::unordered_map<std::string, std::string>
+  matching_bindings(const Statement& pattern) const;
+
 private:
   friend Statement_vector;
 
@@ -434,14 +467,22 @@ private:
     bool is_named_parameter(const std::string_view name) const noexcept;
     bool is_quoted_named_parameter() const noexcept;
     bool is_quoted_named_parameter(const std::string_view name) const noexcept;
+    bool is_comment() const noexcept;
+
+    const std::string& norm_str() const;
+    bool norm_equal(const Fragment& rhs) const;
 
     Type type;
     std::string str;
+
+  private:
+    mutable std::string norm_;
   };
 
   using Fragment_list = std::list<Fragment>;
 
   Fragment_list fragments_;
+  mutable Fragment_list norm_fragments_; // cache
   std::unordered_map<std::string, std::string> bindings_;
   std::vector<bool> positional_parameters_; // cache
   std::vector<Fragment_list::const_iterator> named_parameters_; // cache
@@ -468,6 +509,9 @@ private:
   // ---------------------------------------------------------------------------
   // Updaters
   // ---------------------------------------------------------------------------
+
+  // Exception safety guarantee: strong.
+  DMITIGR_PGFE_API void normalize() const;
 
   // Exception safety guarantee: strong.
   void update_cache(const Statement& rhs);
