@@ -86,7 +86,7 @@ class Signal;
 class Statement;
 class Statement_vector;
 class Transaction_guard;
-class Tuple;
+template<typename> class Tuple;
 
 class Exception;
 class Generic_exception;

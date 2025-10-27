@@ -23,7 +23,8 @@ int main()
 {
   try {
     namespace pgfe = dmitigr::pgfe;
-    pgfe::Tuple tuple;
+    using Tuple = pgfe::Tuple<std::pair<std::string, std::unique_ptr<pgfe::Data>>>;
+    Tuple tuple;
     DMITIGR_ASSERT(tuple.field_count() == 0);
     DMITIGR_ASSERT(tuple.is_empty());
     // Modifying the tuple.
@@ -79,9 +80,9 @@ int main()
       DMITIGR_ASSERT(!(lhs > rhs));             \
       DMITIGR_ASSERT(!(lhs >= rhs))
 
-      pgfe::Tuple lhs;
+      Tuple lhs;
       lhs.append("name", "dima");
-      pgfe::Tuple rhs;
+      Tuple rhs;
       rhs.append("name", "olga");
       ASSERTMENTS;
       rhs.set("name", pgfe::Data::make("olgaolga"));
@@ -99,9 +100,9 @@ int main()
       DMITIGR_ASSERT(!(lhs > rhs));             \
       DMITIGR_ASSERT(lhs >= rhs)
 
-      pgfe::Tuple lhs;
+      Tuple lhs;
       lhs.append("name", "dima");
-      pgfe::Tuple rhs;
+      Tuple rhs;
       rhs.append("name", "dima");
       ASSERTMENTS;
       lhs.set("name", "");
@@ -120,9 +121,9 @@ int main()
       DMITIGR_ASSERT(lhs > rhs);                \
       DMITIGR_ASSERT(lhs >= rhs)
 
-      pgfe::Tuple lhs;
+      Tuple lhs;
       lhs.append("name", "olga");
-      pgfe::Tuple rhs;
+      Tuple rhs;
       rhs.append("name", "dima");
       ASSERTMENTS;
       lhs.set("name", "olgaolga");

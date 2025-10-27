@@ -881,7 +881,8 @@ private:
   }
 };
 
-DMITIGR_PGFE_INLINE const Tuple& Statement::extra() const noexcept
+DMITIGR_PGFE_INLINE const Tuple<std::pair<std::string, std::unique_ptr<Data>>>&
+Statement::extra() const noexcept
 {
   if (!extra_)
     extra_.emplace(Extra::extract(fragments_));
@@ -892,9 +893,10 @@ DMITIGR_PGFE_INLINE const Tuple& Statement::extra() const noexcept
   return *extra_;
 }
 
-DMITIGR_PGFE_INLINE Tuple& Statement::extra() noexcept
+DMITIGR_PGFE_INLINE Tuple<std::pair<std::string, std::unique_ptr<Data>>>&
+Statement::extra() noexcept
 {
-  return const_cast<Tuple&>(static_cast<const Statement*>(this)->extra());
+  return const_cast<Tuple<std::pair<std::string, std::unique_ptr<Data>>>&>(static_cast<const Statement*>(this)->extra());
 }
 
 DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const

@@ -90,7 +90,6 @@ set(dmitigr_pgfe_implementations
   row_info.cpp
   statement.cpp
   statement_vector.cpp
-  tuple.cpp
   )
 
 # ------------------------------------------------------------------------------
