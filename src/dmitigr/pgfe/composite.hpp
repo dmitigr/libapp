@@ -65,7 +65,6 @@ public:
 
 private:
   friend Row;
-  template<typename> friend class Tuple;
 
   Composite() = default;
   using Compositional::is_invariant_ok;

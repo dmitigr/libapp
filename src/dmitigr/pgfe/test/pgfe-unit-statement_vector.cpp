@@ -55,17 +55,17 @@ try {
     "pgfe-unit-statement_vector.sql");
   bunch = pgfe::Statement_vector{input};
   DMITIGR_ASSERT(bunch.size() == 3);
-  DMITIGR_ASSERT(bunch[0].extra().field_count() == 1);
-  DMITIGR_ASSERT(bunch[1].extra().field_count() == 2);
-  DMITIGR_ASSERT(bunch[2].extra().field_count() == 1);
+  DMITIGR_ASSERT(bunch[0].extra().size() == 1);
+  DMITIGR_ASSERT(bunch[1].extra().size() == 2);
+  DMITIGR_ASSERT(bunch[2].extra().size() == 1);
   //
   DMITIGR_ASSERT(bunch.statement_index("id", "plus_one") == 0);
   DMITIGR_ASSERT(bunch.statement_index("id", "digit") == 1);
   DMITIGR_ASSERT(bunch.statement_index("id", "any-data") == 2);
-  DMITIGR_ASSERT(bunch[0].extra().field_index("id") == 0);
-  DMITIGR_ASSERT(bunch[1].extra().field_index("id") == 0);
-  DMITIGR_ASSERT(bunch[1].extra().field_index("cond") == 1);
-  DMITIGR_ASSERT(bunch[1].extra().field_index("id") == 0);
+  DMITIGR_ASSERT(bunch[0].extra().index("id") == 0);
+  DMITIGR_ASSERT(bunch[1].extra().index("id") == 0);
+  DMITIGR_ASSERT(bunch[1].extra().index("cond") == 1);
+  DMITIGR_ASSERT(bunch[1].extra().index("id") == 0);
 
   const auto& plus_one = bunch[0];
   auto& digit = bunch[1];
@@ -84,8 +84,10 @@ try {
   // digit
   {
     DMITIGR_ASSERT(digit.has_parameter("cond"));
-    DMITIGR_ASSERT(to<std::string>(digit.extra().data("cond")) == "n > 0\n  AND n < 2");
-    digit.replace("cond", to<std::string_view>(digit.extra().data("cond")));
+    DMITIGR_ASSERT(std::any_cast<std::string>(
+        digit.extra().value("cond")) == "n > 0\n  AND n < 2");
+    digit.replace("cond", *std::any_cast<std::string>(
+        std::addressof(digit.extra().value("cond"))));
     conn->execute([](auto&& row)
     {
       DMITIGR_ASSERT(to<int>(row[0]) == 1);

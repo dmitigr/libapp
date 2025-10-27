@@ -53,7 +53,6 @@
 #include "statement.hpp"
 #include "statement_vector.hpp"
 #include "transaction_guard.hpp"
-#include "tuple.hpp"
 #include "types_fwd.hpp"
 #include "version.hpp"
 #include "lib_version.hpp"

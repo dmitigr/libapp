@@ -15,56 +15,47 @@
 // limitations under the License.
 
 #include "../../base/assert.hpp"
-#include "../../pgfe/conversions.hpp"
-#include "../../pgfe/data.hpp"
-#include "../../pgfe/tuple.hpp"
+#include "../../base/assoc_vector.hpp"
 
 int main()
 {
   try {
-    namespace pgfe = dmitigr::pgfe;
-    using Tuple = pgfe::Tuple<std::pair<std::string, std::unique_ptr<pgfe::Data>>>;
-    Tuple tuple;
-    DMITIGR_ASSERT(tuple.field_count() == 0);
-    DMITIGR_ASSERT(tuple.is_empty());
-    // Modifying the tuple.
-    DMITIGR_ASSERT(tuple.field_count() == 0);
-    tuple.append("foo", nullptr);
-    DMITIGR_ASSERT(tuple.field_count() == 1);
-    DMITIGR_ASSERT(!tuple.is_empty());
-    DMITIGR_ASSERT(tuple.field_name(0) == "foo");
-    DMITIGR_ASSERT(tuple.field_index("foo") == 0);
-    DMITIGR_ASSERT(!tuple.data(0));
-    DMITIGR_ASSERT(!tuple.data("foo"));
-    tuple.set("foo", "foo data");
-    DMITIGR_ASSERT(tuple.data(0));
-    DMITIGR_ASSERT(tuple.data("foo"));
-    DMITIGR_ASSERT(pgfe::to<std::string_view>(tuple[0]) == "foo data");
-    DMITIGR_ASSERT(pgfe::to<std::string_view>(tuple["foo"]) == "foo data");
+    using Avector = dmitigr::Assoc_vector<std::string, std::string>;
+    Avector vec;
+    DMITIGR_ASSERT(vec.size() == 0);
+    DMITIGR_ASSERT(vec.is_empty());
+    // Modifying the vec.
+    DMITIGR_ASSERT(vec.size() == 0);
+    vec.append("foo", "");
+    DMITIGR_ASSERT(vec.size() == 1);
+    DMITIGR_ASSERT(!vec.is_empty());
+    DMITIGR_ASSERT(vec.vector()[0].first == "foo");
+    DMITIGR_ASSERT(vec.index("foo") == 0);
+    DMITIGR_ASSERT(vec.value("foo").empty());
+    vec.value("foo") = "foo data";
+    DMITIGR_ASSERT(!vec.value("foo").empty());
+    DMITIGR_ASSERT(vec.value("foo") == "foo data");
     //
-    DMITIGR_ASSERT(tuple.field_count() == 1);
-    tuple.append("bar", "bar data");
-    DMITIGR_ASSERT(tuple.field_count() == 2);
-    DMITIGR_ASSERT(!tuple.is_empty());
-    DMITIGR_ASSERT(tuple.field_name(1) == "bar");
-    DMITIGR_ASSERT(tuple.field_index("bar") == 1);
-    DMITIGR_ASSERT(tuple.data(1));
-    DMITIGR_ASSERT(tuple.data("bar"));
-    DMITIGR_ASSERT(pgfe::to<std::string_view>(tuple.data(1)) == "bar data");
-    DMITIGR_ASSERT(pgfe::to<std::string_view>(tuple.data("bar")) == "bar data");
+    DMITIGR_ASSERT(vec.size() == 1);
+    vec.append("bar", "bar data");
+    DMITIGR_ASSERT(vec.size() == 2);
+    DMITIGR_ASSERT(!vec.is_empty());
+    DMITIGR_ASSERT(vec.vector()[1].first == "bar");
+    DMITIGR_ASSERT(vec.index("bar") == 1);
+    DMITIGR_ASSERT(!vec.value("bar").empty());
+    DMITIGR_ASSERT(vec.value("bar") == "bar data");
     //
-    tuple.insert("bar", "baz", 1983);
-    DMITIGR_ASSERT(tuple.field_count() == 3);
-    DMITIGR_ASSERT(tuple.data(2));
-    DMITIGR_ASSERT(tuple.data("baz"));
-    DMITIGR_ASSERT(pgfe::to<int>(tuple.data("baz")) == 1983);
-    tuple.remove("foo");
-    DMITIGR_ASSERT(tuple.field_count() == 2);
-    DMITIGR_ASSERT(tuple.field_index("foo") == tuple.field_count());
-    tuple.remove("bar");
-    DMITIGR_ASSERT(tuple.field_count() == 1);
-    DMITIGR_ASSERT(tuple.field_index("bar") == tuple.field_count());
-    DMITIGR_ASSERT(tuple.field_index("baz") != tuple.field_count());
+    vec.insert(vec.index("bar"), "baz", "1983");
+    DMITIGR_ASSERT(vec.size() == 3);
+    DMITIGR_ASSERT(!vec.value("baz").empty());
+    DMITIGR_ASSERT(vec.value("baz") == "1983");
+    vec.remove_each("foo");
+    DMITIGR_ASSERT(vec.size() == 2);
+    DMITIGR_ASSERT(vec.index("foo") == vec.size());
+    vec.remove_each("bar");
+    DMITIGR_ASSERT(vec.size() == 1);
+    DMITIGR_ASSERT(vec.index("bar") == vec.size());
+    DMITIGR_ASSERT(vec.index("baz") != vec.size());
 
     // -------------------------------------------------------------------------
     // Operators
@@ -80,12 +71,12 @@ int main()
       DMITIGR_ASSERT(!(lhs > rhs));             \
       DMITIGR_ASSERT(!(lhs >= rhs))
 
-      Tuple lhs;
+      Avector lhs;
       lhs.append("name", "dima");
-      Tuple rhs;
+      Avector rhs;
       rhs.append("name", "olga");
       ASSERTMENTS;
-      rhs.set("name", pgfe::Data::make("olgaolga"));
+      rhs.value("name") = "olgaolga";
       ASSERTMENTS;
 #undef ASSERTMENTS
     }
@@ -100,13 +91,13 @@ int main()
       DMITIGR_ASSERT(!(lhs > rhs));             \
       DMITIGR_ASSERT(lhs >= rhs)
 
-      Tuple lhs;
+      Avector lhs;
       lhs.append("name", "dima");
-      Tuple rhs;
+      Avector rhs;
       rhs.append("name", "dima");
       ASSERTMENTS;
-      lhs.set("name", "");
-      rhs.set("name", "");
+      lhs.value("name") = "";
+      rhs.value("name") = "";
       ASSERTMENTS;
 #undef ASSERTMENTS
     }
@@ -121,12 +112,12 @@ int main()
       DMITIGR_ASSERT(lhs > rhs);                \
       DMITIGR_ASSERT(lhs >= rhs)
 
-      Tuple lhs;
+      Avector lhs;
       lhs.append("name", "olga");
-      Tuple rhs;
+      Avector rhs;
       rhs.append("name", "dima");
       ASSERTMENTS;
-      lhs.set("name", "olgaolga");
+      lhs.value("name") = "olgaolga";
       ASSERTMENTS;
 #undef ASSERTMENTS
     }

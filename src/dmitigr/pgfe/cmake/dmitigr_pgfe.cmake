@@ -61,7 +61,6 @@ set(dmitigr_pgfe_headers
   statement.hpp
   statement_vector.hpp
   transaction_guard.hpp
-  tuple.hpp
   types_fwd.hpp
   )
 
@@ -130,7 +129,6 @@ if(DMITIGR_LIBS_TESTS)
     benchmark_array_server
     benchmark_statement
     benchmark_statement_replace
-    composite
     connection
     connection_deferrable
     connection-err_in_mid

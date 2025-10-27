@@ -78,11 +78,11 @@ DMITIGR_PGFE_INLINE std::size_t Statement_vector::statement_index(
       b + static_cast<Diff>(sz)), e,
     [&extra_name, &extra_value, extra_offset](const auto& statement)
     {
-      if (const auto& extra = statement.extra();
-        extra_offset < extra.field_count()) {
-        const auto index = extra.field_index(extra_name, extra_offset);
-        return (index < extra.field_count()) &&
-          (to<std::string_view>(extra.data(index)) == extra_value);
+      if (const auto& extra = statement.extra(); extra_offset < extra.size()) {
+        const auto index = extra.index(extra_name, extra_offset);
+        return (index < extra.size()) &&
+          *std::any_cast<std::string>(
+            std::addressof(extra.vector()[index].second)) == extra_value;
       } else
         return false;
     });

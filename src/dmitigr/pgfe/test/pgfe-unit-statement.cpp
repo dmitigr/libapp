@@ -58,16 +58,16 @@ int main()
       DMITIGR_ASSERT(!st.is_empty());
       DMITIGR_ASSERT(st.is_query_empty());
 
-      st.extra().append("description", pgfe::Data::make("This is an unknown query"));
-      DMITIGR_ASSERT(st.extra().field_count() == 1);
-      DMITIGR_ASSERT(st.extra().field_index("description") != st.extra().field_count());
-      DMITIGR_ASSERT(st.extra().data("description"));
+      st.extra().append("description", std::string{"This is an unknown query"});
+      DMITIGR_ASSERT(st.extra().size() == 1);
+      DMITIGR_ASSERT(st.extra().index("description") != st.extra().size());
+      DMITIGR_ASSERT(st.extra().value("description").has_value());
 
       st.append("SELECT 1");
-      DMITIGR_ASSERT(st.extra().field_count() == 2);
-      DMITIGR_ASSERT(st.extra().field_index("id") != st.extra().field_count());
-      DMITIGR_ASSERT(st.extra().data("id"));
-      DMITIGR_ASSERT(pgfe::to<std::string>(st.extra().data("id")) == "unknown-query");
+      DMITIGR_ASSERT(st.extra().size() == 2);
+      DMITIGR_ASSERT(st.extra().index("id") != st.extra().size());
+      DMITIGR_ASSERT(st.extra().value("id").has_value());
+      DMITIGR_ASSERT(std::any_cast<std::string>(st.extra().value("id")) == "unknown-query");
     }
 
     {

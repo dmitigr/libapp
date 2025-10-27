@@ -509,10 +509,10 @@ Statement::to_query_string(const Connection& conn) const
 struct Statement::Extra final {
 public:
   /// Denotes the key type of the associated data.
-  using Key = std::string;
+  using Key = Statement::Extra_data::Key;
 
   /// Denotes the value type of the associated data.
-  using Value = std::unique_ptr<Data>;
+  using Value = Statement::Extra_data::Value;
 
   /// Denotes the fragment type.
   using Fragment = Statement::Fragment;
@@ -608,8 +608,7 @@ private:
              */
             state = top;
             result.emplace_back(std::move(dollar_quote_leading_tag_name),
-              Data::make(cleaned_content(std::move(content), comment_type),
-                Data_format::text));
+              cleaned_content(std::move(content), comment_type));
             content = {};
             dollar_quote_leading_tag_name = {};
           } else
@@ -881,22 +880,20 @@ private:
   }
 };
 
-DMITIGR_PGFE_INLINE const Tuple<std::pair<std::string, std::unique_ptr<Data>>>&
-Statement::extra() const noexcept
+DMITIGR_PGFE_INLINE auto Statement::extra() const noexcept -> const Extra_data&
 {
   if (!extra_)
     extra_.emplace(Extra::extract(fragments_));
   else if (is_extra_data_should_be_extracted_from_comments_)
-    extra_->append(Tuple{Extra::extract(fragments_)});
+    extra_->append(Extra_data{Extra::extract(fragments_)});
   is_extra_data_should_be_extracted_from_comments_ = false;
   assert(is_invariant_ok());
   return *extra_;
 }
 
-DMITIGR_PGFE_INLINE Tuple<std::pair<std::string, std::unique_ptr<Data>>>&
-Statement::extra() noexcept
+DMITIGR_PGFE_INLINE auto Statement::extra() noexcept -> Extra_data&
 {
-  return const_cast<Tuple<std::pair<std::string, std::unique_ptr<Data>>>&>(static_cast<const Statement*>(this)->extra());
+  return const_cast<Extra_data&>(static_cast<const Statement*>(this)->extra());
 }
 
 DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const

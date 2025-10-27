@@ -17,12 +17,13 @@
 #ifndef DMITIGR_PGFE_STATEMENT_HPP
 #define DMITIGR_PGFE_STATEMENT_HPP
 
+#include "../base/assoc_vector.hpp"
 #include "basics.hpp"
 #include "dll.hpp"
 #include "parameterizable.hpp"
-#include "tuple.hpp"
 #include "types_fwd.hpp"
 
+#include <any>
 #include <cctype>
 #include <cstdint>
 #include <list>
@@ -70,6 +71,9 @@ namespace dmitigr::pgfe {
  */
 class Statement final : public Parameterizable {
 public:
+  /// An alias of extra data.
+  using Extra_data = Assoc_vector<std::string, std::any>;
+
   /// @name Constructors
   /// @{
 
@@ -408,10 +412,10 @@ public:
   /// @endcode
   ///
   /// The content of the `text3` association is "one\n two\n three".
-  DMITIGR_PGFE_API const Tuple<std::pair<std::string, std::unique_ptr<Data>>>& extra() const noexcept;
+  DMITIGR_PGFE_API const Extra_data& extra() const noexcept;
 
   /// @overload
-  DMITIGR_PGFE_API Tuple<std::pair<std::string, std::unique_ptr<Data>>>& extra() noexcept;
+  DMITIGR_PGFE_API Extra_data& extra() noexcept;
 
   /**
    * @brief Tests instances on equivalency.
@@ -487,7 +491,7 @@ private:
   std::vector<bool> positional_parameters_; // cache
   std::vector<Fragment_list::const_iterator> named_parameters_; // cache
   mutable bool is_extra_data_should_be_extracted_from_comments_{true};
-  mutable std::optional<Tuple<std::pair<std::string, std::unique_ptr<Data>>>> extra_; // cache
+  mutable std::optional<Extra_data> extra_; // cache
 
   static std::pair<Statement, std::string_view::size_type>
   parse_sql_input(std::string_view);
