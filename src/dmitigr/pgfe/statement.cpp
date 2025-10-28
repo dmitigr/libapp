@@ -920,7 +920,7 @@ DMITIGR_PGFE_INLINE Statement Statement::match(const Statement& pattern) const
 }
 
 DMITIGR_PGFE_INLINE std::unordered_map<std::string, std::string>
-Statement::matching_bindings(const Statement& pattern) const
+Statement::matchings(const Statement& pattern) const
 {
   throw "not implemented yet";
 }
