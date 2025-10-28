@@ -880,7 +880,7 @@ private:
   }
 };
 
-DMITIGR_PGFE_INLINE auto Statement::extra() const noexcept -> const Extra_data&
+DMITIGR_PGFE_INLINE auto Statement::extra() const -> const Extra_data&
 {
   if (!extra_)
     extra_.emplace(Extra::extract(fragments_));
@@ -891,7 +891,7 @@ DMITIGR_PGFE_INLINE auto Statement::extra() const noexcept -> const Extra_data&
   return *extra_;
 }
 
-DMITIGR_PGFE_INLINE auto Statement::extra() noexcept -> Extra_data&
+DMITIGR_PGFE_INLINE auto Statement::extra() -> Extra_data&
 {
   return const_cast<Extra_data&>(static_cast<const Statement*>(this)->extra());
 }

@@ -412,10 +412,10 @@ public:
   /// @endcode
   ///
   /// The content of the `text3` association is "one\n two\n three".
-  DMITIGR_PGFE_API const Extra_data& extra() const noexcept;
+  DMITIGR_PGFE_API const Extra_data& extra() const;
 
   /// @overload
-  DMITIGR_PGFE_API Extra_data& extra() noexcept;
+  DMITIGR_PGFE_API Extra_data& extra();
 
   /**
    * @brief Tests instances on equivalency.
