@@ -418,13 +418,22 @@ public:
   DMITIGR_PGFE_API Extra_data& extra();
 
   /**
-   * @brief Tests instances on equivalency.
+   * @brief Tests instances on samelency.
    *
-   * @details Statements are equivalent if all theirs parts, except comments,
-   * being normalized are equal.
+   * @details Statements are same if all theirs parts, except comments and
+   * named parameters, being normalized are equal.
    *
    * @returns `true` if this instance equivalents to `rhs`.
    */
+  DMITIGR_PGFE_API bool is_same(const Statement& rhs) const;
+
+  /**
+   * @returns `true` if the named parameters of this statement are equals to the
+   * named parameters of `rhs`.
+   */
+  DMITIGR_PGFE_API bool is_named_parameters_equal(const Statement& rhs) const;
+
+  /// @returns `is_same(rhs) && is_named_parameters_equal(rhs)`.
   DMITIGR_PGFE_API bool is_equal(const Statement& rhs) const;
 
   /**

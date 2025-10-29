@@ -901,7 +901,7 @@ DMITIGR_PGFE_INLINE auto Statement::extra() -> Extra_data&
   return const_cast<Extra_data&>(static_cast<const Statement*>(this)->extra());
 }
 
-DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const
+DMITIGR_PGFE_INLINE bool Statement::is_same(const Statement& rhs) const
 {
   normalize();
   rhs.normalize();
@@ -911,12 +911,28 @@ DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const
   const auto re = rhs_frags.cend();
   for (auto li = frags.cbegin(), ri = rhs_frags.cbegin();; ++li, ++ri) {
     if (li != le && ri != re) {
-      if (!li->norm_equal(*ri))
+      if (!li->is_named_parameter() && !li->norm_equal(*ri))
         return false;
     } else
       return li == le && ri == re;
   }
   return true;
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::is_named_parameters_equal(const Statement& rhs) const
+{
+  return equal(named_parameters_.cbegin(), named_parameters_.cend(),
+    rhs.named_parameters_.cbegin(), rhs.named_parameters_.cend(),
+    [](const auto& li, const auto& ri) noexcept
+    {
+      return li->str == ri->str;
+    });
+}
+
+DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const
+{
+  return is_same(rhs) && is_named_parameters_equal(rhs);
 }
 
 DMITIGR_PGFE_INLINE Statement Statement::match(const Statement& pattern) const
