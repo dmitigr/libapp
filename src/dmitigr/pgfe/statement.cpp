@@ -780,7 +780,6 @@ private:
   std::pair<Fragment_list::const_iterator, Fragment_list::const_iterator>
   static first_related_comments(const Fragment_list& fragments)
   {
-    using Ft = Fragment::Type;
     const auto b = cbegin(fragments);
     const auto e = cend(fragments);
     auto result = std::make_pair(e, e);
