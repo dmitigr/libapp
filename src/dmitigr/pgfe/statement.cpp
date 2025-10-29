@@ -935,12 +935,7 @@ DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const
   return is_same(rhs) && is_named_parameters_equal(rhs);
 }
 
-DMITIGR_PGFE_INLINE Statement Statement::match(const Statement& pattern) const
-{
-  throw "not implemented yet";
-}
-
-DMITIGR_PGFE_INLINE std::unordered_map<std::string, std::string>
+DMITIGR_PGFE_INLINE std::optional<std::unordered_map<std::string, std::string>>
 Statement::matchings(const Statement& pattern) const
 {
   throw "not implemented yet";

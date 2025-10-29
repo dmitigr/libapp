@@ -439,24 +439,12 @@ public:
   /**
    * @brief Matches this statement with `pattern`.
    *
-   * @returns The statement with bindings according to the named parameters of
-   * the `pattern`, or empty statement if this statement is empty or not matches
-   * the `pattern`.
-   *
-   * @see bind().
-   */
-  DMITIGR_PGFE_API Statement match(const Statement& pattern) const;
-
-  /**
-   * @brief Matches this statement with `pattern`.
-   *
    * @returns The map with matchings according to the named parameters of the
-   * `pattern`, or empty map if this statement is empty or not matches the
-   * `pattern`.
+   * `pattern`, or `std::nullopt` if this statement doesn't matches the `pattern`.
    *
    * @see bind().
    */
-  DMITIGR_PGFE_API std::unordered_map<std::string, std::string>
+  DMITIGR_PGFE_API std::optional<std::unordered_map<std::string, std::string>>
   matchings(const Statement& pattern) const;
 
 private:
