@@ -1543,9 +1543,10 @@ Statement::parse_sql_input(const std::string_view text)
     result.push_positional_parameter(fragment);
     break;
   default: {
-    std::string message{"invalid SQL input"};
+    std::string message{"invalid SQL input:\n"};
+    message.append(text);
     if (!result.fragments_.empty())
-      message.append(" after: ").append(result.fragments_.back().str);
+      message.append("\nafter: ").append(result.fragments_.back().str);
     throw Generic_exception{message};
   }
   }
