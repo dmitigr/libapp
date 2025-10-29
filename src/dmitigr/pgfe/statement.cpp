@@ -36,6 +36,12 @@ Statement::Fragment::Fragment(const Type tp, const std::string& s)
 {}
 
 DMITIGR_PGFE_INLINE bool
+Statement::Fragment::is_text() const noexcept
+{
+  return type == Fragment::Type::text;
+}
+
+DMITIGR_PGFE_INLINE bool
 Statement::Fragment::is_named_parameter() const noexcept
 {
   using Ft = Fragment::Type;
@@ -240,7 +246,7 @@ DMITIGR_PGFE_INLINE bool Statement::is_query_empty() const noexcept
   return all_of(cbegin(fragments_), cend(fragments_),
     [this](const Fragment& f)
     {
-      return is_comment(f) || (is_text(f) && str::is_blank(f.str));
+      return f.is_comment() || (f.is_text() && str::is_blank(f.str));
     });
 }
 
@@ -801,14 +807,14 @@ private:
     // Try to find the first fragment with nearby comment.
     auto i = find_if(b, e, [](const Fragment& f)noexcept
     {
-      return !is_comment(f) && is_nearby_string(f.str) && !str::is_blank(f.str);
+      return !f.is_comment() && is_nearby_string(f.str) && !str::is_blank(f.str);
     });
     if (i != b && i != e) {
       result.second = i;
       do {
         --i;
-        DMITIGR_ASSERT(is_comment(*i) || (is_text(*i) && str::is_blank(i->str)));
-        if (is_text(*i)) {
+        DMITIGR_ASSERT(i->is_comment() || (i->is_text() && str::is_blank(i->str)));
+        if (i->is_text()) {
           if (!is_nearby_string(i->str))
             break;
         }
@@ -833,7 +839,7 @@ private:
     const Fragment_list::const_iterator e)
   {
     using Ft = Fragment::Type;
-    DMITIGR_ASSERT(is_comment(*i));
+    DMITIGR_ASSERT(i->is_comment());
     std::string result;
     const auto fragment_type = i->type;
     for (; i->type == fragment_type && i != e; ++i) {
@@ -868,7 +874,7 @@ private:
   {
     std::vector<std::pair<std::string, Extra::Comment_type>> result;
     while (i != e) {
-      if (is_comment(*i)) {
+      if (i->is_comment()) {
         auto comments = joined_comments_of_same_type(i, e);
         result.emplace_back(std::move(comments.first));
         i = comments.second;
@@ -931,10 +937,10 @@ DMITIGR_PGFE_INLINE void Statement::normalize() const
 
   Fragment_list norm_fragments;
   for (const auto& fragment : fragments_) {
-    if (is_text(fragment) &&
-      !norm_fragments.empty() && is_text(norm_fragments.back()))
+    if (fragment.is_text() &&
+      !norm_fragments.empty() && norm_fragments.back().is_text())
       norm_fragments.back().str.append(fragment.str);
-    else if (!is_comment(fragment))
+    else if (!fragment.is_comment())
       norm_fragments.push_back(fragment);
   }
 
@@ -1125,25 +1131,6 @@ DMITIGR_PGFE_INLINE auto Statement::named_parameters() const
 // ---------------------------------------------------------------------------
 // Predicates
 // ---------------------------------------------------------------------------
-
-DMITIGR_PGFE_INLINE bool
-Statement::is_comment(const Fragment& f) noexcept
-{
-  return (f.type == Fragment::Type::one_line_comment) ||
-    (f.type == Fragment::Type::multi_line_comment);
-}
-
-DMITIGR_PGFE_INLINE bool
-Statement::is_text(const Fragment& f) noexcept
-{
-  return f.type == Fragment::Type::text;
-}
-
-DMITIGR_PGFE_INLINE bool
-Statement::is_named_param(const Fragment& f) noexcept
-{
-  return f.type == Fragment::Type::named_parameter;
-}
 
 DMITIGR_PGFE_INLINE bool
 Statement::is_ident_char(const unsigned char c) noexcept

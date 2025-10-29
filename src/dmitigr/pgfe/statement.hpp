@@ -467,6 +467,7 @@ private:
     };
 
     Fragment(const Type tp, const std::string& s);
+    bool is_text() const noexcept;
     bool is_named_parameter() const noexcept;
     bool is_named_parameter(const std::string_view name) const noexcept;
     bool is_quoted_named_parameter() const noexcept;
@@ -532,9 +533,6 @@ private:
   // Predicates
   // ---------------------------------------------------------------------------
 
-  static bool is_comment(const Fragment& f) noexcept;
-  static bool is_text(const Fragment& f) noexcept;
-  static bool is_named_param(const Fragment& f) noexcept;
   static bool is_ident_char(const unsigned char c) noexcept;
   static bool is_named_param_char(const unsigned char c) noexcept;
   static bool is_quote_char(const unsigned char c) noexcept;
