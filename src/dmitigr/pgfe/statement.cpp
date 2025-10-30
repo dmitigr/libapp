@@ -1285,18 +1285,6 @@ Statement::parse_sql_input(const std::string_view text)
         fragment += current_char;
         continue;
 
-      case '$':
-        if (!is_ident_char(previous_char))
-          state = dollar;
-        else
-          fragment += current_char;
-
-        continue;
-
-      case ':':
-        state = colon;
-        continue;
-
       case '(':
         fragment += current_char;
         result.push_text(fragment_depth, fragment);
@@ -1312,6 +1300,17 @@ Statement::parse_sql_input(const std::string_view text)
           state = invalid;
         else
           fragment += current_char;
+        continue;
+
+      case '$':
+        if (!is_ident_char(previous_char))
+          state = dollar;
+        else
+          fragment += current_char;
+        continue;
+
+      case ':':
+        state = colon;
         continue;
 
       case '-':
@@ -1344,12 +1343,13 @@ Statement::parse_sql_input(const std::string_view text)
           state = dollar_quote_leading_tag;
           dollar_quote_leading_tag_name += current_char;
         }
-        fragment += previous_char;
+        result.push_text(fragment_depth, fragment);
+        fragment.clear();
+        fragment += previous_char; // $
       } else {
         state = top;
-        fragment += previous_char;
+        fragment += previous_char; // $
       }
-
       fragment += current_char;
       continue;
 
@@ -1389,13 +1389,22 @@ Statement::parse_sql_input(const std::string_view text)
         if (dollar_quote_leading_tag_name == dollar_quote_trailing_tag_name) {
           state = top;
           dollar_quote_leading_tag_name.clear();
-        } else
+          dollar_quote_trailing_tag_name.clear();
+          fragment += current_char;
+          result.push_quoted_text(fragment_depth, fragment);
+          fragment.clear();
+          continue;
+        } else {
           state = dollar_quote;
-
-        dollar_quote_trailing_tag_name.clear();
-      } else
+          dollar_quote_trailing_tag_name.clear();
+          goto start;
+        }
+      } else if (is_ident_char(current_char)) {
         dollar_quote_trailing_tag_name += current_char;
-
+      } else {
+        state = dollar_quote;
+        dollar_quote_trailing_tag_name.clear();
+      }
       fragment += current_char;
       continue;
 

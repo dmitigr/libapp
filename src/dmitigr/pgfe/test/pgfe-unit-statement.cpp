@@ -209,6 +209,19 @@ update task_step_log
     }
 
     // -------------------------------------------------------------------------
+    // Parser tests
+    // -------------------------------------------------------------------------
+
+    // Dollar quoting.
+    {
+      const pgfe::Statement s1{"select $$hello $$$"};
+      const pgfe::Statement s2{"select $$hello $a$$"};
+      const pgfe::Statement s3{"select $$hello $a$ $$"};
+      const pgfe::Statement s4{"select $abc$hello $ab$$abc$"};
+    }
+
+
+    // -------------------------------------------------------------------------
     // Comparison
     // -------------------------------------------------------------------------
 
