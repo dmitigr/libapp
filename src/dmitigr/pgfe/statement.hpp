@@ -463,7 +463,7 @@ private:
       positional_parameter
     };
 
-    Fragment(const Type tp, const std::string& s);
+    Fragment(const Type tp, const int depth, const std::string& s);
     bool is_text() const noexcept;
     bool is_named_parameter() const noexcept;
     bool is_named_parameter(const std::string_view name) const noexcept;
@@ -475,6 +475,7 @@ private:
     bool norm_equal(const Fragment& rhs) const;
 
     Type type;
+    int depth{};
     std::string str;
 
   private:
@@ -500,13 +501,13 @@ private:
   // Initializers
   // ---------------------------------------------------------------------------
 
-  void push_back_fragment(const Fragment::Type type, const std::string& str);
-  void push_text(const std::string& str);
-  void push_quoted_text(const std::string& str);
-  void push_one_line_comment(const std::string& str);
-  void push_multi_line_comment(const std::string& str);
-  void push_positional_parameter(const std::string& str);
-  void push_named_parameter(const std::string& str, char quote_char);
+  void push_back_fragment(Fragment::Type type, int depth, const std::string& str);
+  void push_text(int depth, const std::string& str);
+  void push_quoted_text(int depth, const std::string& str);
+  void push_one_line_comment(int depth, const std::string& str);
+  void push_multi_line_comment(int depth, const std::string& str);
+  void push_positional_parameter(int depth, const std::string& str);
+  void push_named_parameter(int depth, const std::string& str, char quote_char);
 
   // ---------------------------------------------------------------------------
   // Updaters

@@ -30,9 +30,10 @@
 namespace dmitigr::pgfe {
 
 DMITIGR_PGFE_INLINE
-Statement::Fragment::Fragment(const Type tp, const std::string& s)
-  : type(tp)
-  , str(s)
+Statement::Fragment::Fragment(const Type tp, const int dp, const std::string& s)
+  : type{tp}
+  , depth{dp}
+  , str{s}
 {}
 
 DMITIGR_PGFE_INLINE bool
@@ -992,42 +993,43 @@ DMITIGR_PGFE_INLINE bool Statement::is_invariant_ok() const noexcept
 // ---------------------------------------------------------------------------
 
 DMITIGR_PGFE_INLINE void
-Statement::push_back_fragment(const Fragment::Type type, const std::string& str)
+Statement::push_back_fragment(const Fragment::Type type,
+  const int depth, const std::string& str)
 {
   if (!str.empty()) {
-    fragments_.emplace_back(type, str);
+    fragments_.emplace_back(type, depth, str);
     assert(is_invariant_ok());
   }
 }
 
 DMITIGR_PGFE_INLINE void
-Statement::push_text(const std::string& str)
+Statement::push_text(const int depth, const std::string& str)
 {
-  push_back_fragment(Fragment::Type::text, str);
+  push_back_fragment(Fragment::Type::text, depth, str);
 }
 
 DMITIGR_PGFE_INLINE void
-Statement::push_quoted_text(const std::string& str)
+Statement::push_quoted_text(const int depth, const std::string& str)
 {
-  push_back_fragment(Fragment::Type::quoted_text, str);
+  push_back_fragment(Fragment::Type::quoted_text, depth, str);
 }
 
 DMITIGR_PGFE_INLINE void
-Statement::push_one_line_comment(const std::string& str)
+Statement::push_one_line_comment(const int depth, const std::string& str)
 {
-  push_back_fragment(Fragment::Type::one_line_comment, str);
+  push_back_fragment(Fragment::Type::one_line_comment, depth, str);
 }
 
 DMITIGR_PGFE_INLINE void
-Statement::push_multi_line_comment(const std::string& str)
+Statement::push_multi_line_comment(const int depth, const std::string& str)
 {
-  push_back_fragment(Fragment::Type::multi_line_comment, str);
+  push_back_fragment(Fragment::Type::multi_line_comment, depth, str);
 }
 
 DMITIGR_PGFE_INLINE void
-Statement::push_positional_parameter(const std::string& str)
+Statement::push_positional_parameter(const int depth, const std::string& str)
 {
-  push_back_fragment(Fragment::Type::positional_parameter, str);
+  push_back_fragment(Fragment::Type::positional_parameter, depth, str);
 
   using Size = std::vector<bool>::size_type;
   const int position = stoi(str);
@@ -1043,7 +1045,8 @@ Statement::push_positional_parameter(const std::string& str)
 }
 
 DMITIGR_PGFE_INLINE void
-Statement::push_named_parameter(const std::string& str, const char quote_char)
+Statement::push_named_parameter(const int depth, const std::string& str,
+  const char quote_char)
 {
   DMITIGR_ASSERT(!quote_char || is_quote_char(quote_char));
   if (parameter_count() < max_parameter_count()) {
@@ -1051,7 +1054,7 @@ Statement::push_named_parameter(const std::string& str, const char quote_char)
     const auto type =
       quote_char == '\'' ? Ft::named_parameter_literal :
       quote_char == '\"' ? Ft::named_parameter_identifier : Ft::named_parameter;
-    push_back_fragment(type, str);
+    push_back_fragment(type, depth, str);
     if (none_of(cbegin(named_parameters_), cend(named_parameters_),
         [&str](const auto& i){return (i->str == str);})) {
       auto e = cend(fragments_);
@@ -1231,6 +1234,8 @@ DMITIGR_PGFE_INLINE std::pair<Statement, std::string_view::size_type>
 Statement::parse_sql_input(const std::string_view text)
 {
   enum {
+    invalid,
+
     top,
 
     colon,
@@ -1255,6 +1260,7 @@ Statement::parse_sql_input(const std::string_view text)
 
   Statement result;
   int depth{};
+  int fragment_depth{};
   char current_char{};
   char previous_char{};
   char quote_char{};
@@ -1274,7 +1280,7 @@ Statement::parse_sql_input(const std::string_view text)
       case '"':
         state = quote;
         quote_char = current_char;
-        result.push_text(fragment);
+        result.push_text(fragment_depth, fragment);
         fragment.clear();
         fragment += current_char;
         continue;
@@ -1289,6 +1295,23 @@ Statement::parse_sql_input(const std::string_view text)
 
       case ':':
         state = colon;
+        continue;
+
+      case '(':
+        fragment += current_char;
+        result.push_text(fragment_depth, fragment);
+        fragment.clear();
+        ++fragment_depth;
+        continue;
+
+      case ')':
+        result.push_text(fragment_depth, fragment);
+        fragment.clear();
+        --fragment_depth;
+        if (fragment_depth < 0)
+          state = invalid;
+        else
+          fragment += current_char;
         continue;
 
       case '-':
@@ -1311,7 +1334,7 @@ Statement::parse_sql_input(const std::string_view text)
       DMITIGR_ASSERT(previous_char == '$');
       if (std::isdigit(static_cast<unsigned char>(current_char))) {
         state = positional_parameter;
-        result.push_text(fragment);
+        result.push_text(fragment_depth, fragment);
         fragment.clear();
         // The 1st digit of positional parameter (current_char) will be stored below.
       } else if (is_ident_char(current_char)) {
@@ -1334,14 +1357,13 @@ Statement::parse_sql_input(const std::string_view text)
       DMITIGR_ASSERT(isdigit(static_cast<unsigned char>(previous_char)));
       if (!isdigit(static_cast<unsigned char>(current_char))) {
         state = top;
-        result.push_positional_parameter(fragment);
+        result.push_positional_parameter(fragment_depth, fragment);
         fragment.clear();
       }
 
-      if (current_char != ';') {
-        fragment += current_char;
-        continue;
-      } else
+      if (current_char != ';')
+        goto start;
+      else
         goto finish;
 
     case dollar_quote_leading_tag:
@@ -1381,7 +1403,7 @@ Statement::parse_sql_input(const std::string_view text)
       DMITIGR_ASSERT(previous_char == ':');
       if (current_char == '{' || is_quote_char(current_char)) {
         state = named_parameter;
-        result.push_text(fragment);
+        result.push_text(fragment_depth, fragment);
         fragment.clear();
         if (is_quote_char(current_char))
           quote_char = current_char;
@@ -1403,7 +1425,7 @@ Statement::parse_sql_input(const std::string_view text)
       else if (!is_named_param_char(current_char)) {
         if (current_char == '}' || current_char == quote_char) {
           state = top;
-          result.push_named_parameter(fragment, quote_char);
+          result.push_named_parameter(fragment_depth, fragment, quote_char);
           fragment.clear();
           quote_char = 0;
           continue;
@@ -1427,7 +1449,7 @@ Statement::parse_sql_input(const std::string_view text)
         state = top;
         quote_char = 0;
         fragment += previous_char; // store previous quote
-        result.push_quoted_text(fragment);
+        result.push_quoted_text(fragment_depth, fragment);
         fragment.clear();
         goto start;
       } else {
@@ -1440,7 +1462,7 @@ Statement::parse_sql_input(const std::string_view text)
       DMITIGR_ASSERT(previous_char == '-');
       if (current_char == '-') {
         state = one_line_comment;
-        result.push_text(fragment);
+        result.push_text(fragment_depth, fragment);
         fragment.clear();
         // The comment marker ("--") will not be included in the next fragment.
       } else {
@@ -1461,7 +1483,7 @@ Statement::parse_sql_input(const std::string_view text)
         state = top;
         if (!fragment.empty() && fragment.back() == '\r')
           fragment.pop_back();
-        result.push_one_line_comment(fragment);
+        result.push_one_line_comment(fragment_depth, fragment);
         fragment.clear();
       } else
         fragment += current_char;
@@ -1476,7 +1498,7 @@ Statement::parse_sql_input(const std::string_view text)
           fragment += previous_char;
           fragment += current_char;
         } else {
-          result.push_text(fragment);
+          result.push_text(fragment_depth, fragment);
           fragment.clear();
           // The comment marker ("/*") will not be included in the next fragment.
         }
@@ -1505,7 +1527,8 @@ Statement::parse_sql_input(const std::string_view text)
         --depth;
         if (depth == 0) {
           state = top;
-          result.push_multi_line_comment(fragment); // without trailing "*/"
+          // Without trailing "*/".
+          result.push_multi_line_comment(fragment_depth, fragment);
           fragment.clear();
         } else {
           state = multi_line_comment;
@@ -1519,32 +1542,37 @@ Statement::parse_sql_input(const std::string_view text)
       }
 
       continue;
+
+    case invalid:
+      goto finish;
     } // switch (state)
   } // for
 
  finish:
+  if (fragment_depth != 0)
+    state = invalid;
   switch (state) {
   case top:
     if (current_char == ';')
       ++i;
     if (!fragment.empty())
-      result.push_text(fragment);
+      result.push_text(fragment_depth, fragment);
     break;
   case quote_quote:
     fragment += previous_char;
-    result.push_text(fragment);
+    result.push_text(fragment_depth, fragment);
     break;
   case one_line_comment:
-    result.push_one_line_comment(fragment);
+    result.push_one_line_comment(fragment_depth, fragment);
     break;
   case positional_parameter:
-    result.push_positional_parameter(fragment);
+    result.push_positional_parameter(fragment_depth, fragment);
     break;
   default: {
     std::string message{"invalid SQL input:\n"};
     message.append(text);
     if (!result.fragments_.empty())
-      message.append("\nafter: ").append(result.fragments_.back().str);
+      message.append("\n  after: ").append(result.fragments_.back().str);
     throw Generic_exception{message};
   }
   }
