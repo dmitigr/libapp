@@ -17,7 +17,6 @@
 #include "../base/assert.hpp"
 #include "../str/predicate.hpp"
 #include "connection.hpp"
-#include "data.hpp"
 #include "exceptions.hpp"
 #include "statement.hpp"
 
