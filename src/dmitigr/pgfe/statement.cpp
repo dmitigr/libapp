@@ -1259,7 +1259,7 @@ Statement::parse_sql_input(const std::string_view text)
   } state = top;
 
   Statement result;
-  int depth{};
+  int multi_line_comment_depth{};
   int fragment_depth{};
   char current_char{};
   char previous_char{};
@@ -1494,45 +1494,43 @@ Statement::parse_sql_input(const std::string_view text)
         fragment.clear();
       } else
         fragment += current_char;
-
       continue;
 
     case slash:
       DMITIGR_ASSERT(previous_char == '/');
       if (current_char == '*') {
         state = multi_line_comment;
-        if (depth > 0) {
-          fragment += previous_char;
+        if (multi_line_comment_depth > 0) {
+          fragment += previous_char; // '/'
           fragment += current_char;
         } else {
           result.push_text(fragment_depth, fragment);
           fragment.clear();
           // The comment marker ("/*") will not be included in the next fragment.
         }
-        ++depth;
+        ++multi_line_comment_depth;
       } else {
-        state = (depth == 0) ? top : multi_line_comment;
-        fragment += previous_char;
+        state = (multi_line_comment_depth == 0) ? top : multi_line_comment;
+        fragment += previous_char; // '/'
         fragment += current_char;
       }
-
       continue;
 
     case multi_line_comment:
-      if (current_char == '/') {
+      if (current_char == '/')
         state = slash;
-      } else if (current_char == '*') {
+      else if (current_char == '*')
         state = multi_line_comment_star;
-      } else
+      else
         fragment += current_char;
-
       continue;
 
     case multi_line_comment_star:
       DMITIGR_ASSERT(previous_char == '*');
       if (current_char == '/') {
-        --depth;
-        if (depth == 0) {
+        --multi_line_comment_depth;
+        DMITIGR_ASSERT(multi_line_comment_depth >= 0);
+        if (multi_line_comment_depth == 0) {
           state = top;
           // Without trailing "*/".
           result.push_multi_line_comment(fragment_depth, fragment);
@@ -1547,7 +1545,6 @@ Statement::parse_sql_input(const std::string_view text)
         fragment += previous_char;
         fragment += current_char;
       }
-
       continue;
 
     case invalid:
