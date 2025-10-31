@@ -593,11 +593,11 @@ private:
         }
         continue;
       case dollar_quote_leading_tag:
-        if (current_char == '$') {
+        if (current_char == '$')
           state = dollar_quote;
-        } else if (is_valid_tag_char(current_char)) {
+        else if (is_valid_tag_char(current_char))
           dollar_quote_leading_tag_name += current_char;
-        } else
+        else
           throw Generic_exception{"invalid dollar quote tag"};
         continue;
       case dollar_quote:
