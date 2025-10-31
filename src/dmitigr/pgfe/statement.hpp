@@ -474,8 +474,8 @@ private:
     const std::string& norm_str() const;
     bool norm_equal(const Fragment& rhs) const;
 
-    const Type type;
-    const int depth{};
+    Type type;
+    int depth{};
     std::string str;
 
   private:
@@ -483,7 +483,7 @@ private:
   };
 
   struct Named_parameter final {
-    const Fragment::Type type;
+    Fragment::Type type;
     std::string name;
     bool operator<=>(const Named_parameter&) const noexcept = default;
   };

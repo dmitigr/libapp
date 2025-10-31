@@ -114,9 +114,8 @@ bool Statement::Fragment::norm_equal(const Fragment& rhs) const
 // =============================================================================
 
 DMITIGR_PGFE_INLINE Statement::Statement(const std::string_view text)
+  : Statement{parse_sql_input(text).first}
 {
-  auto s = parse_sql_input(text).first;
-  swap(s);
   assert(is_invariant_ok());
 }
 
