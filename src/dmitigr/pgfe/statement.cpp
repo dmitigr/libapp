@@ -127,7 +127,7 @@ DMITIGR_PGFE_INLINE Statement::Statement(const std::string& text)
 {}
 
 DMITIGR_PGFE_INLINE Statement::Statement(const char* const text)
-  : Statement{std::string_view{text, std::strlen(text)}}
+  : Statement{std::string_view{text}}
 {}
 
 DMITIGR_PGFE_INLINE Statement& Statement::operator=(const Statement& rhs)
