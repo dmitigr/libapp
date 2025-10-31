@@ -1478,13 +1478,11 @@ Statement::parse_sql_input(const std::string_view text)
         state = top;
         fragment += previous_char;
 
-        if (current_char != ';') {
-          fragment += current_char;
-          continue;
-        } else
+        if (current_char != ';')
+          goto start;
+        else
           goto finish;
       }
-
       continue;
 
     case one_line_comment:
