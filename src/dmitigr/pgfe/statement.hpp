@@ -100,19 +100,19 @@ public:
   DMITIGR_PGFE_API Statement(const char* text);
 
   /// Copy-constructible.
-  DMITIGR_PGFE_API Statement(const Statement& rhs);
+  DMITIGR_PGFE_API Statement(const Statement&) = default;
 
   /// Copy-assignable.
-  DMITIGR_PGFE_API Statement& operator=(const Statement& rhs);
+  DMITIGR_PGFE_API Statement& operator=(const Statement&);
 
   /// Move-constructible.
-  DMITIGR_PGFE_API Statement(Statement&& rhs) noexcept;
+  DMITIGR_PGFE_API Statement(Statement&&) noexcept = default;
 
   /// Move-assignable.
-  DMITIGR_PGFE_API Statement& operator=(Statement&& rhs) noexcept;
+  DMITIGR_PGFE_API Statement& operator=(Statement&&) noexcept;
 
   /// Swaps the instances.
-  DMITIGR_PGFE_API void swap(Statement& rhs) noexcept;
+  DMITIGR_PGFE_API void swap(Statement&) noexcept;
 
   /// @}
 
@@ -464,6 +464,7 @@ private:
     };
 
     Fragment(const Type tp, const int depth, const std::string& s);
+
     bool is_text() const noexcept;
     bool is_named_parameter() const noexcept;
     bool is_named_parameter(const std::string_view name) const noexcept;
@@ -474,12 +475,18 @@ private:
     const std::string& norm_str() const;
     bool norm_equal(const Fragment& rhs) const;
 
-    Type type;
-    int depth{};
+    const Type type;
+    const int depth{};
     std::string str;
 
   private:
     mutable std::string norm_;
+  };
+
+  struct Named_parameter final {
+    const Fragment::Type type;
+    std::string name;
+    bool operator<=>(const Named_parameter&) const noexcept = default;
   };
 
   using Fragment_list = std::list<Fragment>;
@@ -488,7 +495,7 @@ private:
   mutable Fragment_list norm_fragments_; // cache
   std::unordered_map<std::string, std::string> bindings_;
   std::vector<bool> positional_parameters_; // cache
-  std::vector<Fragment_list::const_iterator> named_parameters_; // cache
+  std::vector<Named_parameter> named_parameters_; // cache
   mutable bool is_extra_data_should_be_extracted_from_comments_{true};
   mutable std::optional<Extra_data> extra_; // cache
 
@@ -525,7 +532,7 @@ private:
 
   Fragment::Type named_parameter_type(const std::size_t index) const noexcept;
   std::size_t named_parameter_index(const std::string_view name) const noexcept;
-  std::vector<Fragment_list::const_iterator> named_parameters() const;
+  std::vector<Named_parameter> named_parameters() const;
 
   // ---------------------------------------------------------------------------
   // Predicates

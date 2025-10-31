@@ -131,18 +131,6 @@ DMITIGR_PGFE_INLINE Statement::Statement(const char* const text)
   : Statement{std::string_view{text, std::strlen(text)}}
 {}
 
-DMITIGR_PGFE_INLINE Statement::Statement(const Statement& rhs)
-  : fragments_{rhs.fragments_}
-  , norm_fragments_{rhs.norm_fragments_}
-  , bindings_{rhs.bindings_}
-  , positional_parameters_{rhs.positional_parameters_}
-  , is_extra_data_should_be_extracted_from_comments_{
-      rhs.is_extra_data_should_be_extracted_from_comments_}
-  , extra_{rhs.extra_}
-{
-  named_parameters_ = named_parameters();
-}
-
 DMITIGR_PGFE_INLINE Statement& Statement::operator=(const Statement& rhs)
 {
   if (this != &rhs) {
@@ -150,18 +138,6 @@ DMITIGR_PGFE_INLINE Statement& Statement::operator=(const Statement& rhs)
     swap(tmp);
   }
   return *this;
-}
-
-DMITIGR_PGFE_INLINE Statement::Statement(Statement&& rhs) noexcept
-  : fragments_{std::move(rhs.fragments_)}
-  , norm_fragments_{std::move(rhs.norm_fragments_)}
-  , bindings_{std::move(rhs.bindings_)}
-  , positional_parameters_{std::move(rhs.positional_parameters_)}
-  , is_extra_data_should_be_extracted_from_comments_{
-      std::move(rhs.is_extra_data_should_be_extracted_from_comments_)}
-  , extra_{std::move(rhs.extra_)}
-{
-  named_parameters_ = named_parameters();
 }
 
 DMITIGR_PGFE_INLINE Statement& Statement::operator=(Statement&& rhs) noexcept
@@ -228,7 +204,7 @@ Statement::parameter_name(const std::size_t index) const
 {
   if (!((positional_parameter_count() <= index) && (index < parameter_count())))
     throw Generic_exception{"cannot get Statement parameter name"};
-  return named_parameters_[index - positional_parameter_count()]->str;
+  return named_parameters_[index - positional_parameter_count()].name;
 }
 
 DMITIGR_PGFE_INLINE std::size_t
@@ -923,12 +899,7 @@ DMITIGR_PGFE_INLINE bool Statement::is_same(const Statement& rhs) const
 DMITIGR_PGFE_INLINE bool
 Statement::is_named_parameters_equal(const Statement& rhs) const
 {
-  return equal(named_parameters_.cbegin(), named_parameters_.cend(),
-    rhs.named_parameters_.cbegin(), rhs.named_parameters_.cend(),
-    [](const auto& li, const auto& ri) noexcept
-    {
-      return li->str == ri->str;
-    });
+  return named_parameters_ == rhs.named_parameters_;
 }
 
 DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const
@@ -1056,11 +1027,8 @@ Statement::push_named_parameter(const int depth, const std::string& str,
       quote_char == '\"' ? Ft::named_parameter_identifier : Ft::named_parameter;
     push_back_fragment(type, depth, str);
     if (none_of(cbegin(named_parameters_), cend(named_parameters_),
-        [&str](const auto& i){return (i->str == str);})) {
-      auto e = cend(fragments_);
-      --e;
-      named_parameters_.push_back(e);
-    }
+        [&str](const auto& param)noexcept{return param.name == str;}))
+      named_parameters_.emplace_back(type, str);
   } else
     throw Generic_exception{"maximum parameters count (" +
       std::to_string(max_parameter_count()) + ") exceeded"};
@@ -1110,7 +1078,7 @@ Statement::named_parameter_type(const std::size_t index) const noexcept
 {
   DMITIGR_ASSERT(positional_parameter_count() <= index && index < parameter_count());
   const auto relative_index = index - positional_parameter_count();
-  return named_parameters_[relative_index]->type;
+  return named_parameters_[relative_index].type;
 }
 
 DMITIGR_PGFE_INLINE std::size_t
@@ -1120,23 +1088,27 @@ Statement::named_parameter_index(const std::string_view name) const noexcept
   {
     const auto b = cbegin(named_parameters_);
     const auto e = cend(named_parameters_);
-    const auto i = find_if(b, e, [name](const auto& pi){return pi->str == name;});
+    const auto i = find_if(b, e, [name](const auto& p) noexcept
+    {
+      return p.name == name;
+    });
     return static_cast<std::size_t>(i - b);
   }();
   return positional_parameter_count() + relative_index;
 }
 
-DMITIGR_PGFE_INLINE auto Statement::named_parameters() const
-  -> std::vector<Fragment_list::const_iterator>
+DMITIGR_PGFE_INLINE auto
+Statement::named_parameters() const -> std::vector<Named_parameter>
 {
-  std::vector<Fragment_list::const_iterator> result;
-  result.reserve(8);
+  std::vector<Named_parameter> result;
+  result.reserve(fragments_.size() -
+    (!fragments_.empty() && !fragments_.front().is_named_parameter()));
   const auto e = cend(fragments_);
   for (auto i = cbegin(fragments_); i != e; ++i) {
     if (i->is_named_parameter()) {
       if (none_of(cbegin(result), cend(result),
-          [i](const auto& result_i){return i->str == result_i->str;}))
-        result.push_back(i);
+          [i](const auto& param) noexcept { return param.name == i->str; }))
+        result.emplace_back(i->type, i->str);
     }
   }
   return result;
