@@ -335,7 +335,8 @@ DMITIGR_PGFE_INLINE void
 Statement::replace(const std::string_view name, const Statement& replacement)
 {
   if (!(has_parameter(name) && (this != &replacement)))
-    throw Generic_exception{"cannot replace Statement parameter "+std::string{name}};
+    throw Generic_exception{"cannot replace Statement parameter " +
+      std::string{name}};
 
   // Update fragments.
   for (auto fi = begin(fragments_); fi != end(fragments_);) {
@@ -358,7 +359,7 @@ DMITIGR_PGFE_INLINE std::string Statement::to_string() const
 {
   using Ft = Fragment::Type;
   std::string result;
-  result.reserve(512);
+  result.reserve(2048);
   for (const auto& fragment : fragments_) {
     switch (fragment.type) {
     case Ft::text:
@@ -539,8 +540,8 @@ private:
    * @param input An input string with comments.
    * @param comment_type A type of comments in the `input`.
    */
-  static std::vector<std::pair<Key, Value>> extract(const std::string_view input,
-    const Comment_type comment_type)
+  static std::vector<std::pair<Key, Value>>
+  extract(const std::string_view input, const Comment_type comment_type)
   {
     enum { top, dollar, dollar_quote_leading_tag,
       dollar_quote, dollar_quote_dollar } state = top;
@@ -604,7 +605,8 @@ private:
     }
 
     if (state != top)
-      throw Generic_exception{"invalid comment block:\n" + std::string{input}};
+      throw Generic_exception{"invalid comment block:\n" +
+        std::string{input}};
 
     return result;
   }
@@ -823,7 +825,7 @@ private:
       if (fragment_type == Ft::one_line_comment)
         result.append("\n");
     }
-    const auto comment_type = [](const Ft ft)
+    const auto comment_type = [](const Ft ft) noexcept
     {
       switch (ft) {
       case Ft::one_line_comment:
@@ -834,7 +836,8 @@ private:
         DMITIGR_ASSERT(false);
       }
     };
-    return std::make_pair(std::make_pair(result, comment_type(fragment_type)), i);
+    return std::make_pair(
+      std::make_pair(std::move(result), comment_type(fragment_type)), i);
   }
 
   /**
