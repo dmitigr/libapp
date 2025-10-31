@@ -22,9 +22,7 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstring>
-#include <memory>
-#include <stdexcept>
+#include <cctype>
 
 namespace dmitigr::pgfe {
 
