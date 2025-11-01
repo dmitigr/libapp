@@ -636,7 +636,7 @@ private:
       }
     }
 
-    // Calculating the result depending on the comment type.
+    // Calculate the result depending on the comment type.
     switch (comment_type) {
     case Comment_type::multi_line:
       if (min_indent_to_border) {
@@ -669,7 +669,7 @@ private:
   {
     std::string result;
 
-    // Removing the indentation characters (if any).
+    // Remove the indentation characters (if any).
     if (const std::size_t isize = indent_size(content, comment_type); isize > 0) {
       std::size_t count{};
       enum { eating, skiping } state = eating;
@@ -694,10 +694,7 @@ private:
     } else
       result.swap(content);
 
-    /*
-     * Trimming the result string: remove the most leading and the most trailing
-     * newline-characters.
-     */
+    // Trim the most leading and the most trailing newline-characters.
     if (const auto size = result.size(); size > 0) {
       std::string::size_type start{};
       if (result[start] == '\r')
@@ -789,7 +786,7 @@ private:
     for (; i->type == fragment_type && i != e; ++i) {
       result.append(i->str);
       if (fragment_type == Ft::one_line_comment)
-        result.append("\n");
+        result += '\n';
     }
     const auto comment_type = [](const Ft ft) noexcept
     {
