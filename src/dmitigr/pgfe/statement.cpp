@@ -851,17 +851,13 @@ DMITIGR_PGFE_INLINE bool Statement::is_same(const Statement& rhs) const
   normalize();
   rhs.normalize();
   const auto& frags = norm_fragments_;
-  const auto& rhs_frags = rhs.norm_fragments_;
-  const auto le = frags.cend();
-  const auto re = rhs_frags.cend();
-  for (auto li = frags.cbegin(), ri = rhs_frags.cbegin();; ++li, ++ri) {
-    if (li != le && ri != re) {
-      if (!li->is_named_parameter() && !li->norm_equal(*ri))
-        return false;
-    } else
-      return li == le && ri == re;
-  }
-  return true;
+  const auto& rfrags = rhs.norm_fragments_;
+  return equal(frags.cbegin(), frags.cend(), rfrags.cbegin(), rfrags.cend(),
+    [](const auto& lhs, const auto& rhs) noexcept
+    {
+      return lhs.is_named_parameter() && rhs.is_named_parameter() ?
+        lhs.type == rhs.type : lhs.norm_equal(rhs);
+    });
 }
 
 DMITIGR_PGFE_INLINE bool
