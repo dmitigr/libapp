@@ -127,37 +127,6 @@ DMITIGR_PGFE_INLINE Statement::Statement(const char* const text)
   : Statement{std::string_view{text}}
 {}
 
-DMITIGR_PGFE_INLINE Statement& Statement::operator=(const Statement& rhs)
-{
-  if (this != &rhs) {
-    Statement tmp{rhs};
-    swap(tmp);
-  }
-  return *this;
-}
-
-DMITIGR_PGFE_INLINE Statement& Statement::operator=(Statement&& rhs) noexcept
-{
-  if (this != &rhs) {
-    Statement tmp{std::move(rhs)};
-    swap(tmp);
-  }
-  return *this;
-}
-
-DMITIGR_PGFE_INLINE void Statement::swap(Statement& rhs) noexcept
-{
-  using std::swap;
-  swap(fragments_, rhs.fragments_);
-  swap(norm_fragments_, rhs.norm_fragments_);
-  swap(bindings_, rhs.bindings_);
-  swap(positional_parameters_, rhs.positional_parameters_);
-  swap(named_parameters_, rhs.named_parameters_);
-  swap(is_extra_data_should_be_extracted_from_comments_,
-    rhs.is_extra_data_should_be_extracted_from_comments_);
-  swap(extra_, rhs.extra_);
-}
-
 DMITIGR_PGFE_INLINE std::size_t
 Statement::positional_parameter_count() const noexcept
 {

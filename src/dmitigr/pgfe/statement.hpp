@@ -98,21 +98,6 @@ public:
   /// @overload
   DMITIGR_PGFE_API Statement(const char* text);
 
-  /// Copy-constructible.
-  DMITIGR_PGFE_API Statement(const Statement&) = default;
-
-  /// Copy-assignable.
-  DMITIGR_PGFE_API Statement& operator=(const Statement&);
-
-  /// Move-constructible.
-  DMITIGR_PGFE_API Statement(Statement&&) noexcept = default;
-
-  /// Move-assignable.
-  DMITIGR_PGFE_API Statement& operator=(Statement&&) noexcept;
-
-  /// Swaps the instances.
-  DMITIGR_PGFE_API void swap(Statement&) noexcept;
-
   /// @}
 
   /// @see Parameterizable::positional_parameter_count().
@@ -548,16 +533,6 @@ private:
   /// Represents an API for extraction the extra data from the comments.
   struct Extra;
 };
-
-/**
- * @ingroup utilities
- *
- * @brief Statement is swappable.
- */
-inline void swap(Statement& lhs, Statement& rhs) noexcept
-{
-  lhs.swap(rhs);
-}
 
 } // namespace dmitigr::pgfe
 
