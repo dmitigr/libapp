@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <memory>
 
 namespace dmitigr::pgfe {
 
@@ -664,7 +665,7 @@ Statement::bound(const std::string& name) const
     throw Generic_exception{"cannot get bound Statement parameter"};
 
   const auto i = bindings_.find(name);
-  return i != bindings_.cend() ? &(i->second) : nullptr;
+  return i != bindings_.cend() ? std::addressof(i->second) : nullptr;
   DMITIGR_ASSERT(false);
 }
 
@@ -683,7 +684,7 @@ Statement::has_bound_parameter() const noexcept
 DMITIGR_PGFE_INLINE void
 Statement::replace(const std::string_view name, const Statement& replacement)
 {
-  if (!(has_parameter(name) && (this != &replacement)))
+  if (!(has_parameter(name) && (std::addressof(replacement) != this)))
     throw Generic_exception{"cannot replace Statement parameter " +
       std::string{name}};
 

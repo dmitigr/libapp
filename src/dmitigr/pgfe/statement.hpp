@@ -278,7 +278,7 @@ public:
    * `replacement`.
    *
    * @par Requires
-   * `has_parameter(name) && (&replacement != this)`.
+   * `has_parameter(name) && std::addressof(replacement) != this`.
    *
    * @par Effects
    * This instance contains the given `replacement` instead of the parameter
