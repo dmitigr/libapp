@@ -1206,7 +1206,7 @@ Statement::parse_sql_input(const std::string_view text)
 
     slash,
     multi_line_comment,
-    multi_line_comment_star
+    multi_line_comment_asterisk
   } state = top;
 
   Statement result;
@@ -1471,12 +1471,12 @@ Statement::parse_sql_input(const std::string_view text)
       if (current_char == '/')
         state = slash;
       else if (current_char == '*')
-        state = multi_line_comment_star;
+        state = multi_line_comment_asterisk;
       else
         fragment += current_char;
       continue;
 
-    case multi_line_comment_star:
+    case multi_line_comment_asterisk:
       DMITIGR_ASSERT(previous_char == '*');
       if (current_char == '/') {
         --multi_line_comment_depth;
