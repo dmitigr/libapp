@@ -156,10 +156,10 @@ public:
 private:
   /// Represents a comment type.
   enum class Comment_type {
-    /// Denotes one line comment
+    /// Denotes one line comment.
     one_line,
 
-    /// Denotes multi line comment
+    /// Denotes multi line comment.
     multi_line
   };
 
