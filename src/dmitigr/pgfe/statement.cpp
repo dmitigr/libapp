@@ -307,10 +307,21 @@ Statement::replace(const std::string_view name, const Statement& replacement)
   // Update fragments.
   for (auto fi = begin(fragments_); fi != end(fragments_);) {
     if (fi->is_named_parameter(name)) {
-      // Insert the `replacement` just before `fi`.
-      fragments_.insert(fi, cbegin(replacement.fragments_),
-        cend(replacement.fragments_));
-      // Erase named parameter pointed by `fi` and got the next iterator.
+      {
+        // Insert the `replacement` just before `fi`.
+        auto ri = fragments_.insert(fi, cbegin(replacement.fragments_),
+          cend(replacement.fragments_));
+
+        // Update the depth of inserted fragments.
+        const auto rsz = replacement.fragments_.size();
+        const auto fi_depth = fi->depth;
+        for (std::size_t i{}; i < rsz; ++i) {
+          ri->depth += fi_depth;
+          ++ri;
+        }
+      }
+
+      // Erase named parameter pointed by `fi` and get the next iterator.
       fi = fragments_.erase(fi);
     } else
       ++fi;
