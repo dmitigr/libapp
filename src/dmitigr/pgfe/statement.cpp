@@ -26,6 +26,10 @@
 
 namespace dmitigr::pgfe {
 
+// =============================================================================
+// Statement::Fragment
+// =============================================================================
+
 DMITIGR_PGFE_INLINE
 Statement::Fragment::Fragment(const Type tp, const int dp, const std::string& s)
   : type{tp}
@@ -112,358 +116,8 @@ bool Statement::Fragment::norm_equal(const Fragment& rhs) const
 }
 
 // =============================================================================
-
-DMITIGR_PGFE_INLINE Statement::Statement(const std::string_view text)
-  : Statement{parse_sql_input(text).first}
-{
-  assert(is_invariant_ok());
-}
-
-DMITIGR_PGFE_INLINE Statement::Statement(const std::string& text)
-  : Statement{std::string_view{text}}
-{}
-
-DMITIGR_PGFE_INLINE Statement::Statement(const char* const text)
-  : Statement{std::string_view{text}}
-{}
-
-DMITIGR_PGFE_INLINE std::size_t
-Statement::positional_parameter_count() const noexcept
-{
-  return positional_parameters_.size();
-}
-
-DMITIGR_PGFE_INLINE std::size_t Statement::named_parameter_count() const noexcept
-{
-  return named_parameters_.size();
-}
-
-DMITIGR_PGFE_INLINE std::size_t Statement::parameter_count() const noexcept
-{
-  return positional_parameter_count() + named_parameter_count();
-}
-
-DMITIGR_PGFE_INLINE bool Statement::has_positional_parameter() const noexcept
-{
-  return !positional_parameters_.empty();
-}
-
-DMITIGR_PGFE_INLINE bool Statement::has_named_parameter() const noexcept
-{
-  return !named_parameters_.empty();
-}
-
-DMITIGR_PGFE_INLINE bool Statement::has_parameter() const noexcept
-{
-  return has_positional_parameter() || has_named_parameter();
-}
-
-DMITIGR_PGFE_INLINE bool
-Statement::has_parameter(const std::string_view name) const noexcept
-{
-  return parameter_index(name) < parameter_count();
-}
-
-DMITIGR_PGFE_INLINE std::string_view
-Statement::parameter_name(const std::size_t index) const
-{
-  if (!((positional_parameter_count() <= index) && (index < parameter_count())))
-    throw Generic_exception{"cannot get Statement parameter name"};
-  return named_parameters_[index - positional_parameter_count()].name;
-}
-
-DMITIGR_PGFE_INLINE std::size_t
-Statement::parameter_index(const std::string_view name) const noexcept
-{
-  return named_parameter_index(name);
-}
-
-DMITIGR_PGFE_INLINE bool Statement::is_empty() const noexcept
-{
-  return fragments_.empty();
-}
-
-DMITIGR_PGFE_INLINE bool Statement::is_query_empty() const noexcept
-{
-  return all_of(cbegin(fragments_), cend(fragments_),
-    [this](const Fragment& f)
-    {
-      return f.is_comment() || (f.is_text() && str::is_blank(f.str));
-    });
-}
-
-DMITIGR_PGFE_INLINE bool
-Statement::is_parameter_missing(const std::size_t index) const
-{
-  if (!(index < positional_parameter_count()))
-    throw Generic_exception{"cannot determine if Statement parameter is missing"};
-  return !positional_parameters_[index];
-}
-
-DMITIGR_PGFE_INLINE bool
-Statement::is_parameter_literal(const std::size_t index) const
-{
-  if (!((positional_parameter_count() <= index) && (index < parameter_count())))
-    throw Generic_exception{"cannot determine if Statement parameter is literal"};
-  return named_parameter_type(index) == Fragment::Type::named_parameter_literal;
-}
-
-DMITIGR_PGFE_INLINE bool
-Statement::is_parameter_literal(const std::string_view name) const
-{
-  return is_parameter_literal(parameter_index(name));
-}
-
-DMITIGR_PGFE_INLINE bool
-Statement::is_parameter_identifier(const std::size_t index) const
-{
-  if (!((positional_parameter_count() <= index) && (index < parameter_count())))
-    throw Generic_exception{"cannot determine if Statement parameter is identifier"};
-  return named_parameter_type(index) == Fragment::Type::named_parameter_identifier;
-}
-
-DMITIGR_PGFE_INLINE bool
-Statement::is_parameter_identifier(const std::string_view name) const
-{
-  return is_parameter_identifier(parameter_index(name));
-}
-
-DMITIGR_PGFE_INLINE bool Statement::has_missing_parameter() const noexcept
-{
-  return any_of(cbegin(positional_parameters_), cend(positional_parameters_),
-    [](const auto is_present) {return !is_present;});
-}
-
-DMITIGR_PGFE_INLINE void Statement::append(const Statement& appendix)
-{
-  const bool was_query_empty{is_query_empty()};
-
-  // Update fragments.
-  fragments_.insert(cend(fragments_), cbegin(appendix.fragments_),
-    cend(appendix.fragments_));
-  update_cache(appendix); // can throw
-
-  if (was_query_empty)
-    is_extra_data_should_be_extracted_from_comments_ = true;
-
-  assert(is_invariant_ok());
-}
-
-DMITIGR_PGFE_INLINE Statement&
-Statement::bind(const std::string& name, std::string value)
-{
-  if (!has_parameter(name))
-    throw Generic_exception{"cannot bind Statement parameter"};
-
-  bindings_[name] = std::move(value);
-
-  assert(is_invariant_ok());
-  return *this;
-}
-
-DMITIGR_PGFE_INLINE Statement&
-Statement::unbind(const std::string& name)
-{
-  if (!has_parameter(name))
-    throw Generic_exception{"cannot unbind Statement parameter"};
-
-  if (const auto i = bindings_.find(name); i != bindings_.cend())
-    bindings_.erase(i);
-
-  assert(is_invariant_ok());
-  return *this;
-}
-
-DMITIGR_PGFE_INLINE const std::string*
-Statement::bound(const std::string& name) const
-{
-  if (!has_parameter(name))
-    throw Generic_exception{"cannot get bound Statement parameter"};
-
-  const auto i = bindings_.find(name);
-  return i != bindings_.cend() ? &(i->second) : nullptr;
-  DMITIGR_ASSERT(false);
-}
-
-DMITIGR_PGFE_INLINE std::size_t
-Statement::bound_parameter_count() const noexcept
-{
-  return bindings_.size();
-}
-
-DMITIGR_PGFE_INLINE bool
-Statement::has_bound_parameter() const noexcept
-{
-  return !bindings_.empty();
-}
-
-DMITIGR_PGFE_INLINE void
-Statement::replace(const std::string_view name, const Statement& replacement)
-{
-  if (!(has_parameter(name) && (this != &replacement)))
-    throw Generic_exception{"cannot replace Statement parameter " +
-      std::string{name}};
-
-  // Update fragments.
-  for (auto fi = begin(fragments_); fi != end(fragments_);) {
-    if (fi->is_named_parameter(name)) {
-      {
-        // Insert the `replacement` just before `fi`.
-        auto ri = fragments_.insert(fi, cbegin(replacement.fragments_),
-          cend(replacement.fragments_));
-
-        // Update the depth of inserted fragments.
-        const auto rsz = replacement.fragments_.size();
-        const auto fi_depth = fi->depth;
-        for (std::size_t i{}; i < rsz; ++i) {
-          ri->depth += fi_depth;
-          ++ri;
-        }
-      }
-
-      // Erase named parameter pointed by `fi` and get the next iterator.
-      fi = fragments_.erase(fi);
-    } else
-      ++fi;
-  }
-
-  update_cache(replacement);  // can throw
-
-  assert(is_invariant_ok());
-}
-
-DMITIGR_PGFE_INLINE std::string Statement::to_string() const
-{
-  using Ft = Fragment::Type;
-  std::string result;
-  result.reserve(2048);
-  for (const auto& fragment : fragments_) {
-    switch (fragment.type) {
-    case Ft::text:
-      [[fallthrough]];
-    case Ft::quoted_text:
-      result += fragment.str;
-      break;
-    case Ft::one_line_comment:
-      result += "--";
-      result += fragment.str;
-      result += '\n';
-      break;
-    case Ft::multi_line_comment:
-      result += "/*";
-      result += fragment.str;
-      result += "*/";
-      break;
-    case Ft::named_parameter:
-      result += ':';
-      result += '{';
-      result += fragment.str;
-      result += '}';
-      break;
-    case Ft::named_parameter_literal:
-      result += ":";
-      result += '\'';
-      result += fragment.str;
-      result += '\'';
-      break;
-    case Ft::named_parameter_identifier:
-      result += ":";
-      result += '"';
-      result += fragment.str;
-      result += '"';
-      break;
-    case Ft::positional_parameter:
-      result += '$';
-      result += fragment.str;
-      break;
-    }
-  }
-  result.shrink_to_fit();
-  return result;
-}
-
-DMITIGR_PGFE_INLINE std::string
-Statement::to_query_string(const Connection& conn) const
-{
-  using Ft = Fragment::Type;
-
-  if (has_missing_parameter())
-    throw Generic_exception{"cannot convert Statement to query string: "
-      "has missing parameter"};
-  else if (!conn.is_connected())
-    throw Generic_exception{"cannot convert Statement to query string: "
-      "not connected"};
-
-  static const auto check_value_bound = [](const auto& fragment, const auto* const value)
-  {
-    DMITIGR_ASSERT(fragment.is_named_parameter());
-    if (!value) {
-      std::string what{"named parameter "};
-      what.append(fragment.str);
-      const char* const type_str =
-        fragment.type == Ft::named_parameter_literal ? "literal" :
-        fragment.type == Ft::named_parameter_identifier ? "identifier" : nullptr;
-      if (type_str)
-        what.append(" declared as ").append(type_str);
-      what.append(" has no value bound");
-      throw Generic_exception{what};
-    }
-  };
-
-  std::string result;
-  result.reserve(2048);
-  std::size_t bound_counter{};
-  const bool has_bound{has_bound_parameter()};
-  for (const auto& fragment : fragments_) {
-    switch (fragment.type) {
-    case Ft::text:
-      [[fallthrough]];
-    case Ft::quoted_text:
-      result += fragment.str;
-      break;
-    case Ft::one_line_comment:
-      [[fallthrough]];
-    case Ft::multi_line_comment:
-      break;
-    case Ft::named_parameter: {
-      const auto* const value = bound(fragment.str);
-      if (!has_bound || !value) {
-        const auto idx = named_parameter_index(fragment.str);
-        DMITIGR_ASSERT(idx >= positional_parameter_count());
-        DMITIGR_ASSERT(idx < parameter_count());
-        result += '$';
-        result += std::to_string(idx - bound_counter + 1);
-      } else {
-        result += *value;
-        ++bound_counter;
-      }
-      break;
-    }
-    case Ft::named_parameter_literal: {
-      const auto* const value = bound(fragment.str);
-      check_value_bound(fragment, value);
-      result += conn.to_quoted_literal(*value);
-      break;
-    }
-    case Ft::named_parameter_identifier: {
-      const auto* const value = bound(fragment.str);
-      check_value_bound(fragment, value);
-      result += conn.to_quoted_identifier(*value);
-      break;
-    }
-    case Ft::positional_parameter:
-      result += '$';
-      result += fragment.str;
-      break;
-    }
-  }
-  DMITIGR_ASSERT(bound_counter <= bound_parameter_count());
-  return result;
-}
-
-// ---------------------------------------------------------------------------
-// Extra data
-// ---------------------------------------------------------------------------
+// Statement::Extra
+// =============================================================================
 
 /// Represents an API for extraction the extra data from the comments.
 struct Statement::Extra final {
@@ -838,6 +492,358 @@ private:
   }
 };
 
+// =============================================================================
+// Statement
+// =============================================================================
+
+DMITIGR_PGFE_INLINE Statement::Statement(const std::string_view text)
+  : Statement{parse_sql_input(text).first}
+{
+  assert(is_invariant_ok());
+}
+
+DMITIGR_PGFE_INLINE Statement::Statement(const std::string& text)
+  : Statement{std::string_view{text}}
+{}
+
+DMITIGR_PGFE_INLINE Statement::Statement(const char* const text)
+  : Statement{std::string_view{text}}
+{}
+
+DMITIGR_PGFE_INLINE std::size_t
+Statement::positional_parameter_count() const noexcept
+{
+  return positional_parameters_.size();
+}
+
+DMITIGR_PGFE_INLINE std::size_t Statement::named_parameter_count() const noexcept
+{
+  return named_parameters_.size();
+}
+
+DMITIGR_PGFE_INLINE std::size_t Statement::parameter_count() const noexcept
+{
+  return positional_parameter_count() + named_parameter_count();
+}
+
+DMITIGR_PGFE_INLINE bool Statement::has_positional_parameter() const noexcept
+{
+  return !positional_parameters_.empty();
+}
+
+DMITIGR_PGFE_INLINE bool Statement::has_named_parameter() const noexcept
+{
+  return !named_parameters_.empty();
+}
+
+DMITIGR_PGFE_INLINE bool Statement::has_parameter() const noexcept
+{
+  return has_positional_parameter() || has_named_parameter();
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::has_parameter(const std::string_view name) const noexcept
+{
+  return parameter_index(name) < parameter_count();
+}
+
+DMITIGR_PGFE_INLINE std::string_view
+Statement::parameter_name(const std::size_t index) const
+{
+  if (!((positional_parameter_count() <= index) && (index < parameter_count())))
+    throw Generic_exception{"cannot get Statement parameter name"};
+  return named_parameters_[index - positional_parameter_count()].name;
+}
+
+DMITIGR_PGFE_INLINE std::size_t
+Statement::parameter_index(const std::string_view name) const noexcept
+{
+  return named_parameter_index(name);
+}
+
+DMITIGR_PGFE_INLINE bool Statement::is_empty() const noexcept
+{
+  return fragments_.empty();
+}
+
+DMITIGR_PGFE_INLINE bool Statement::is_query_empty() const noexcept
+{
+  return all_of(cbegin(fragments_), cend(fragments_),
+    [this](const Fragment& f)
+    {
+      return f.is_comment() || (f.is_text() && str::is_blank(f.str));
+    });
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::is_parameter_missing(const std::size_t index) const
+{
+  if (!(index < positional_parameter_count()))
+    throw Generic_exception{"cannot determine if Statement parameter is missing"};
+  return !positional_parameters_[index];
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::is_parameter_literal(const std::size_t index) const
+{
+  if (!((positional_parameter_count() <= index) && (index < parameter_count())))
+    throw Generic_exception{"cannot determine if Statement parameter is literal"};
+  return named_parameter_type(index) == Fragment::Type::named_parameter_literal;
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::is_parameter_literal(const std::string_view name) const
+{
+  return is_parameter_literal(parameter_index(name));
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::is_parameter_identifier(const std::size_t index) const
+{
+  if (!((positional_parameter_count() <= index) && (index < parameter_count())))
+    throw Generic_exception{"cannot determine if Statement parameter is identifier"};
+  return named_parameter_type(index) == Fragment::Type::named_parameter_identifier;
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::is_parameter_identifier(const std::string_view name) const
+{
+  return is_parameter_identifier(parameter_index(name));
+}
+
+DMITIGR_PGFE_INLINE bool Statement::has_missing_parameter() const noexcept
+{
+  return any_of(cbegin(positional_parameters_), cend(positional_parameters_),
+    [](const auto is_present) {return !is_present;});
+}
+
+DMITIGR_PGFE_INLINE void Statement::append(const Statement& appendix)
+{
+  const bool was_query_empty{is_query_empty()};
+
+  // Update fragments.
+  fragments_.insert(cend(fragments_), cbegin(appendix.fragments_),
+    cend(appendix.fragments_));
+  update_cache(appendix); // can throw
+
+  if (was_query_empty)
+    is_extra_data_should_be_extracted_from_comments_ = true;
+
+  assert(is_invariant_ok());
+}
+
+DMITIGR_PGFE_INLINE Statement&
+Statement::bind(const std::string& name, std::string value)
+{
+  if (!has_parameter(name))
+    throw Generic_exception{"cannot bind Statement parameter"};
+
+  bindings_[name] = std::move(value);
+
+  assert(is_invariant_ok());
+  return *this;
+}
+
+DMITIGR_PGFE_INLINE Statement&
+Statement::unbind(const std::string& name)
+{
+  if (!has_parameter(name))
+    throw Generic_exception{"cannot unbind Statement parameter"};
+
+  if (const auto i = bindings_.find(name); i != bindings_.cend())
+    bindings_.erase(i);
+
+  assert(is_invariant_ok());
+  return *this;
+}
+
+DMITIGR_PGFE_INLINE const std::string*
+Statement::bound(const std::string& name) const
+{
+  if (!has_parameter(name))
+    throw Generic_exception{"cannot get bound Statement parameter"};
+
+  const auto i = bindings_.find(name);
+  return i != bindings_.cend() ? &(i->second) : nullptr;
+  DMITIGR_ASSERT(false);
+}
+
+DMITIGR_PGFE_INLINE std::size_t
+Statement::bound_parameter_count() const noexcept
+{
+  return bindings_.size();
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::has_bound_parameter() const noexcept
+{
+  return !bindings_.empty();
+}
+
+DMITIGR_PGFE_INLINE void
+Statement::replace(const std::string_view name, const Statement& replacement)
+{
+  if (!(has_parameter(name) && (this != &replacement)))
+    throw Generic_exception{"cannot replace Statement parameter " +
+      std::string{name}};
+
+  // Update fragments.
+  for (auto fi = begin(fragments_); fi != end(fragments_);) {
+    if (fi->is_named_parameter(name)) {
+      {
+        // Insert the `replacement` just before `fi`.
+        auto ri = fragments_.insert(fi, cbegin(replacement.fragments_),
+          cend(replacement.fragments_));
+
+        // Update the depth of inserted fragments.
+        const auto rsz = replacement.fragments_.size();
+        const auto fi_depth = fi->depth;
+        for (std::size_t i{}; i < rsz; ++i) {
+          ri->depth += fi_depth;
+          ++ri;
+        }
+      }
+
+      // Erase named parameter pointed by `fi` and get the next iterator.
+      fi = fragments_.erase(fi);
+    } else
+      ++fi;
+  }
+
+  update_cache(replacement);  // can throw
+
+  assert(is_invariant_ok());
+}
+
+DMITIGR_PGFE_INLINE std::string Statement::to_string() const
+{
+  using Ft = Fragment::Type;
+  std::string result;
+  result.reserve(2048);
+  for (const auto& fragment : fragments_) {
+    switch (fragment.type) {
+    case Ft::text:
+      [[fallthrough]];
+    case Ft::quoted_text:
+      result += fragment.str;
+      break;
+    case Ft::one_line_comment:
+      result += "--";
+      result += fragment.str;
+      result += '\n';
+      break;
+    case Ft::multi_line_comment:
+      result += "/*";
+      result += fragment.str;
+      result += "*/";
+      break;
+    case Ft::named_parameter:
+      result += ':';
+      result += '{';
+      result += fragment.str;
+      result += '}';
+      break;
+    case Ft::named_parameter_literal:
+      result += ":";
+      result += '\'';
+      result += fragment.str;
+      result += '\'';
+      break;
+    case Ft::named_parameter_identifier:
+      result += ":";
+      result += '"';
+      result += fragment.str;
+      result += '"';
+      break;
+    case Ft::positional_parameter:
+      result += '$';
+      result += fragment.str;
+      break;
+    }
+  }
+  result.shrink_to_fit();
+  return result;
+}
+
+DMITIGR_PGFE_INLINE std::string
+Statement::to_query_string(const Connection& conn) const
+{
+  using Ft = Fragment::Type;
+
+  if (has_missing_parameter())
+    throw Generic_exception{"cannot convert Statement to query string: "
+      "has missing parameter"};
+  else if (!conn.is_connected())
+    throw Generic_exception{"cannot convert Statement to query string: "
+      "not connected"};
+
+  static const auto check_value_bound = [](const auto& fragment, const auto* const value)
+  {
+    DMITIGR_ASSERT(fragment.is_named_parameter());
+    if (!value) {
+      std::string what{"named parameter "};
+      what.append(fragment.str);
+      const char* const type_str =
+        fragment.type == Ft::named_parameter_literal ? "literal" :
+        fragment.type == Ft::named_parameter_identifier ? "identifier" : nullptr;
+      if (type_str)
+        what.append(" declared as ").append(type_str);
+      what.append(" has no value bound");
+      throw Generic_exception{what};
+    }
+  };
+
+  std::string result;
+  result.reserve(2048);
+  std::size_t bound_counter{};
+  const bool has_bound{has_bound_parameter()};
+  for (const auto& fragment : fragments_) {
+    switch (fragment.type) {
+    case Ft::text:
+      [[fallthrough]];
+    case Ft::quoted_text:
+      result += fragment.str;
+      break;
+    case Ft::one_line_comment:
+      [[fallthrough]];
+    case Ft::multi_line_comment:
+      break;
+    case Ft::named_parameter: {
+      const auto* const value = bound(fragment.str);
+      if (!has_bound || !value) {
+        const auto idx = named_parameter_index(fragment.str);
+        DMITIGR_ASSERT(idx >= positional_parameter_count());
+        DMITIGR_ASSERT(idx < parameter_count());
+        result += '$';
+        result += std::to_string(idx - bound_counter + 1);
+      } else {
+        result += *value;
+        ++bound_counter;
+      }
+      break;
+    }
+    case Ft::named_parameter_literal: {
+      const auto* const value = bound(fragment.str);
+      check_value_bound(fragment, value);
+      result += conn.to_quoted_literal(*value);
+      break;
+    }
+    case Ft::named_parameter_identifier: {
+      const auto* const value = bound(fragment.str);
+      check_value_bound(fragment, value);
+      result += conn.to_quoted_identifier(*value);
+      break;
+    }
+    case Ft::positional_parameter:
+      result += '$';
+      result += fragment.str;
+      break;
+    }
+  }
+  DMITIGR_ASSERT(bound_counter <= bound_parameter_count());
+  return result;
+}
+
 DMITIGR_PGFE_INLINE auto Statement::extra() const -> const Extra_data&
 {
   if (!extra_)
@@ -932,7 +938,7 @@ DMITIGR_PGFE_INLINE bool Statement::is_invariant_ok() const noexcept
 }
 
 // ---------------------------------------------------------------------------
-// Initializers
+// Statement initializers
 // ---------------------------------------------------------------------------
 
 DMITIGR_PGFE_INLINE void
@@ -1009,7 +1015,7 @@ Statement::push_named_parameter(const int depth, const std::string& str,
 }
 
 // ---------------------------------------------------------------------------
-// Updaters
+// Statement updaters
 // ---------------------------------------------------------------------------
 
 // Exception safety guarantee: basic.
@@ -1041,7 +1047,7 @@ DMITIGR_PGFE_INLINE void Statement::update_cache(const Statement& rhs)
 }
 
 // ---------------------------------------------------------------------------
-// Named parameters helpers
+// Statement's named parameters helpers
 // ---------------------------------------------------------------------------
 
 DMITIGR_PGFE_INLINE auto
@@ -1087,7 +1093,7 @@ Statement::named_parameters() const -> std::vector<Named_parameter>
 }
 
 // ---------------------------------------------------------------------------
-// Predicates
+// Statement predicates
 // ---------------------------------------------------------------------------
 
 DMITIGR_PGFE_INLINE bool
@@ -1109,7 +1115,7 @@ Statement::is_quote_char(const unsigned char c) noexcept
 }
 
 // -----------------------------------------------------------------------------
-// Basic SQL input parser
+// Statement's basic SQL parser
 // -----------------------------------------------------------------------------
 
 /*
