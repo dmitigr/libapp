@@ -1273,14 +1273,14 @@ DMITIGR_PGFE_INLINE void Connection::reset_session() noexcept
 
   // Reset prepared statements.
   last_prepared_statement_ = {};
-  for (auto& s : ps_states_) {
+  for (const auto& s : ps_states_) {
     DMITIGR_ASSERT(s);
     s->connection_ = nullptr;
   }
   ps_states_.clear();
 
   // Reset large objects.
-  for (auto& s : lo_states_) {
+  for (const auto& s : lo_states_) {
     DMITIGR_ASSERT(s);
     s->connection_ = nullptr;
   }
