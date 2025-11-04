@@ -471,7 +471,7 @@ private:
   struct Named_parameter final {
     Fragment::Type type;
     std::string name;
-    bool operator<=>(const Named_parameter&) const noexcept = default;
+    auto operator<=>(const Named_parameter&) const noexcept = default;
   };
 
   using Fragment_list = std::list<Fragment>;
