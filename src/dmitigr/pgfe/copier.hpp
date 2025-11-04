@@ -161,13 +161,12 @@ public:
 private:
   friend Connection;
 
-  std::shared_ptr<Connection*> connection_;
+  std::shared_ptr<Connection*> state_;
   detail::pq::Result pq_result_;
   mutable std::unique_ptr<char, void(*)(void*)> buffer_{nullptr, &dummy_free};
 
   /// The constructor.
-  explicit DMITIGR_PGFE_API Copier(Connection& connection,
-    detail::pq::Result&& pq_result) noexcept;
+  Copier(Connection&, detail::pq::Result&&) noexcept;
 
   static void dummy_free(void*) noexcept {};
   void check_send() const;

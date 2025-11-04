@@ -24,8 +24,8 @@ namespace dmitigr::pgfe {
 DMITIGR_PGFE_INLINE Copier::~Copier() noexcept
 {
   if (is_valid()) {
-    auto& conn = **connection_;
-    *connection_ = nullptr;
+    auto& conn = **state_;
+    *state_ = nullptr;
     conn.reset_response(std::move(pq_result_));
     DMITIGR_ASSERT(!is_valid());
   }
@@ -33,17 +33,17 @@ DMITIGR_PGFE_INLINE Copier::~Copier() noexcept
 
 DMITIGR_PGFE_INLINE Copier::Copier(Connection& connection,
   detail::pq::Result&& pq_result) noexcept
-  : connection_{connection.copier_state_}
+  : state_{connection.copier_state_}
   , pq_result_{std::move(pq_result)}
 {
-  DMITIGR_ASSERT(connection_ && !*connection_);
+  DMITIGR_ASSERT(state_ && !*state_);
   DMITIGR_ASSERT(pq_result_);
-  *connection_ = &connection;
+  *state_ = &connection;
   DMITIGR_ASSERT(is_valid());
 }
 
 DMITIGR_PGFE_INLINE Copier::Copier(Copier&& rhs) noexcept
-  : connection_{std::move(rhs.connection_)}
+  : state_{std::move(rhs.state_)}
   , pq_result_{std::move(rhs.pq_result_)}
 {}
 
@@ -59,14 +59,14 @@ DMITIGR_PGFE_INLINE Copier& Copier::operator=(Copier&& rhs) noexcept
 DMITIGR_PGFE_INLINE void Copier::swap(Copier& rhs) noexcept
 {
   using std::swap;
-  swap(connection_, rhs.connection_);
+  swap(state_, rhs.state_);
   swap(pq_result_, rhs.pq_result_);
   swap(buffer_, rhs.buffer_);
 }
 
 DMITIGR_PGFE_INLINE bool Copier::is_valid() const noexcept
 {
-  return connection_ && *connection_;
+  return state_ && *state_;
 }
 
 DMITIGR_PGFE_INLINE std::size_t Copier::field_count() const noexcept
@@ -112,7 +112,7 @@ DMITIGR_PGFE_INLINE bool Copier::end(const std::string& error_message) const
   const int r{PQputCopyEnd(connection().conn(),
     !error_message.empty() ? error_message.c_str() : nullptr)};
   if (r == 0 || r == 1) {
-    auto& conn = **connection_;
+    auto& conn = **state_;
     conn.reset_copier_state();
     DMITIGR_ASSERT(!is_valid());
     DMITIGR_ASSERT(!conn.is_copy_in_progress());
@@ -150,7 +150,7 @@ DMITIGR_PGFE_INLINE Data_view Copier::receive(const bool wait) const
 DMITIGR_PGFE_INLINE const Connection& Copier::connection() const
 {
   if (is_valid())
-    return **connection_;
+    return **state_;
   else
     throw Generic_exception{"cannot get connection of invalid instance"};
 }
