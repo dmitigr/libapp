@@ -28,7 +28,7 @@ namespace dmitigr::pgfe::detail {
  * @throws Generic_exception if `!value`.
  */
 template<typename T>
-inline auto forward_or_throw(T&& value, const char* const what)
+auto forward_or_throw(T&& value, const char* const what)
 {
   return dmitigr::forward_or_throw<Generic_exception>(std::forward<T>(value), what);
 }

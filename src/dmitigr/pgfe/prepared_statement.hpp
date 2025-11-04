@@ -484,11 +484,6 @@ private:
 
   /// A state.
   struct State final {
-    State(std::string id, Connection* const connection)
-      : id_{std::move(id)}
-      , connection_{connection}
-    {}
-
     std::string id_;
     Connection* connection_{};
     bool preparsed_{};

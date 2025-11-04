@@ -248,12 +248,6 @@ private:
 
   /// A state.
   struct State final {
-    State(const std::int_fast64_t id,
-      const int desc, Connection* const connection)
-      : id_{id}
-      , desc_{desc}
-      , connection_{connection}
-    {}
     std::int_fast64_t id_{};
     int desc_{-1};
     Connection* connection_{};

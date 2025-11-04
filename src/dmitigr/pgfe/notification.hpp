@@ -78,7 +78,7 @@ private:
 
   std::unique_ptr<PGnotify> pgnotify_;
 
-  explicit DMITIGR_PGFE_API Notification(PGnotify* const pgnotify) noexcept;
+  explicit DMITIGR_PGFE_API Notification(PGnotify*) noexcept;
   bool is_invariant_ok() const noexcept;
 };
 
