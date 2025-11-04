@@ -861,7 +861,7 @@ DMITIGR_PGFE_INLINE auto Statement::extra() -> Extra_data&
   return const_cast<Extra_data&>(static_cast<const Statement*>(this)->extra());
 }
 
-DMITIGR_PGFE_INLINE bool Statement::is_same(const Statement& rhs) const
+DMITIGR_PGFE_INLINE bool Statement::is_equivalent(const Statement& rhs) const
 {
   normalize();
   rhs.normalize();
@@ -883,7 +883,7 @@ Statement::is_named_parameters_equal(const Statement& rhs) const
 
 DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const
 {
-  return is_same(rhs) && is_named_parameters_equal(rhs);
+  return is_equivalent(rhs) && is_named_parameters_equal(rhs);
 }
 
 DMITIGR_PGFE_INLINE std::optional<std::unordered_map<std::string, std::string>>

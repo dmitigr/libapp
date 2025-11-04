@@ -236,7 +236,7 @@ update task_step_log
         ", \n"
         "/* another comment */ :{age}, $2, F(:{age}),"
         " 'simple string', $$dollar quoted$$, $tag$dollar quoted$tag$"};
-      DMITIGR_ASSERT(s1.is_same(s2));
+      DMITIGR_ASSERT(s1.is_equivalent(s2));
       DMITIGR_ASSERT(s1.is_named_parameters_equal(s2));
       DMITIGR_ASSERT(s1.is_equal(s2));
     }
@@ -244,7 +244,7 @@ update task_step_log
     {
       const pgfe::Statement s1{"select 1"};
       const pgfe::Statement s2{"select 2"};
-      DMITIGR_ASSERT(!s1.is_same(s2));
+      DMITIGR_ASSERT(!s1.is_equivalent(s2));
       DMITIGR_ASSERT(s1.is_named_parameters_equal(s2));
       DMITIGR_ASSERT(!s1.is_equal(s2));
     }
@@ -252,7 +252,7 @@ update task_step_log
     {
       const pgfe::Statement s1{"select :{a} /*a*/"};
       const pgfe::Statement s2{"select :{b} /*b*/"};
-      DMITIGR_ASSERT(s1.is_same(s2));
+      DMITIGR_ASSERT(s1.is_equivalent(s2));
       DMITIGR_ASSERT(!s1.is_named_parameters_equal(s2));
       DMITIGR_ASSERT(!s1.is_equal(s2));
     }
@@ -260,7 +260,7 @@ update task_step_log
     {
       const pgfe::Statement s1{"select :{a} /*a*/"};
       const pgfe::Statement s2{"select :{a} /*a*/"};
-      DMITIGR_ASSERT(s1.is_same(s2));
+      DMITIGR_ASSERT(s1.is_equivalent(s2));
       DMITIGR_ASSERT(s1.is_named_parameters_equal(s2));
       DMITIGR_ASSERT(s1.is_equal(s2));
     }
@@ -268,7 +268,7 @@ update task_step_log
     {
       const pgfe::Statement s1{"select /*one*/ 1"};
       const pgfe::Statement s2{"SELECT 1"};
-      DMITIGR_ASSERT(s1.is_same(s2));
+      DMITIGR_ASSERT(s1.is_equivalent(s2));
       DMITIGR_ASSERT(s1.is_named_parameters_equal(s2));
       DMITIGR_ASSERT(s1.is_equal(s2));
     }
@@ -276,7 +276,7 @@ update task_step_log
     {
       const pgfe::Statement s1{"select /*one*/ 1"};
       const pgfe::Statement s2{"SELECT 1 /*one*/"};
-      DMITIGR_ASSERT(s1.is_same(s2));
+      DMITIGR_ASSERT(s1.is_equivalent(s2));
       DMITIGR_ASSERT(s1.is_named_parameters_equal(s2));
       DMITIGR_ASSERT(s1.is_equal(s2));
     }
@@ -284,7 +284,7 @@ update task_step_log
     {
       const pgfe::Statement s1{"select 1"};
       const pgfe::Statement s2{"select1"};
-      DMITIGR_ASSERT(!s1.is_same(s2));
+      DMITIGR_ASSERT(!s1.is_equivalent(s2));
       DMITIGR_ASSERT(s1.is_named_parameters_equal(s2));
       DMITIGR_ASSERT(!s1.is_equal(s2));
     }
@@ -292,7 +292,7 @@ update task_step_log
     {
       const pgfe::Statement s1{"select 1"};
       const pgfe::Statement s2{"select 1, :{two}"};
-      DMITIGR_ASSERT(!s1.is_same(s2));
+      DMITIGR_ASSERT(!s1.is_equivalent(s2));
       DMITIGR_ASSERT(!s1.is_named_parameters_equal(s2));
       DMITIGR_ASSERT(!s1.is_equal(s2));
     }
@@ -300,7 +300,7 @@ update task_step_log
     {
       const pgfe::Statement s1{"select /*comment*/ :{two}, 1"};
       const pgfe::Statement s2{"select /*comment*/ 1, :{two}"};
-      DMITIGR_ASSERT(!s1.is_same(s2));
+      DMITIGR_ASSERT(!s1.is_equivalent(s2));
       DMITIGR_ASSERT(s1.is_named_parameters_equal(s2));
       DMITIGR_ASSERT(!s1.is_equal(s2));
     }
@@ -308,7 +308,7 @@ update task_step_log
     {
       const pgfe::Statement s1{"   select  1"};
       const pgfe::Statement s2{"select    1 "};
-      DMITIGR_ASSERT(s1.is_same(s2));
+      DMITIGR_ASSERT(s1.is_equivalent(s2));
       DMITIGR_ASSERT(s1.is_named_parameters_equal(s2));
       DMITIGR_ASSERT(s1.is_equal(s2));
     }
@@ -316,7 +316,7 @@ update task_step_log
     {
       const pgfe::Statement s1{"SELECT ARRAY [  [1:2], [3:4]]"};
       const pgfe::Statement s2{"select   array[[1:2],[3:4]] "};
-      DMITIGR_ASSERT(s1.is_same(s2));
+      DMITIGR_ASSERT(s1.is_equivalent(s2));
       DMITIGR_ASSERT(s1.is_named_parameters_equal(s2));
       DMITIGR_ASSERT(s1.is_equal(s2));
     }

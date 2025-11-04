@@ -24,6 +24,7 @@
 #include "types_fwd.hpp"
 
 #include <any>
+#include <compare>
 #include <cstddef>
 #include <list>
 #include <optional>
@@ -402,14 +403,14 @@ public:
   DMITIGR_PGFE_API Extra_data& extra();
 
   /**
-   * @brief Tests instances on samelency.
+   * @brief Tests instances on equivalency.
    *
-   * @details Statements are same if all theirs parts, except comments and
+   * @details Statements are equivalent if all theirs parts, except comments and
    * named parameters, being normalized are equal.
    *
    * @returns `true` if this instance equivalents to `rhs`.
    */
-  DMITIGR_PGFE_API bool is_same(const Statement& rhs) const;
+  DMITIGR_PGFE_API bool is_equivalent(const Statement& rhs) const;
 
   /**
    * @returns `true` if the named parameters of this statement are equals to the
@@ -417,7 +418,7 @@ public:
    */
   DMITIGR_PGFE_API bool is_named_parameters_equal(const Statement& rhs) const;
 
-  /// @returns `is_same(rhs) && is_named_parameters_equal(rhs)`.
+  /// @returns `is_equivalent(rhs) && is_named_parameters_equal(rhs)`.
   DMITIGR_PGFE_API bool is_equal(const Statement& rhs) const;
 
   /**
