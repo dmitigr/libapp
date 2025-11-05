@@ -23,6 +23,8 @@
 
 #include <functional>
 
+#define ASSERT DMITIGR_ASSERT
+
 template<typename ... Types>
 void state_task(dmitigr::pgfe::Connection& dbconn, Types&& ... execute_args)
 {
@@ -42,6 +44,7 @@ int main()
 {
   try {
     namespace pgfe = dmitigr::pgfe;
+    using pgfe::Statement;
 
     const auto conn = pgfe::test::make_connection();
     conn->connect();
@@ -331,6 +334,237 @@ update task_step_log
       DMITIGR_ASSERT(s1.is_equivalent(s2));
       DMITIGR_ASSERT(s1.are_named_parameters_equal(s2));
       DMITIGR_ASSERT(s1.is_equal(s2));
+    }
+
+    // -------------------------------------------------------------------------
+    // Destructuring
+    // -------------------------------------------------------------------------
+
+    {
+      bool called{};
+      const Statement pattern{""};
+      const Statement stmt{""};
+      ASSERT(stmt.destructure([&called](const auto&, const auto&)
+      {
+        called = true;
+        return true;
+      }, pattern));
+      ASSERT(!called);
+    }
+
+    {
+      bool called{};
+      const Statement pattern{""};
+      const Statement stmt{"select 1"};
+      ASSERT(!stmt.destructure([&called](const auto&, const auto&)
+      {
+        called = true;
+        return true;
+      }, pattern));
+      ASSERT(!called);
+    }
+
+    {
+      bool called{};
+      const Statement pattern{"select 1"};
+      const Statement stmt{""};
+      ASSERT(!stmt.destructure([&called](const auto&, const auto&)
+      {
+        called = true;
+        return true;
+      }, pattern));
+      ASSERT(!called);
+    }
+
+    {
+      bool called{};
+      const Statement pattern{"select 1"};
+      const Statement stmt{"select 1"};
+      ASSERT(stmt.destructure([&called](const auto&, const auto&)
+      {
+        called = true;
+        return true;
+      }, pattern));
+      ASSERT(!called);
+    }
+
+    {
+      bool called{};
+      const Statement pattern{"  select   1    "};
+      const Statement stmt{"select 1"};
+      ASSERT(stmt.destructure([&called](const auto&, const auto&)
+      {
+        called = true;
+        return true;
+      }, pattern));
+      ASSERT(!called);
+    }
+
+    {
+      bool called{};
+      const Statement pattern{"select 1"};
+      const Statement stmt{"  select   1    "};
+      ASSERT(stmt.destructure([&called](const auto&, const auto&)
+      {
+        called = true;
+        return true;
+      }, pattern));
+      ASSERT(!called);
+    }
+
+    {
+      bool called{};
+      const Statement pattern{"select 1"};
+      const Statement stmt{"select 1, 2"};
+      ASSERT(!stmt.destructure([&called](const auto&, const auto&)
+      {
+        called = true;
+        return true;
+      }, pattern));
+      ASSERT(!called);
+    }
+
+    {
+      bool called{};
+      const Statement pattern{"select 'dima'"};
+      const Statement stmt{"select 'olga'"};
+      ASSERT(!stmt.destructure([&called](const auto&, const auto&)
+      {
+        called = true;
+        return true;
+      }, pattern));
+      ASSERT(!called);
+    }
+
+    {
+      bool called{};
+      const Statement pattern{"select 'dima'"};
+      const Statement stmt{"select    'dima'"};
+      ASSERT(stmt.destructure([&called](const auto&, const auto&)
+      {
+        called = true;
+        return true;
+      }, pattern));
+      ASSERT(!called);
+    }
+
+    {
+      bool called{};
+      const Statement pattern{"select :{foo}"};
+      const Statement stmt{"select       1  "};
+      ASSERT(stmt.destructure([&called](const auto& name, const auto& match)
+      {
+        called = true;
+        ASSERT(name == "foo");
+        const auto str = match.to_string();
+        ASSERT(str == "1");
+        return true;
+      }, pattern));
+      ASSERT(called);
+    }
+
+    {
+      bool called_foo{};
+      bool called_bar{};
+      const Statement pattern{"select :{foo}, 2, :{bar}"};
+      const Statement stmt{"select       1  , 2  , 3"};
+      ASSERT(stmt.destructure([&](const auto& name, const auto& match)
+      {
+        if (name == "foo") {
+          called_foo = true;
+          const auto str = match.to_string();
+          ASSERT(str == "1");
+        } else if (name == "bar") {
+          called_bar = true;
+          const auto str = match.to_string();
+          ASSERT(str == "3");
+        } else
+          ASSERT(false);
+        return true;
+      }, pattern));
+      ASSERT(called_foo);
+      ASSERT(called_bar);
+    }
+
+    {
+      int called_foo{};
+      const Statement pattern{"select :{foo}, 2, :{foo}"};
+      const Statement stmt{"select       1  , 2  , 3"};
+      ASSERT(stmt.destructure([&](const auto& name, const auto& match)
+      {
+        if (name == "foo")
+          ++called_foo;
+        else
+          ASSERT(false);
+        switch (called_foo) {
+        case 1: {
+          const auto str = match.to_string();
+          ASSERT(str == "1");
+          break;
+        }
+        case 2: {
+          const auto str = match.to_string();
+          ASSERT(str == "3");
+          break;
+        }
+        default:
+          ASSERT(false);
+        }
+        return true;
+      }, pattern));
+      ASSERT(called_foo == 2);
+    }
+
+    {
+      bool called{};
+      const Statement pattern{"select :{foo}"};
+      Statement stmt{"select :{bar}"};
+      stmt.bind("bar", "1");
+      ASSERT(stmt.destructure([&called](const auto& name, const auto& match)
+      {
+        called = true;
+        ASSERT(name == "foo");
+        const auto str = match.to_string();
+        ASSERT(str == "1");
+        return true;
+      }, pattern));
+      ASSERT(called);
+    }
+
+    // Statement with unbound parameter.
+    {
+      bool catched{};
+      try {
+        const Statement pattern{"select :{foo}"};
+        const Statement stmt{"select :{bar}"};
+        ASSERT(!stmt.destructure([](const auto&, const auto&)
+        {
+          ASSERT(false);
+          return true;
+        }, pattern));
+      } catch (const std::exception& e) {
+        std::cerr << "catched: " << e.what() << std::endl;
+        catched = true;
+      }
+      ASSERT(catched);
+    }
+
+    // Statement with adjacent named parameters without non-space text between them.
+    {
+      bool catched{};
+      try {
+        const Statement pattern{"select :{foo} :{bar}"};
+        const Statement stmt{"select 1 2"};
+        ASSERT(!stmt.destructure([](const auto&, const auto&)
+        {
+          ASSERT(false);
+          return true;
+        }, pattern));
+      } catch (const std::exception& e) {
+        std::cerr << "catched: " << e.what() << std::endl;
+        catched = true;
+      }
+      ASSERT(catched);
     }
 
   } catch (const std::exception& e) {

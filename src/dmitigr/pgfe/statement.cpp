@@ -17,7 +17,6 @@
 #include "../base/assert.hpp"
 #include "../str/predicate.hpp"
 #include "connection.hpp"
-#include "exceptions.hpp"
 #include "statement.hpp"
 
 #include <algorithm>
@@ -42,6 +41,12 @@ DMITIGR_PGFE_INLINE bool
 Statement::Fragment::is_text() const noexcept
 {
   return type == Fragment::Type::text;
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::Fragment::is_quoted_text() const noexcept
+{
+  return type == Fragment::Type::quoted_text;
 }
 
 DMITIGR_PGFE_INLINE bool
@@ -71,6 +76,18 @@ Statement::Fragment::is_quoted_named_parameter(const std::string_view name) cons
 }
 
 DMITIGR_PGFE_INLINE bool
+Statement::Fragment::is_positional_parameter() const noexcept
+{
+  return type == Fragment::Type::positional_parameter;
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::Fragment::is_parameter() const noexcept
+{
+  return is_named_parameter() || is_positional_parameter();
+}
+
+DMITIGR_PGFE_INLINE bool
 Statement::Fragment::is_comment() const noexcept
 {
   return type == Fragment::Type::one_line_comment ||
@@ -82,25 +99,21 @@ const std::string& Statement::Fragment::norm_str() const
 {
   if (type == Type::text) {
     if (norm_.empty()) {
-      norm_.reserve(2 * str.size());
-      enum { word_char, spec_char, space_char } prev_char_type{space_char};
-      for (const unsigned char ch : str) {
+      const auto str_size = str.size();
+      norm_.reserve(2 * str_size);
+      enum { word, spec, space } prev_char_type{space}, prev_non_space{spec};
+      for (std::string::size_type i{}; i < str_size; ++i) {
+        const unsigned char ch = str[i];
         if (std::isalnum(ch) || ch == '_' || ch == '$') {
-          if (prev_char_type == spec_char)
+          if (prev_char_type == space && prev_non_space == word)
             norm_ += ' ';
           norm_ += std::tolower(ch);
-          prev_char_type = word_char;
-        } else if (std::isspace(ch)) {
-          if (prev_char_type != space_char) {
-            norm_ += ' ';
-            prev_char_type = space_char;
-          }
-        } else {
-          if (prev_char_type != space_char)
-            norm_ += ' ';
+          prev_char_type = prev_non_space = word;
+        } else if (!std::isspace(ch)) {
           norm_ += ch;
-          prev_char_type = spec_char;
-        }
+          prev_char_type = prev_non_space = spec;
+        } else
+          prev_char_type = space;
       }
       if (!norm_.empty() && norm_.back() == ' ')
         norm_.pop_back();
@@ -113,7 +126,7 @@ const std::string& Statement::Fragment::norm_str() const
 DMITIGR_PGFE_INLINE
 bool Statement::Fragment::norm_equal(const Fragment& rhs) const
 {
-  return type == rhs.type && norm_str() == rhs.norm_str();
+  return type == rhs.type && depth == rhs.depth && norm_str() == rhs.norm_str();
 }
 
 // =============================================================================
@@ -676,7 +689,6 @@ Statement::bound(const std::string& name) const
 
   const auto i = bindings_.find(name);
   return i != bindings_.cend() ? std::addressof(i->second) : nullptr;
-  DMITIGR_ASSERT(false);
 }
 
 DMITIGR_PGFE_INLINE std::size_t
@@ -685,10 +697,14 @@ Statement::bound_parameter_count() const noexcept
   return bindings_.size();
 }
 
-DMITIGR_PGFE_INLINE bool
-Statement::has_bound_parameter() const noexcept
+DMITIGR_PGFE_INLINE bool Statement::has_bound_parameter() const noexcept
 {
   return !bindings_.empty();
+}
+
+DMITIGR_PGFE_INLINE bool Statement::has_unbound_parameter() const noexcept
+{
+  return bound_parameter_count() < named_parameter_count();
 }
 
 DMITIGR_PGFE_INLINE void
@@ -894,12 +910,6 @@ Statement::are_named_parameters_equal(const Statement& rhs) const
 DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const
 {
   return is_equivalent(rhs) && are_named_parameters_equal(rhs);
-}
-
-DMITIGR_PGFE_INLINE std::optional<Assoc_vector<std::string, std::string>>
-Statement::matchings_vector(const Statement& pattern) const
-{
-  throw "not implemented";
 }
 
 DMITIGR_PGFE_INLINE void Statement::normalize() const
@@ -1266,20 +1276,19 @@ Statement::parse_sql_input(const std::string_view text)
         continue;
 
       case '(':
-        fragment += current_char;
         result.push_text(fragment_depth, fragment);
         fragment.clear();
         ++fragment_depth;
+        fragment += current_char;
         continue;
 
       case ')':
+        fragment += current_char;
         result.push_text(fragment_depth, fragment);
         fragment.clear();
         --fragment_depth;
         if (fragment_depth < 0)
           state = invalid;
-        else
-          fragment += current_char;
         continue;
 
       case '$':

@@ -41,11 +41,19 @@ public:
   /// An alias of the underlying type.
   using Underlying_type = std::vector<Element>;
 
+  /// An alias of the allocator.
+  using Allocator = Underlying_type::allocator_type;
+
   /// An alias of the size type.
   using Size = typename Underlying_type::size_type;
 
   /// Default-constructible
   Assoc_vector() = default;
+
+  /// The constructor.
+  explicit Assoc_vector(const Size size, const Allocator& alloc = Allocator())
+    : elements_(size, alloc)
+  {}
 
   /// The constructor.
   Assoc_vector(std::vector<Element>&& elements) noexcept

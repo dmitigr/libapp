@@ -17,9 +17,12 @@
 #ifndef DMITIGR_PGFE_STATEMENT_HPP
 #define DMITIGR_PGFE_STATEMENT_HPP
 
+#include "../base/assert.hpp"
 #include "../base/assoc_vector.hpp"
+#include "../base/string_vector.hpp"
 #include "basics.hpp"
 #include "dll.hpp"
+#include "exceptions.hpp"
 #include "parameterizable.hpp"
 #include "types_fwd.hpp"
 
@@ -73,6 +76,9 @@ class Statement final : public Parameterizable {
 public:
   /// An alias of extra data.
   using Extra_data = Assoc_vector<std::string, std::any>;
+
+  /// An alias of destructured string.
+  using Destructured_string = String_vector<std::string_view>;
 
   /// @name Constructors
   /// @{
@@ -281,6 +287,13 @@ public:
   DMITIGR_PGFE_API bool has_bound_parameter() const noexcept;
 
   /**
+   * @returns `true` if `bound_parameter_count() < named_parameter_count()`.
+   *
+   * @see bound_parameter_count(), named_parameter_count().
+   */
+  DMITIGR_PGFE_API bool has_unbound_parameter() const noexcept;
+
+  /**
    * @brief Replaces the parameter named by the `name` with the specified
    * `replacement`.
    *
@@ -428,18 +441,132 @@ public:
   DMITIGR_PGFE_API bool is_equal(const Statement& rhs) const;
 
   /**
-   * @brief Matches this statement with `pattern`.
+   * @brief Destructures this statement according to the `pattern`.
+   *
+   * @param callback A function with signature
+   * `bool callback(const std::string& name, const Destructured_string&)`
+   * which called for every matching found.
    *
    * @par Requires
-   * `!pattern.has_duplicate_named_parameter()`.
+   *   -# `!has_unbound_parameter()`;
+   *   -# `pattern` must not have adjacent named parameters without non-space
+   *   text between them.
    *
-   * @returns The map with matchings according to the named parameters of the
-   * `pattern`, or `std::nullopt` if this statement doesn't matches the `pattern`.
+   * @returns `true` if this statement matches to the `pattern`, i.e. it's parts
+   * can be destructured by the named parameters of the `pattern`.
    *
    * @see bind().
    */
-  DMITIGR_PGFE_API std::optional<Assoc_vector<std::string, std::string>>
-  matchings_vector(const Statement& pattern) const;
+  template<typename F>
+  bool destructure(F&& callback, const Statement& pattern) const
+  {
+    static const auto make_view = [](const std::string& str,
+      const std::string::size_type begin,
+      const std::string::size_type end) noexcept
+    {
+      DMITIGR_ASSERT(begin < end);
+      DMITIGR_ASSERT(begin < str.size());
+      DMITIGR_ASSERT(end - begin <= str.size() - begin);
+      return std::string_view{str.data() + begin, end - begin};
+    };
+
+    thread_local Assoc_vector<const std::string*, Destructured_string> result(16);
+    result.clear();
+
+    normalize();
+    pattern.normalize();
+    auto nf = norm_fragments_.cbegin();
+    auto pnf = pattern.norm_fragments_.cbegin();
+    const auto nf_end = norm_fragments_.cend();
+    const auto pnf_end = pattern.norm_fragments_.cend();
+    std::string::size_type nf_norm_offset{};
+    const auto shift_nf_norm_offset = [&nf, &pnf, &nf_norm_offset]
+      (const std::string::size_type norm_pos)
+    {
+      nf_norm_offset = nf->norm_str()
+        .find_first_not_of(' ', norm_pos + pnf->norm_str().size());
+      if (nf_norm_offset == std::string::npos) {
+        nf_norm_offset = 0;
+        ++nf;
+      }
+    };
+
+    while (nf != nf_end && pnf != pnf_end) {
+      if (pnf->is_named_parameter()) {
+        const auto& name = pnf->str;
+
+        // Skip empty text fragments which follows the parameter name.
+        ++pnf;
+        while (pnf != pnf_end && pnf->is_text() && pnf->norm_str().empty())
+          ++pnf;
+        if (pnf != pnf_end && pnf->is_named_parameter())
+          throw Generic_exception{"cannot destructure statement: pattern has "
+            "adjacent named parameters without non-space text between them: "+
+            name+" and "+pnf->str};
+
+        Destructured_string matching;
+        matching.reserve(16);
+        for (; nf != nf_end; ++nf) {
+          if (nf->is_text()) {
+            if (pnf != pnf_end && pnf->is_text()) {
+              DMITIGR_ASSERT(!nf->norm_str().empty());
+              DMITIGR_ASSERT(!pnf->norm_str().empty());
+              const auto norm_pos = nf->norm_str().find(pnf->norm_str(), nf_norm_offset);
+              if (norm_pos != std::string::npos) {
+                matching.push_back(
+                  make_view(nf->norm_str(), nf_norm_offset, norm_pos));
+                shift_nf_norm_offset(norm_pos);
+                ++pnf;
+                break;
+              }
+            }
+            matching.push_back(
+              make_view(nf->norm_str(), nf_norm_offset, nf->norm_str().size()));
+          } else if (nf->is_named_parameter()) {
+            if (const auto* const b = bound(nf->str))
+              matching.push_back(std::string_view{b->data(), b->size()});
+            else
+              throw Generic_exception{"cannot destructure statement: it has "
+                "unbound parameter "+nf->str};
+          } else if (pnf != pnf_end && nf->norm_equal(*pnf)) {
+            ++nf;
+            ++pnf;
+            break;
+          } else
+            matching.push_back(nf->str);
+        } // for
+
+        if (!matching.is_empty())
+          result.append(std::addressof(name), std::move(matching));
+        else
+          return false;
+      } else if (pnf->is_text()) {
+        const auto& nf_norm_str = nf->norm_str();
+        const auto& pnf_norm_str = pnf->norm_str();
+        if (pnf_norm_str.empty())
+          return nf_norm_str.empty();
+        const auto norm_pos = nf_norm_str.find(pnf_norm_str);
+        if (norm_pos == std::string::npos)
+          return false;
+        shift_nf_norm_offset(norm_pos);
+        ++pnf;
+      } else if (pnf->norm_equal(*nf)) {
+        ++nf;
+        ++pnf;
+      } else
+        return false;
+    } // while
+    if (!(nf == nf_end && pnf == pnf_end))
+      return false;
+
+    for (const auto& [name, mtch] : result.vector()) {
+      DMITIGR_ASSERT(name);
+      DMITIGR_ASSERT(!mtch.is_empty());
+      if (!callback(*name, mtch))
+        break;
+    }
+    return true;
+   }
 
 private:
   friend Statement_vector;
@@ -460,10 +587,13 @@ private:
     Fragment(const Type tp, const int depth, const std::string& s);
 
     bool is_text() const noexcept;
+    bool is_quoted_text() const noexcept;
     bool is_named_parameter() const noexcept;
     bool is_named_parameter(const std::string_view name) const noexcept;
     bool is_quoted_named_parameter() const noexcept;
     bool is_quoted_named_parameter(const std::string_view name) const noexcept;
+    bool is_positional_parameter() const noexcept;
+    bool is_parameter() const noexcept;
     bool is_comment() const noexcept;
 
     const std::string& norm_str() const;
@@ -473,7 +603,6 @@ private:
     int depth{};
     std::string str;
 
-  private:
     mutable std::string norm_;
   };
 
