@@ -21,6 +21,7 @@
 #include "dll.hpp"
 #include "types_fwd.hpp"
 
+#include <compare>
 #include <cstddef>
 #include <cstring>
 #include <memory>
@@ -145,86 +146,23 @@ protected:
 /**
  * @ingroup main
  *
- * @returns Either of:
- *   - negative value if the first differing byte in `lhs` is less than the
- *   corresponding byte in `rhs`;
- *   - zero if all bytes of `lhs` and `rhs` are equal;
- *   - positive value if the first differing byte in `lhs` is greater than the
- *   corresponding byte in `rhs`.
+ * @returns
+ *   - `std::strong_ordering::less` if the first differing byte in `lhs` is
+ *   less than the corresponding byte in `rhs`;
+ *   - `std::strong_ordering::equal` if all bytes of `lhs` and `rhs` are equal;
+ *   - `std::strong_ordering::greater` if the first differing byte in `lhs` is
+ *   greater than the corresponding byte in `rhs`.
  */
-DMITIGR_PGFE_API int cmp(const Data& lhs, const Data& rhs) noexcept;
+DMITIGR_PGFE_API std::strong_ordering
+operator<=>(const Data& lhs, const Data& rhs) noexcept;
 
 /**
  * @ingroup main
  *
- * @returns `cmp(lhs, rhs) < 0`.
- *
- * @see cmp(const Data&, const Data&).
+ * @returns `(lhs <=> rhs) == 0`.
  */
-inline bool operator<(const Data& lhs, const Data& rhs) noexcept
-{
-  return cmp(lhs, rhs) < 0;
-}
-
-/**
- * @ingroup main
- *
- * @returns `cmp(lhs, rhs) <= 0`.
- *
- * @see cmp(const Data&, const Data&).
- */
-inline bool operator<=(const Data& lhs, const Data& rhs) noexcept
-{
-  return cmp(lhs, rhs) <= 0;
-}
-
-/**
- * @ingroup main
- *
- * @returns `cmp(lhs, rhs) == 0`.
- *
- * @see cmp(const Data&, const Data&).
- */
-inline bool operator==(const Data& lhs, const Data& rhs) noexcept
-{
-  return !cmp(lhs, rhs);
-}
-
-/**
- * @ingroup main
- *
- * @returns `cmp(lhs, rhs) != 0`.
- *
- * @see cmp(const Data&, const Data&).
- */
-inline bool operator!=(const Data& lhs, const Data& rhs) noexcept
-{
-  return !(lhs == rhs);
-}
-
-/**
- * @ingroup main
- *
- * @returns `cmp(lhs, rhs) > 0`.
- *
- * @see cmp(const Data&, const Data&).
- */
-inline bool operator>(const Data& lhs, const Data& rhs) noexcept
-{
-  return cmp(lhs, rhs) > 0;
-}
-
-/**
- * @ingroup main
- *
- * @returns `cmp(lhs, rhs) >= 0`.
- *
- * @see cmp(const Data&, const Data&).
- */
-inline bool operator>=(const Data& lhs, const Data& rhs) noexcept
-{
-  return cmp(lhs, rhs) >= 0;
-}
+DMITIGR_PGFE_API bool
+operator==(const Data& lhs, const Data& rhs) noexcept;
 
 // =============================================================================
 

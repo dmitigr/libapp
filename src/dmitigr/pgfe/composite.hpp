@@ -21,6 +21,8 @@
 #include "data.hpp"
 #include "dll.hpp"
 
+#include <compare>
+
 namespace dmitigr::pgfe {
 
 /**
@@ -74,85 +76,22 @@ private:
  * @ingroup main
  *
  * @returns
- *   - negative value if the first differing field in `lhs` is less than the
- *   corresponding field in `rhs`;
- *   - zero if all fields of `lhs` and `rhs` are equal;
- *   - positive value if the first differing field in `lhs` is greater than the
- *   corresponding field in `rhs`.
+ *   - `std::strong_ordering::less` if the first differing field in `lhs` is
+ *   less than the corresponding field in `rhs`;
+ *   - `std::strong_ordering::equal` if all fields of `lhs` and `rhs` are equal;
+ *   - `std::strong_ordering::greater` if the first differing field in `lhs` is
+ *   greater than the corresponding field in `rhs`.
  */
-DMITIGR_PGFE_API int cmp(const Composite& lhs, const Composite& rhs) noexcept;
+DMITIGR_PGFE_API std::strong_ordering
+operator<=>(const Composite& lhs, const Composite& rhs) noexcept;
 
 /**
  * @ingroup main
  *
- * @returns `cmp(lhs, rhs) < 0`.
- *
- * @see cmp(const Composite&, const Composite&).
+ * @returns `(lhs <=> rhs) == 0`.
  */
-inline bool operator<(const Composite& lhs, const Composite& rhs) noexcept
-{
-  return cmp(lhs, rhs) < 0;
-}
-
-/**
- * @ingroup main
- *
- * @returns `cmp(lhs, rhs) <= 0`.
- *
- * @see cmp(const Composite&, const Composite&).
- */
-inline bool operator<=(const Composite& lhs, const Composite& rhs) noexcept
-{
-  return cmp(lhs, rhs) <= 0;
-}
-
-/**
- * @ingroup main
- *
- * @returns `cmp(lhs, rhs) == 0`.
- *
- * @see cmp(const Composite&, const Composite&).
- */
-inline bool operator==(const Composite& lhs, const Composite& rhs) noexcept
-{
-  return !cmp(lhs, rhs);
-}
-
-/**
- * @ingroup main
- *
- * @returns `cmp(lhs, rhs) != 0`.
- *
- * @see cmp(const Composite&, const Composite&).
- */
-inline bool operator!=(const Composite& lhs, const Composite& rhs) noexcept
-{
-  return !(lhs == rhs);
-}
-
-/**
- * @ingroup main
- *
- * @returns `cmp(lhs, rhs) > 0`.
- *
- * @see cmp(const Composite&, const Composite&).
- */
-inline bool operator>(const Composite& lhs, const Composite& rhs) noexcept
-{
-  return cmp(lhs, rhs) > 0;
-}
-
-/**
- * @ingroup main
- *
- * @returns `cmp(lhs, rhs) >= 0`.
- *
- * @see cmp(const Composite&, const Composite&).
- */
-inline bool operator>=(const Composite& lhs, const Composite& rhs) noexcept
-{
-  return cmp(lhs, rhs) >= 0;
-}
+DMITIGR_PGFE_API bool
+operator==(const Composite& lhs, const Composite& rhs) noexcept;
 
 } // namespace dmitigr::pgfe
 

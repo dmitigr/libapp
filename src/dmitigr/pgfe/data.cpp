@@ -238,11 +238,27 @@ DMITIGR_PGFE_INLINE bool Data::is_invariant_ok() const
   return size_ok && empty_ok;
 }
 
-DMITIGR_PGFE_INLINE int cmp(const Data& lhs, const Data& rhs) noexcept
+DMITIGR_PGFE_INLINE std::strong_ordering
+operator<=>(const Data& lhs, const Data& rhs) noexcept
 {
+  const auto lfm = lhs.format(), rfm = rhs.format();
   const auto lsz = lhs.size(), rsz = rhs.size();
-  return lsz == rsz ? std::memcmp(lhs.bytes(), rhs.bytes(), lsz) :
-    lsz < rsz ? -1 : 1;
+  if (lfm == rfm && lsz == rsz) {
+    const auto r = std::memcmp(lhs.bytes(), rhs.bytes(), lsz);
+    return r < 0 ? std::strong_ordering::less :
+      r > 0 ? std::strong_ordering::greater : std::strong_ordering::equal;
+  } else if (lfm < rfm)
+    return std::strong_ordering::less;
+  else if (lfm > rfm)
+    return std::strong_ordering::greater;
+  else
+    return lsz < rsz ? std::strong_ordering::less : std::strong_ordering::greater;
+}
+
+DMITIGR_PGFE_INLINE bool
+operator==(const Data& lhs, const Data& rhs) noexcept
+{
+  return (lhs <=> rhs) == std::strong_ordering::equal;
 }
 
 // -----------------------------------------------------------------------------

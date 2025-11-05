@@ -18,18 +18,25 @@
 
 namespace dmitigr::pgfe {
 
-DMITIGR_PGFE_INLINE int cmp(const Composite& lhs, const Composite& rhs) noexcept
+DMITIGR_PGFE_INLINE std::strong_ordering
+operator<=>(const Composite& lhs, const Composite& rhs) noexcept
 {
   if (const auto lfc = lhs.field_count(), rfc = rhs.field_count(); lfc == rfc) {
     for (std::size_t i{}; i < lfc; ++i) {
       if (lhs.field_name(i) < rhs.field_name(i) || lhs[i] < rhs[i])
-        return -1;
+        return std::strong_ordering::less;
       else if (lhs.field_name(i) > rhs.field_name(i) || lhs[i] > rhs[i])
-        return 1;
+        return std::strong_ordering::greater;
     }
-    return 0;
+    return std::strong_ordering::equal;
   } else
-    return lfc < rfc ? -1 : 1;
+    return lfc < rfc ? std::strong_ordering::less : std::strong_ordering::greater;
+}
+
+DMITIGR_PGFE_INLINE bool
+operator==(const Composite& lhs, const Composite& rhs) noexcept
+{
+  return (lhs <=> rhs) == std::strong_ordering::equal;
 }
 
 } // namespace dmitigr::pgfe
