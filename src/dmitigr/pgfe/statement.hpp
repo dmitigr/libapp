@@ -200,6 +200,12 @@ public:
   DMITIGR_PGFE_API bool has_missing_parameter() const noexcept;
 
   /**
+   * @returns `true` if there is a named parameter in this statement that
+   * appears more than once.
+   */
+  DMITIGR_PGFE_API bool has_duplicate_named_parameter() const noexcept;
+
+  /**
    * @brief Appends the specified statement.
    *
    * @par Effects
@@ -416,7 +422,7 @@ public:
    * @returns `true` if the named parameters of this statement are equals to the
    * named parameters of `rhs`.
    */
-  DMITIGR_PGFE_API bool is_named_parameters_equal(const Statement& rhs) const;
+  DMITIGR_PGFE_API bool are_named_parameters_equal(const Statement& rhs) const;
 
   /// @returns `is_equivalent(rhs) && is_named_parameters_equal(rhs)`.
   DMITIGR_PGFE_API bool is_equal(const Statement& rhs) const;
@@ -424,13 +430,16 @@ public:
   /**
    * @brief Matches this statement with `pattern`.
    *
+   * @par Requires
+   * `!pattern.has_duplicate_named_parameter()`.
+   *
    * @returns The map with matchings according to the named parameters of the
    * `pattern`, or `std::nullopt` if this statement doesn't matches the `pattern`.
    *
    * @see bind().
    */
-  DMITIGR_PGFE_API std::optional<std::unordered_map<std::string, std::string>>
-  matchings(const Statement& pattern) const;
+  DMITIGR_PGFE_API std::optional<Assoc_vector<std::string, std::string>>
+  matchings_vector(const Statement& pattern) const;
 
 private:
   friend Statement_vector;
@@ -471,6 +480,7 @@ private:
   struct Named_parameter final {
     Fragment::Type type;
     std::string name;
+    std::size_t count{1};
     auto operator<=>(const Named_parameter&) const noexcept = default;
   };
 

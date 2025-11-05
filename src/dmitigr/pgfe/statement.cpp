@@ -618,6 +618,16 @@ DMITIGR_PGFE_INLINE bool Statement::has_missing_parameter() const noexcept
     [](const auto is_present) {return !is_present;});
 }
 
+DMITIGR_PGFE_INLINE bool
+Statement::has_duplicate_named_parameter() const noexcept
+{
+  return any_of(cbegin(named_parameters_), cend(named_parameters_),
+    [](const auto& param) noexcept
+    {
+      return param.count > 1;
+    });
+}
+
 DMITIGR_PGFE_INLINE void Statement::append(const Statement& appendix)
 {
   const bool was_query_empty{is_query_empty()};
@@ -876,20 +886,20 @@ DMITIGR_PGFE_INLINE bool Statement::is_equivalent(const Statement& rhs) const
 }
 
 DMITIGR_PGFE_INLINE bool
-Statement::is_named_parameters_equal(const Statement& rhs) const
+Statement::are_named_parameters_equal(const Statement& rhs) const
 {
   return named_parameters_ == rhs.named_parameters_;
 }
 
 DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const
 {
-  return is_equivalent(rhs) && is_named_parameters_equal(rhs);
+  return is_equivalent(rhs) && are_named_parameters_equal(rhs);
 }
 
-DMITIGR_PGFE_INLINE std::optional<std::unordered_map<std::string, std::string>>
-Statement::matchings(const Statement& pattern) const
+DMITIGR_PGFE_INLINE std::optional<Assoc_vector<std::string, std::string>>
+Statement::matchings_vector(const Statement& pattern) const
 {
-  throw "not implemented yet";
+  throw "not implemented";
 }
 
 DMITIGR_PGFE_INLINE void Statement::normalize() const
@@ -1005,9 +1015,22 @@ Statement::push_named_parameter(const int depth, const std::string& str,
       quote_char == '\'' ? Ft::named_parameter_literal :
       quote_char == '\"' ? Ft::named_parameter_identifier : Ft::named_parameter;
     push_back_fragment(type, depth, str);
-    if (none_of(cbegin(named_parameters_), cend(named_parameters_),
-        [&str](const auto& param)noexcept{return param.name == str;}))
+    const auto e = end(named_parameters_);
+    const auto p = find_if(begin(named_parameters_), e,
+      [&str](const auto& param) noexcept
+      {
+        return param.name == str;
+      });
+    if (p == e)
       named_parameters_.emplace_back(type, str);
+    else
+      ++p->count;
+
+    /*
+     * Note, that it's okay to mix named parameters with the same name but
+     * different types, for example:
+     * select :"table" from :{table} t where t.tname = :'table'.
+     */
   } else
     throw Generic_exception{"maximum parameters count (" +
       std::to_string(max_parameter_count()) + ") exceeded"};
@@ -1085,9 +1108,15 @@ Statement::named_parameters() const -> std::vector<Named_parameter>
   const auto e = cend(fragments_);
   for (auto i = cbegin(fragments_); i != e; ++i) {
     if (i->is_named_parameter()) {
-      if (none_of(cbegin(result), cend(result),
-          [i](const auto& param) noexcept { return param.name == i->str; }))
+      const auto e = end(result);
+      const auto p = find_if(begin(result), e, [i](const auto& param) noexcept
+      {
+        return param.name == i->str;
+      });
+      if (p == e)
         result.emplace_back(i->type, i->str);
+      else
+        ++p->count;
     }
   }
   return result;
