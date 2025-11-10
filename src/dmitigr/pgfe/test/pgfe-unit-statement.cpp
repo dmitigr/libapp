@@ -341,149 +341,149 @@ update task_step_log
     // -------------------------------------------------------------------------
 
     {
-      bool called{};
+      int called{};
       const Statement pattern{""};
       const Statement stmt{""};
       ASSERT(stmt.destructure([&called](const auto&, const auto&)
       {
-        called = true;
+        ++called;
         return true;
       }, pattern));
       ASSERT(!called);
     }
 
     {
-      bool called{};
+      int called{};
       const Statement pattern{""};
       const Statement stmt{"select 1"};
       ASSERT(!stmt.destructure([&called](const auto&, const auto&)
       {
-        called = true;
+        ++called;
         return true;
       }, pattern));
       ASSERT(!called);
     }
 
     {
-      bool called{};
+      int called{};
       const Statement pattern{"select 1"};
       const Statement stmt{""};
       ASSERT(!stmt.destructure([&called](const auto&, const auto&)
       {
-        called = true;
+        ++called;
         return true;
       }, pattern));
       ASSERT(!called);
     }
 
     {
-      bool called{};
+      int called{};
       const Statement pattern{"select 1"};
       const Statement stmt{"select 1"};
       ASSERT(stmt.destructure([&called](const auto&, const auto&)
       {
-        called = true;
+        ++called;
         return true;
       }, pattern));
       ASSERT(!called);
     }
 
     {
-      bool called{};
+      int called{};
       const Statement pattern{"  select   1    "};
       const Statement stmt{"select 1"};
       ASSERT(stmt.destructure([&called](const auto&, const auto&)
       {
-        called = true;
+        ++called;
         return true;
       }, pattern));
       ASSERT(!called);
     }
 
     {
-      bool called{};
+      int called{};
       const Statement pattern{"select 1"};
       const Statement stmt{"  select   1    "};
       ASSERT(stmt.destructure([&called](const auto&, const auto&)
       {
-        called = true;
+        ++called;
         return true;
       }, pattern));
       ASSERT(!called);
     }
 
     {
-      bool called{};
+      int called{};
       const Statement pattern{"select 1"};
       const Statement stmt{"select 1, 2"};
       ASSERT(!stmt.destructure([&called](const auto&, const auto&)
       {
-        called = true;
+        ++called;
         return true;
       }, pattern));
       ASSERT(!called);
     }
 
     {
-      bool called{};
+      int called{};
       const Statement pattern{"select 'dima'"};
       const Statement stmt{"select 'olga'"};
       ASSERT(!stmt.destructure([&called](const auto&, const auto&)
       {
-        called = true;
+        ++called;
         return true;
       }, pattern));
       ASSERT(!called);
     }
 
     {
-      bool called{};
+      int called{};
       const Statement pattern{"select 'dima'"};
       const Statement stmt{"select    'dima'"};
       ASSERT(stmt.destructure([&called](const auto&, const auto&)
       {
-        called = true;
+        ++called;
         return true;
       }, pattern));
       ASSERT(!called);
     }
 
     {
-      bool called{};
+      int called{};
       const Statement pattern{"select :{foo}"};
       const Statement stmt{"select       1  "};
       ASSERT(stmt.destructure([&called](const auto& name, const auto& match)
       {
-        called = true;
+        ++called;
         ASSERT(name == "foo");
         const auto str = match.to_string();
         ASSERT(str == "1");
         return true;
       }, pattern));
-      ASSERT(called);
+      ASSERT(called == 1);
     }
 
     {
-      bool called_foo{};
-      bool called_bar{};
+      int called_foo{};
+      int called_bar{};
       const Statement pattern{"select :{foo}, 2, :{bar}"};
       const Statement stmt{"select       1  , 2  , 3"};
       ASSERT(stmt.destructure([&](const auto& name, const auto& match)
       {
         if (name == "foo") {
-          called_foo = true;
+          ++called_foo;
           const auto str = match.to_string();
           ASSERT(str == "1");
         } else if (name == "bar") {
-          called_bar = true;
+          ++called_bar;
           const auto str = match.to_string();
           ASSERT(str == "3");
         } else
           ASSERT(false);
         return true;
       }, pattern));
-      ASSERT(called_foo);
-      ASSERT(called_bar);
+      ASSERT(called_foo == 1);
+      ASSERT(called_bar == 1);
     }
 
     {
@@ -516,19 +516,19 @@ update task_step_log
     }
 
     {
-      bool called{};
+      int called{};
       const Statement pattern{"select :{foo}"};
       Statement stmt{"select :{bar}"};
       stmt.bind("bar", "1");
       ASSERT(stmt.destructure([&called](const auto& name, const auto& match)
       {
-        called = true;
+        ++called;
         ASSERT(name == "foo");
         const auto str = match.to_string();
         ASSERT(str == "1");
         return true;
       }, pattern));
-      ASSERT(called);
+      ASSERT(called == 1);
     }
 
     {
