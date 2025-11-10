@@ -470,6 +470,12 @@ public:
       return std::string_view{str.data() + begin, end - begin};
     };
 
+    static const auto push_back_if_not_empty = [](auto& cont, auto&& val)
+    {
+      if (val.data() && !val.empty())
+        cont.push_back(std::forward<decltype(val)>(val));
+    };
+
     thread_local Assoc_vector<const std::string*, Destructured_string> result(16);
     result.clear();
 
@@ -514,7 +520,7 @@ public:
                 DMITIGR_ASSERT(!pnf->norm_str().empty());
                 const auto norm_pos = nf->norm_str().find(pnf->norm_str(), nf_norm_offset);
                 if (norm_pos != std::string::npos) {
-                  matching.push_back(
+                  push_back_if_not_empty(matching,
                     make_view(nf->norm_str(), nf_norm_offset, norm_pos));
                   shift_nf_norm_offset(norm_pos);
                   ++pnf;
@@ -523,11 +529,12 @@ public:
               } else if (nf->depth < pnf->depth)
                 return false;
             }
-            matching.push_back(
+            push_back_if_not_empty(matching,
               make_view(nf->norm_str(), nf_norm_offset, nf->norm_str().size()));
           } else if (nf->is_named_parameter()) {
             if (const auto* const b = bound(nf->str))
-              matching.push_back(std::string_view{b->data(), b->size()});
+              push_back_if_not_empty(matching,
+                std::string_view{b->data(), b->size()});
             else
               throw Generic_exception{"cannot destructure statement: it has "
                 "unbound parameter "+nf->str};
@@ -536,7 +543,7 @@ public:
             ++pnf;
             break;
           } else
-            matching.push_back(nf->str);
+            push_back_if_not_empty(matching, nf->str);
         } // for
 
         if (!matching.is_empty())
