@@ -509,16 +509,19 @@ public:
         for (; nf != nf_end; ++nf) {
           if (nf->is_text()) {
             if (pnf != pnf_end && pnf->is_text()) {
-              DMITIGR_ASSERT(!nf->norm_str().empty());
-              DMITIGR_ASSERT(!pnf->norm_str().empty());
-              const auto norm_pos = nf->norm_str().find(pnf->norm_str(), nf_norm_offset);
-              if (norm_pos != std::string::npos) {
-                matching.push_back(
-                  make_view(nf->norm_str(), nf_norm_offset, norm_pos));
-                shift_nf_norm_offset(norm_pos);
-                ++pnf;
-                break;
-              }
+              if (nf->depth == pnf->depth) {
+                DMITIGR_ASSERT(!nf->norm_str().empty());
+                DMITIGR_ASSERT(!pnf->norm_str().empty());
+                const auto norm_pos = nf->norm_str().find(pnf->norm_str(), nf_norm_offset);
+                if (norm_pos != std::string::npos) {
+                  matching.push_back(
+                    make_view(nf->norm_str(), nf_norm_offset, norm_pos));
+                  shift_nf_norm_offset(norm_pos);
+                  ++pnf;
+                  break;
+                }
+              } else if (nf->depth < pnf->depth)
+                return false;
             }
             matching.push_back(
               make_view(nf->norm_str(), nf_norm_offset, nf->norm_str().size()));

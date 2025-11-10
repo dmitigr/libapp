@@ -531,6 +531,29 @@ update task_step_log
       ASSERT(called);
     }
 
+    {
+      int called_with{};
+      int called_num{};
+      const Statement pattern{":{with} select 1, :{num}"};
+      const Statement stmt{"  with   foo as  (  select 1,    2) select 1  , 3"};
+      ASSERT(stmt.destructure([&](const auto& name, const auto& match)
+      {
+        if (name == "with") {
+          ++called_with;
+          const auto with = match.to_string();
+          ASSERT(with == "with foo as(select 1,2)");
+        } else if (name == "num") {
+          ++called_num;
+          const auto num = match.to_string();
+          ASSERT(num == "3");
+        } else
+          ASSERT(false);
+        return true;
+      }, pattern));
+      ASSERT(called_with == 1);
+      ASSERT(called_num == 1);
+    }
+
     // Statement with unbound parameter.
     {
       bool catched{};
