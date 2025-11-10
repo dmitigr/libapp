@@ -554,6 +554,35 @@ update task_step_log
       ASSERT(called_num == 1);
     }
 
+    {
+      int called_with_name{};
+      int called_subquery{};
+      int called_query{};
+      const Statement pattern{"with :{with_name} as (:{subquery}) :{query}"};
+      const Statement stmt{"with foo as (select 1, 2) select 3, 4"};
+      ASSERT(stmt.destructure([&](const auto& name, const auto& match)
+      {
+        if (name == "with_name") {
+          ++called_with_name;
+          const auto with_name = match.to_string();
+          ASSERT(with_name == "foo");
+        } else if (name == "subquery") {
+          ++called_subquery;
+          const auto subquery = match.to_string();
+          ASSERT(subquery == "select 1,2");
+        } else if (name == "query") {
+          ++called_query;
+          const auto query = match.to_string();
+          ASSERT(query == "select 3,4");
+        } else
+          ASSERT(false);
+        return true;
+      }, pattern));
+      ASSERT(called_with_name == 1);
+      ASSERT(called_subquery == 1);
+      ASSERT(called_query == 1);
+    }
+
     // Statement with unbound parameter.
     {
       bool catched{};

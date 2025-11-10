@@ -520,8 +520,10 @@ public:
                 DMITIGR_ASSERT(!pnf->norm_str().empty());
                 const auto norm_pos = nf->norm_str().find(pnf->norm_str(), nf_norm_offset);
                 if (norm_pos != std::string::npos) {
+                  const auto end = norm_pos - ((norm_pos > nf_norm_offset) &&
+                    nf->norm_str()[norm_pos - 1] == ' ');
                   push_back_if_not_empty(matching,
-                    make_view(nf->norm_str(), nf_norm_offset, norm_pos));
+                    make_view(nf->norm_str(), nf_norm_offset, end));
                   shift_nf_norm_offset(norm_pos);
                   ++pnf;
                   break;

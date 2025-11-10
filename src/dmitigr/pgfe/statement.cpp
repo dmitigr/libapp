@@ -919,11 +919,16 @@ DMITIGR_PGFE_INLINE void Statement::normalize() const
 
   Fragment_list norm_fragments;
   for (const auto& fragment : fragments_) {
-    if (!norm_fragments.empty() &&
-      fragment.is_text() && norm_fragments.back().is_text() &&
-      fragment.depth == norm_fragments.back().depth)
-      norm_fragments.back().str.append(fragment.str);
-    else if (!fragment.is_comment())
+    if (fragment.is_text()) {
+      if (!str::is_blank(fragment.str)) {
+        if (!norm_fragments.empty() &&
+          norm_fragments.back().is_text() &&
+          fragment.depth == norm_fragments.back().depth)
+          norm_fragments.back().str.append(fragment.str);
+        else
+          norm_fragments.push_back(fragment);
+      }
+    } else if (!fragment.is_comment())
       norm_fragments.push_back(fragment);
   }
 
