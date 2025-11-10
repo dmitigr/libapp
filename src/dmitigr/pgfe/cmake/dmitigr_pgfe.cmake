@@ -129,6 +129,7 @@ if(DMITIGR_LIBS_TESTS)
     benchmark_array_server
     benchmark_statement
     benchmark_statement_replace
+    benchmark_statement_destructure
     connection
     connection_deferrable
     connection-err_in_mid
