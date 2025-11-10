@@ -559,7 +559,7 @@ update task_step_log
       int called_subquery{};
       int called_query{};
       const Statement pattern{"with :{with_name} as (:{subquery}) :{query}"};
-      const Statement stmt{"with foo as (select 1, 2) select 3, 4"};
+      const Statement stmt{"  with  foo  as (  select 1, 2 ) select 3 , 4 "};
       ASSERT(stmt.destructure([&](const auto& name, const auto& match)
       {
         if (name == "with_name") {
