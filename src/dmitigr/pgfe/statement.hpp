@@ -452,8 +452,8 @@ public:
    *   -# `pattern` must not have adjacent named parameters without non-space
    *   text between them.
    *
-   * @returns `true` if this statement matches to the `pattern`, i.e. it's parts
-   * can be destructured by the named parameters of the `pattern`.
+   * @returns `true` if this statement matches to the `pattern` and it's parts
+   * are destructured by the named parameters of the `pattern`.
    *
    * @see bind().
    */
