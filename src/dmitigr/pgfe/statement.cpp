@@ -972,16 +972,15 @@ DMITIGR_PGFE_INLINE void
 Statement::push_back_fragment(const Fragment::Type type,
   const int depth, const std::string& str)
 {
-  if (!str.empty()) {
-    fragments_.emplace_back(type, depth, str);
-    assert(is_invariant_ok());
-  }
+  fragments_.emplace_back(type, depth, str);
+  assert(is_invariant_ok());
 }
 
 DMITIGR_PGFE_INLINE void
 Statement::push_text(const int depth, const std::string& str)
 {
-  push_back_fragment(Fragment::Type::text, depth, str);
+  if (!str.empty())
+    push_back_fragment(Fragment::Type::text, depth, str);
 }
 
 DMITIGR_PGFE_INLINE void
@@ -1005,6 +1004,8 @@ Statement::push_multi_line_comment(const int depth, const std::string& str)
 DMITIGR_PGFE_INLINE void
 Statement::push_positional_parameter(const int depth, const std::string& str)
 {
+  DMITIGR_ASSERT(!str.empty());
+
   push_back_fragment(Fragment::Type::positional_parameter, depth, str);
 
   using Size = std::vector<bool>::size_type;
@@ -1024,7 +1025,9 @@ DMITIGR_PGFE_INLINE void
 Statement::push_named_parameter(const int depth, const std::string& str,
   const char quote_char)
 {
+  DMITIGR_ASSERT(!str.empty());
   DMITIGR_ASSERT(!quote_char || is_quote_char(quote_char));
+
   if (parameter_count() < max_parameter_count()) {
     using Ft = Fragment::Type;
     const auto type =
@@ -1351,7 +1354,7 @@ Statement::parse_sql_input(const std::string_view text)
     case positional_parameter:
       DMITIGR_ASSERT(isdigit(static_cast<unsigned char>(previous_char)));
       if (!isdigit(static_cast<unsigned char>(current_char))) {
-        state = top;
+        state = !fragment.empty() ? top : invalid;
         result.push_positional_parameter(fragment_depth, fragment);
         fragment.clear();
       }
@@ -1428,7 +1431,7 @@ Statement::parse_sql_input(const std::string_view text)
         goto finish;
       else if (!is_named_param_char(current_char)) {
         if (current_char == '}' || current_char == quote_char) {
-          state = top;
+          state = !fragment.empty() ? top : invalid;
           result.push_named_parameter(fragment_depth, fragment, quote_char);
           fragment.clear();
           quote_char = 0;
