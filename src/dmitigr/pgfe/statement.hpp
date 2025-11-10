@@ -464,8 +464,8 @@ public:
       const std::string::size_type begin,
       const std::string::size_type end) noexcept
     {
-      DMITIGR_ASSERT(begin < end);
-      DMITIGR_ASSERT(begin < str.size());
+      DMITIGR_ASSERT(begin <= end);
+      DMITIGR_ASSERT(begin <= str.size());
       DMITIGR_ASSERT(end - begin <= str.size() - begin);
       return std::string_view{str.data() + begin, end - begin};
     };
