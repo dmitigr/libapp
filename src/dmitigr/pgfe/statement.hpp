@@ -553,6 +553,8 @@ public:
         else
           return false;
       } else if (pnf->is_text()) {
+        if (nf->depth != pnf->depth)
+          return false;
         const auto& nf_norm_str = nf->norm_str();
         const auto& pnf_norm_str = pnf->norm_str();
         if (pnf_norm_str.empty())
