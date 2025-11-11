@@ -937,7 +937,7 @@ DMITIGR_PGFE_INLINE bool Statement::is_equal(const Statement& rhs) const
 
 DMITIGR_PGFE_INLINE void Statement::normalize() const
 {
-  if (!norm_fragments_.empty())
+  if (is_normalized())
     return;
 
   Fragment_list norm_fragments;
@@ -959,6 +959,11 @@ DMITIGR_PGFE_INLINE void Statement::normalize() const
     fragment.norm_str();
 
   norm_fragments_.swap(norm_fragments);
+}
+
+DMITIGR_PGFE_INLINE bool Statement::is_normalized() const noexcept
+{
+  return !norm_fragments_.empty();
 }
 
 DMITIGR_PGFE_INLINE bool Statement::is_invariant_ok() const noexcept

@@ -582,6 +582,24 @@ public:
     return true;
    }
 
+  /**
+   * @brief Normalizes this statement.
+   *
+   * @details This is called implicitly upon of calling such functions as
+   * is_equivalent() or destructure().
+   *
+   * @par Exception safety guarantee
+   * Strong.
+   */
+  DMITIGR_PGFE_API void normalize() const;
+
+  /**
+   * @returns `true` if this statement is normalized.
+   *
+   * @see normalize().
+   */
+  DMITIGR_PGFE_API bool is_normalized() const noexcept;
+
 private:
   friend Statement_vector;
 
@@ -656,9 +674,6 @@ private:
   // ---------------------------------------------------------------------------
   // Updaters
   // ---------------------------------------------------------------------------
-
-  // Exception safety guarantee: strong.
-  DMITIGR_PGFE_API void normalize() const;
 
   // Exception safety guarantee: strong.
   void update_cache(const Statement& rhs);
