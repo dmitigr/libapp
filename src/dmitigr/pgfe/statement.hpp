@@ -616,8 +616,7 @@ private:
     Type type;
     int depth{};
     std::string str;
-
-    mutable std::string norm_;
+    mutable std::string norm;
   };
 
   struct Named_parameter final {

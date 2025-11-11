@@ -98,27 +98,27 @@ DMITIGR_PGFE_INLINE
 const std::string& Statement::Fragment::norm_str() const
 {
   if (type == Type::text) {
-    if (norm_.empty()) {
+    if (norm.empty()) {
       const auto str_size = str.size();
-      norm_.reserve(2 * str_size);
+      norm.reserve(2 * str_size);
       enum { word, spec, space } prev_char_type{space}, prev_non_space{spec};
       for (std::string::size_type i{}; i < str_size; ++i) {
         const unsigned char ch = str[i];
         if (std::isalnum(ch) || ch == '_' || ch == '$') {
           if (prev_char_type == space && prev_non_space == word)
-            norm_ += ' ';
-          norm_ += std::tolower(ch);
+            norm += ' ';
+          norm += std::tolower(ch);
           prev_char_type = prev_non_space = word;
         } else if (!std::isspace(ch)) {
-          norm_ += ch;
+          norm += ch;
           prev_char_type = prev_non_space = spec;
         } else
           prev_char_type = space;
       }
-      if (!norm_.empty() && norm_.back() == ' ')
-        norm_.pop_back();
+      if (!norm.empty() && norm.back() == ' ')
+        norm.pop_back();
     }
-    return norm_;
+    return norm;
   }
   return str;
 }
