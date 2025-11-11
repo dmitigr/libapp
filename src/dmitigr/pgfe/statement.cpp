@@ -736,7 +736,7 @@ Statement::replace(const std::string_view name, const Statement& replacement)
          * fragments bordering them.
          */
         if (auto rsz = replacement_fragments.size()) {
-          if (first->is_text() && first != begin(fragments)) {
+          if (first != begin(fragments) && first->is_text()) {
             const auto prefirst = prev(first);
             if (prefirst->is_text() && first->depth == prefirst->depth) {
               prefirst->str.append(first->str);
