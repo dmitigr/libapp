@@ -714,9 +714,28 @@ Statement::replace(const std::string_view name, const Statement& replacement)
     throw Generic_exception{"cannot replace Statement parameter " +
       std::string{name}};
 
-  const auto update_fragments = [name](auto& fragments,
+  const auto normalized = [&]
+  {
+    if (is_normalized() || replacement.is_normalized()) {
+      normalize();
+      replacement.normalize();
+      return true;
+    }
+    return false;
+  }();
+
+  const auto update_fragments = [name, normalized](auto& fragments,
     const auto& replacement_fragments)
   {
+    const auto append_norm = [normalized](auto& lhs, const auto& rhs)
+    {
+      if (normalized) {
+        if (!lhs.empty() && !rhs.empty())
+          lhs.append(1, ' ');
+        lhs.append(rhs);
+      }
+    };
+
     for (auto fi = begin(fragments); fi != end(fragments);) {
       if (fi->is_named_parameter(name)) {
         // Insert the `replacement` just before `fi`.
@@ -740,6 +759,7 @@ Statement::replace(const std::string_view name, const Statement& replacement)
             const auto prefirst = prev(first);
             if (prefirst->is_text() && first->depth == prefirst->depth) {
               prefirst->str.append(first->str);
+              append_norm(prefirst->norm, first->norm);
               first = fragments.erase(first);
               --rsz;
             }
@@ -749,6 +769,7 @@ Statement::replace(const std::string_view name, const Statement& replacement)
             const auto last = rsz ? prev(fi) : first;
             if (last->is_text() && last->depth == fi->depth) {
               last->str.append(fi->str);
+              append_norm(last->norm, fi->norm);
               fi = fragments.erase(fi);
             }
           }
