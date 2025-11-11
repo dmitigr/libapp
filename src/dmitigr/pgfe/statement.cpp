@@ -720,44 +720,37 @@ Statement::replace(const std::string_view name, const Statement& replacement)
     for (auto fi = begin(fragments); fi != end(fragments);) {
       if (fi->is_named_parameter(name)) {
         // Insert the `replacement` just before `fi`.
-        auto ri = fragments.insert(fi, cbegin(replacement_fragments),
+        auto first = fragments.insert(fi, cbegin(replacement_fragments),
           cend(replacement_fragments));
 
-        // Store the first element of the replacement.
-        auto first = ri;
-
         // Update the depth of inserted fragments.
-        const auto rsz = replacement_fragments.size();
         const auto fi_depth = fi->depth;
-        for (std::size_t i{}; i < rsz; ++i) {
-          ri->depth += fi_depth;
-          ++ri;
-        }
-
-        // Store the last element of the replacement.
-        const auto last = rsz ? std::prev(ri) : ri;
+        for (auto i = first; i != fi; ++i)
+          i->depth += fi_depth;
 
         // Erase named parameter pointed by `fi` and get the next iterator.
         fi = fragments.erase(fi);
 
         /*
-         * Join first and last text fragments with the previous and next
-         * text fragments respectively.
+         * Join first and last text fragments of the replacement with the
+         * fragments bordering them.
          */
-        if (bool not_empty = rsz) {
+        if (auto rsz = replacement_fragments.size()) {
           if (first->is_text() && first != begin(fragments)) {
-            const auto prefirst = std::prev(first);
+            const auto prefirst = prev(first);
             if (prefirst->is_text() && first->depth == prefirst->depth) {
               prefirst->str.append(first->str);
               first = fragments.erase(first);
-              not_empty = rsz - 1;
+              --rsz;
             }
           }
 
-          if (not_empty && last->is_text() &&
-            fi != end(fragments) && fi->is_text() && last->depth == fi->depth) {
-            last->str.append(fi->str);
-            fi = fragments.erase(fi);
+          if (fi != end(fragments) && fi->is_text()) {
+            const auto last = rsz ? prev(fi) : first;
+            if (last->is_text() && last->depth == fi->depth) {
+              last->str.append(fi->str);
+              fi = fragments.erase(fi);
+            }
           }
         }
       } else
