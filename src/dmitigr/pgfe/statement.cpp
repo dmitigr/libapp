@@ -714,29 +714,58 @@ Statement::replace(const std::string_view name, const Statement& replacement)
     throw Generic_exception{"cannot replace Statement parameter " +
       std::string{name}};
 
-  // Update fragments.
-  for (auto fi = begin(fragments_); fi != end(fragments_);) {
-    if (fi->is_named_parameter(name)) {
-      {
+  const auto update_fragments = [name](auto& fragments,
+    const auto& replacement_fragments)
+  {
+    for (auto fi = begin(fragments); fi != end(fragments);) {
+      if (fi->is_named_parameter(name)) {
         // Insert the `replacement` just before `fi`.
-        auto ri = fragments_.insert(fi, cbegin(replacement.fragments_),
-          cend(replacement.fragments_));
+        auto ri = fragments.insert(fi, cbegin(replacement_fragments),
+          cend(replacement_fragments));
+
+        // Store the first element of the replacement.
+        auto first = ri;
 
         // Update the depth of inserted fragments.
-        const auto rsz = replacement.fragments_.size();
+        const auto rsz = replacement_fragments.size();
         const auto fi_depth = fi->depth;
         for (std::size_t i{}; i < rsz; ++i) {
           ri->depth += fi_depth;
           ++ri;
         }
-      }
 
-      // Erase named parameter pointed by `fi` and get the next iterator.
-      fi = fragments_.erase(fi);
-    } else
-      ++fi;
-  }
+        // Store the last element of the replacement.
+        const auto last = rsz ? std::prev(ri) : ri;
 
+        // Erase named parameter pointed by `fi` and get the next iterator.
+        fi = fragments.erase(fi);
+
+        /*
+         * Join first and last text fragments with the previous and next
+         * text fragments respectively.
+         */
+        if (bool not_empty = rsz) {
+          if (first->is_text() && first != begin(fragments)) {
+            const auto prefirst = std::prev(first);
+            if (prefirst->is_text()) {
+              prefirst->str.append(first->str);
+              first = fragments.erase(first);
+              not_empty = rsz - 1;
+            }
+          }
+
+          if (not_empty && last->is_text() && fi != end(fragments) && fi->is_text()) {
+            last->str.append(fi->str);
+            fi = fragments.erase(fi);
+          }
+        }
+      } else
+        ++fi;
+    }
+  };
+
+  update_fragments(fragments_, replacement.fragments_); // can throw
+  update_fragments(norm_fragments_, replacement.norm_fragments_); // can throw
   update_cache(replacement);  // can throw
 
   assert(is_invariant_ok());
