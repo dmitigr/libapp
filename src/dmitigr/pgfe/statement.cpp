@@ -714,7 +714,7 @@ Statement::replace(const std::string_view name, const Statement& replacement)
     throw Generic_exception{"cannot replace Statement parameter " +
       std::string{name}};
 
-  const auto normalized = [&]
+  const auto normalized = [this, &replacement]
   {
     if (is_normalized() || replacement.is_normalized()) {
       normalize();
