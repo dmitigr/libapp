@@ -747,14 +747,15 @@ Statement::replace(const std::string_view name, const Statement& replacement)
         if (bool not_empty = rsz) {
           if (first->is_text() && first != begin(fragments)) {
             const auto prefirst = std::prev(first);
-            if (prefirst->is_text()) {
+            if (prefirst->is_text() && first->depth == prefirst->depth) {
               prefirst->str.append(first->str);
               first = fragments.erase(first);
               not_empty = rsz - 1;
             }
           }
 
-          if (not_empty && last->is_text() && fi != end(fragments) && fi->is_text()) {
+          if (not_empty && last->is_text() &&
+            fi != end(fragments) && fi->is_text() && last->depth == fi->depth) {
             last->str.append(fi->str);
             fi = fragments.erase(fi);
           }
