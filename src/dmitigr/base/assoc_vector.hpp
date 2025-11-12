@@ -42,7 +42,7 @@ public:
   using Underlying_type = std::vector<Element>;
 
   /// An alias of the allocator.
-  using Allocator = Underlying_type::allocator_type;
+  using Allocator = typename Underlying_type::allocator_type;
 
   /// An alias of the size type.
   using Size = typename Underlying_type::size_type;
