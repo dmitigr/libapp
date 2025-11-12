@@ -122,7 +122,7 @@ public:
   query_absolute_position(std::size_t index, const Connection& conn) const;
 
   /// Appends the `statement` to this vector.
-  DMITIGR_PGFE_API void append(Statement statement) noexcept;
+  DMITIGR_PGFE_API void push_back(Statement statement) noexcept;
 
   /**
    * @brief Inserts the `statement` to this vector.

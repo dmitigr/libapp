@@ -25,7 +25,7 @@ namespace dmitigr::pgfe {
 
 DMITIGR_PGFE_INLINE Statement_vector::Statement_vector(std::string_view input)
 {
-  while (!input.empty()) {
+  while (input.data() && !input.empty()) {
     auto [st, pos] = Statement::parse_sql_input(input);
     statements_.emplace_back(std::move(st));
     DMITIGR_ASSERT(pos <= input.size());
@@ -119,7 +119,7 @@ Statement_vector::query_absolute_position(const std::size_t index,
   return statement_position(index) + junk_size;
 }
 
-DMITIGR_PGFE_INLINE void Statement_vector::append(Statement statement) noexcept
+DMITIGR_PGFE_INLINE void Statement_vector::push_back(Statement statement) noexcept
 {
   statements_.push_back(std::move(statement));
 }

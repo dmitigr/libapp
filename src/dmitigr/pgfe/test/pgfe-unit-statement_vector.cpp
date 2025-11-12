@@ -30,7 +30,7 @@ try {
   pgfe::Statement_vector bunch;
   DMITIGR_ASSERT(bunch.is_empty());
   DMITIGR_ASSERT(bunch.size() == 0);
-  bunch.append("SELECT 1");
+  bunch.push_back("SELECT 1");
   DMITIGR_ASSERT(!bunch.is_empty());
   DMITIGR_ASSERT(bunch.size() == 1);
   DMITIGR_ASSERT(bunch.to_string() == "SELECT 1");
