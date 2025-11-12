@@ -178,7 +178,7 @@ public:
   /// @see Data::to_data().
   std::unique_ptr<Data> to_data() const override
   {
-    return std::make_unique<Type_data<T>>(*this);
+    return std::make_unique<Type_data<Type>>(*this);
   }
 
   /// @see Data::format().
@@ -190,7 +190,7 @@ public:
   /// @see Data::size().
   std::size_t size() const noexcept override
   {
-    return sizeof(T);
+    return sizeof(Type);
   }
 
   /// @see Data::is_empty().
