@@ -62,6 +62,20 @@ DMITIGR_PGFE_INLINE bool Statement_vector::is_empty() const noexcept
   return statements_.empty();
 }
 
+DMITIGR_PGFE_INLINE const Statement&
+Statement_vector::operator[](const std::size_t index) const
+{
+  if (!(index < size()))
+    throw Generic_exception{"cannot get from Statement_vector"};
+  return statements_[index];
+}
+
+DMITIGR_PGFE_INLINE Statement&
+Statement_vector::operator[](const std::size_t index)
+{
+  return const_cast<Statement&>(static_cast<const Statement_vector&>(*this)[index]);
+}
+
 DMITIGR_PGFE_INLINE std::size_t Statement_vector::statement_index(
   const std::string_view extra_name,
   const std::string_view extra_value,
@@ -84,20 +98,6 @@ DMITIGR_PGFE_INLINE std::size_t Statement_vector::statement_index(
         return false;
     });
   return static_cast<std::size_t>(i - b);
-}
-
-DMITIGR_PGFE_INLINE const Statement&
-Statement_vector::operator[](const std::size_t index) const
-{
-  if (!(index < size()))
-    throw Generic_exception{"cannot get from Statement_vector"};
-  return statements_[index];
-}
-
-DMITIGR_PGFE_INLINE Statement&
-Statement_vector::operator[](const std::size_t index)
-{
-  return const_cast<Statement&>(static_cast<const Statement_vector&>(*this)[index]);
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type

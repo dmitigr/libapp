@@ -80,6 +80,19 @@ public:
   DMITIGR_PGFE_API bool is_empty() const noexcept;
 
   /**
+   * @returns The statement that owns by this vector.
+   *
+   * @param index An index of statement to return.
+   *
+   * @par Requires
+   * `index < size()`.
+   */
+  DMITIGR_PGFE_API const Statement& operator[](std::size_t index) const;
+
+  /// @overload
+  DMITIGR_PGFE_API Statement& operator[](std::size_t index);
+
+  /**
    * @returns The index of the statement that owns by this vector, or `size()`
    * if no statement that meets the given criterias exists in this vector.
    *
@@ -95,19 +108,6 @@ public:
     std::string_view extra_value,
     std::size_t offset = 0,
     std::size_t extra_offset = 0) const noexcept;
-
-  /**
-   * @returns The statement that owns by this vector.
-   *
-   * @param index An index of statement to return.
-   *
-   * @par Requires
-   * `index < size()`.
-   */
-  DMITIGR_PGFE_API const Statement& operator[](std::size_t index) const;
-
-  /// @overload
-  DMITIGR_PGFE_API Statement& operator[](std::size_t index);
 
   /**
    * @returns The absolute position of the query of the speficied SQL string.
