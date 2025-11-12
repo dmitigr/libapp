@@ -104,7 +104,7 @@ const std::string& Statement::Fragment::norm_str() const
       enum { word, spec, space } prev_char_type{space}, prev_non_space{spec};
       for (std::string::size_type i{}; i < str_size; ++i) {
         const unsigned char ch = str[i];
-        if (std::isalnum(ch) || ch == '_' || ch == '$') {
+        if (is_ident_char(ch)) {
           if (prev_char_type == space && prev_non_space == word)
             norm += ' ';
           norm += std::tolower(ch);
