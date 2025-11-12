@@ -270,7 +270,7 @@ int main()
 
       {
         const char* valid_literal = "{}";
-        const auto data = pgfe::Data::make(valid_literal);
+        const auto data = pgfe::make_string_data(valid_literal);
         const auto native_arr = pgfe::to<Arr>(*data);
         const auto native_vec = pgfe::to<Vec>(*data);
         DMITIGR_ASSERT((native_arr == Arr{}));
@@ -279,7 +279,7 @@ int main()
 
       {
         const char* valid_literal = "{1}";
-        const auto data = pgfe::Data::make(valid_literal);
+        const auto data = pgfe::make_string_data(valid_literal);
         const auto native_arr = pgfe::to<Arr>(*data);
         const auto native_vec = pgfe::to<Vec>(*data);
         DMITIGR_ASSERT((native_arr == Arr{1}));
@@ -288,7 +288,7 @@ int main()
 
       {
         const char* valid_literal = "{1,2}";
-        const auto data = pgfe::Data::make(valid_literal);
+        const auto data = pgfe::make_string_data(valid_literal);
         const auto native_arr = pgfe::to<Arr>(*data);
         const auto native_vec = pgfe::to<Vec>(*data);
         DMITIGR_ASSERT((native_arr == Arr{1,2}));
@@ -297,7 +297,7 @@ int main()
 
       {
         const char* valid_literal = "{1,NULL}";
-        const auto data = pgfe::Data::make(valid_literal);
+        const auto data = pgfe::make_string_data(valid_literal);
         const auto native_arr = pgfe::to<Arr>(*data);
         DMITIGR_ASSERT((native_arr == Arr{1,{}}));
         DMITIGR_ASSERT(with_catch<std::exception>([&]
@@ -308,7 +308,7 @@ int main()
 
       {
         const char* valid_literal = "{1}}";
-        const auto data = pgfe::Data::make(valid_literal);
+        const auto data = pgfe::make_string_data(valid_literal);
         const auto native_arr = pgfe::to<Arr>(*data);
         const auto native_vec = pgfe::to<Vec>(*data);
         DMITIGR_ASSERT((native_arr == Arr{1}));
@@ -317,7 +317,7 @@ int main()
 
       {
         const char* valid_literal = "{{}}";
-        const auto data = pgfe::Data::make(valid_literal);
+        const auto data = pgfe::make_string_data(valid_literal);
         const auto native_arr2 = pgfe::to<Arr2>(*data);
         const auto native_vec2 = pgfe::to<Vec2>(*data);
         DMITIGR_ASSERT((native_arr2 == Arr2{Arr{}}));
@@ -326,7 +326,7 @@ int main()
 
       {
         const char* valid_literal = "{{1}{2}}";
-        const auto data = pgfe::Data::make(valid_literal);
+        const auto data = pgfe::make_string_data(valid_literal);
         const auto native_arr2 = pgfe::to<Arr2>(*data);
         const auto native_vec2 = pgfe::to<Vec2>(*data);
         DMITIGR_ASSERT((native_arr2 == Arr2{Arr{1}, Arr{2}}));
@@ -335,7 +335,7 @@ int main()
 
       {
         const char* valid_literal = "{{1},{2}}";
-        const auto data = pgfe::Data::make(valid_literal);
+        const auto data = pgfe::make_string_data(valid_literal);
         const auto native_arr2 = pgfe::to<Arr2>(*data);
         const auto native_vec2 = pgfe::to<Vec2>(*data);
         DMITIGR_ASSERT((native_arr2 == Arr2{Arr{1}, Arr{2}}));
@@ -344,7 +344,7 @@ int main()
 
       {
         const char* valid_literal = "{{1}}}";
-        const auto data = pgfe::Data::make(valid_literal);
+        const auto data = pgfe::make_string_data(valid_literal);
         const auto native_arr2 = pgfe::to<Arr2>(*data);
         const auto native_vec2 = pgfe::to<Vec2>(*data);
         DMITIGR_ASSERT((native_arr2 == Arr2{Arr{1}}));
@@ -356,7 +356,7 @@ int main()
         for (const auto* malformed_literal : malformed_literals) {
           std::error_code code;
           try {
-            const auto native = pgfe::to<Arr>(pgfe::Data::make(malformed_literal));
+            const auto native = pgfe::to<Arr>(pgfe::make_string_data(malformed_literal));
           } catch (const pgfe::Generic_exception& e) {
             code = e.code();
             if (code != pgfe::Errc::malformed_literal) {
@@ -375,7 +375,7 @@ int main()
         for (const auto* malformed_literal : malformed_literals2) {
           std::error_code code;
           try {
-            const auto native = pgfe::to<Arr2>(pgfe::Data::make(malformed_literal));
+            const auto native = pgfe::to<Arr2>(pgfe::make_string_data(malformed_literal));
           } catch (const pgfe::Generic_exception& e) {
             code = e.code();
             if (code != pgfe::Errc::malformed_literal) {

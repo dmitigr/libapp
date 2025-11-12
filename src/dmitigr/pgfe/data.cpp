@@ -19,223 +19,18 @@
 #include "pq.hpp"
 
 #include <algorithm> // swap
-#include <cassert>
 #include <cstring>
 #include <new> // bad_alloc
 
-namespace dmitigr::pgfe::detail {
-
-/// The base implementation of Data based on containers.
-template<class Container>
-class container_Data final : public Data {
-public:
-  using Storage = Container;
-
-  template<class S>
-  container_Data(S&& storage, const Format format)
-    : format_(format)
-    , storage_(std::forward<S>(storage))
-  {
-    assert(is_invariant_ok());
-  }
-
-  std::unique_ptr<Data> to_data() const override
-  {
-    return std::make_unique<container_Data>(storage_, format_);
-  }
-
-  Format format() const noexcept override
-  {
-    return format_;
-  }
-
-  std::size_t size() const noexcept override
-  {
-    return storage_.size();
-  }
-
-  bool is_empty() const noexcept override
-  {
-    return storage_.empty();
-  }
-
-  const void* bytes() const noexcept override
-  {
-    return storage_.data();
-  }
-
-protected:
-  const Format format_{Format::text};
-  Storage storage_;
-};
-
-/// The alias of container_Data<std::string>.
-using string_Data = container_Data<std::string>;
-
-// =============================================================================
-
-/// The generic implementation of Data based on a custom heap storage.
-template<typename T, class Deleter = std::default_delete<T>>
-class memory_Data final : public Data {
-public:
-  using Storage = std::unique_ptr<T, Deleter>;
-
-  memory_Data(Storage&& storage, const std::size_t size, const Format format)
-    : format_(format)
-    , size_(size)
-    , storage_(std::move(storage))
-  {
-    assert(is_invariant_ok());
-  }
-
-  std::unique_ptr<Data> to_data() const override
-  {
-    return Data::make(static_cast<char*>(storage_.get()), size_, format_);
-  }
-
-  Format format() const noexcept override
-  {
-    return format_;
-  }
-
-  std::size_t size() const noexcept override
-  {
-    return size_;
-  }
-
-  bool is_empty() const noexcept override
-  {
-    return (size() == 0);
-  }
-
-  const void* bytes() const noexcept override
-  {
-    return storage_.get() ? storage_.get() : "";
-  }
-
-private:
-  const Format format_{Format::text};
-  std::size_t size_{};
-  std::unique_ptr<T, Deleter> storage_;
-};
-
-/// The alias of memory_Data<char[]>.
-using array_memory_Data = memory_Data<char[]>;
-
-/// The alias of memory_Data<void, void(*)(void*)>.
-using custom_memory_Data = memory_Data<void, void(*)(void*)>;
-
-// =============================================================================
-
-/// The implementation of empty Data.
-class empty_Data final : public Data {
-public:
-  explicit empty_Data(const Format format)
-    : format_(format)
-  {
-    assert(is_invariant_ok());
-  }
-
-  std::unique_ptr<Data> to_data() const override
-  {
-    return std::make_unique<empty_Data>(format_);
-  }
-
-  Format format() const noexcept override
-  {
-    return format_;
-  }
-
-  std::size_t size() const noexcept override
-  {
-    return 0;
-  }
-
-  bool is_empty() const noexcept override
-  {
-    return true;
-  }
-
-  const void* bytes() const noexcept override
-  {
-    return "";
-  }
-
-private:
-  const Format format_{Format::text};
-};
-
-} // namespace dmitigr::pgfe::detail
-
 namespace dmitigr::pgfe {
 
-// -----------------------------------------------------------------------------
+// =============================================================================
 // Data
-// -----------------------------------------------------------------------------
+// =============================================================================
 
 DMITIGR_PGFE_INLINE bool Data::is_valid() const noexcept
 {
   return static_cast<int>(format()) >= 0;
-}
-
-DMITIGR_PGFE_INLINE std::unique_ptr<Data>
-Data::make(std::string storage, const Data_format format)
-{
-  return std::make_unique<detail::string_Data>(std::move(storage), format);
-}
-
-DMITIGR_PGFE_INLINE std::unique_ptr<Data>
-Data::make(const char* const bytes, const std::size_t size, const Data_format format)
-{
-  if (bytes && size > 0) {
-    std::unique_ptr<char[]> storage{new char[size + 1]};
-    std::memcpy(storage.get(), bytes, size);
-    storage.get()[size] = '\0';
-    return std::make_unique<detail::array_memory_Data>(std::move(storage), size, format);
-  } else
-    return std::make_unique<detail::empty_Data>(format);
-}
-
-DMITIGR_PGFE_INLINE std::unique_ptr<Data>
-Data::make(std::unique_ptr<void, void(*)(void*)> storage,
-  const std::size_t size, const Data_format format)
-{
-  if (!(storage || !size) ||
-    !(format != Data_format::text || static_cast<const char*>(storage.get())[size] == '\0'))
-    throw Generic_exception{"cannot create an instance of data"};
-  return std::make_unique<detail::custom_memory_Data>(std::move(storage), size, format);
-}
-
-DMITIGR_PGFE_INLINE std::unique_ptr<Data> Data::to_bytea() const
-{
-  if (!((format() == Data_format::text)
-      && bytes() && (static_cast<const char*>(bytes())[size()] == '\0')))
-    throw Generic_exception{"cannot convert data to bytea:"
-      " invalid input data format"};
-
-  return to_bytea(static_cast<const char*>(bytes()));
-}
-
-DMITIGR_PGFE_INLINE std::unique_ptr<Data>
-Data::to_bytea(const char* const text_data)
-{
-  if (!text_data)
-    throw Generic_exception{"cannot convert data to bytea: null input data"};
-
-  const auto* const bytes = reinterpret_cast<const unsigned char*>(text_data);
-  std::size_t storage_size{};
-  using Uptr = std::unique_ptr<void, void(*)(void*)>;
-  if (auto storage = Uptr{PQunescapeBytea(bytes, &storage_size), &PQfreemem})
-    return make(std::move(storage), storage_size, pgfe::Data_format::binary);
-  else
-    throw std::bad_alloc{};
-}
-
-DMITIGR_PGFE_INLINE bool Data::is_invariant_ok() const
-{
-  const bool size_ok = ((size() == 0) == is_empty());
-  const bool empty_ok = !is_empty() || ((size() == 0) && bytes());
-  return size_ok && empty_ok;
 }
 
 DMITIGR_PGFE_INLINE std::strong_ordering
@@ -261,9 +56,27 @@ operator==(const Data& lhs, const Data& rhs) noexcept
   return (lhs <=> rhs) == std::strong_ordering::equal;
 }
 
-// -----------------------------------------------------------------------------
+// =============================================================================
+// Memory_data
+// =============================================================================
+
+DMITIGR_PGFE_INLINE std::unique_ptr<Data> make_bytea_data(const char* const text)
+{
+  if (!text)
+    throw Generic_exception{"cannot make bytea data: null text"};
+
+  const auto* const bytes = reinterpret_cast<const unsigned char*>(text);
+  std::size_t storage_size{};
+  using Uptr = std::unique_ptr<void, void(*)(void*)>;
+  if (auto storage = Uptr{PQunescapeBytea(bytes, &storage_size), &PQfreemem})
+    return make_custom_data(std::move(storage), storage_size, Data_format::binary);
+  else
+    throw std::bad_alloc{};
+}
+
+// =============================================================================
 // Data_view
-// -----------------------------------------------------------------------------
+// =============================================================================
 
 DMITIGR_PGFE_INLINE Data_view::Data_view(const char* const bytes) noexcept
 {
@@ -271,7 +84,6 @@ DMITIGR_PGFE_INLINE Data_view::Data_view(const char* const bytes) noexcept
     format_ = Format::text;
     data_ = bytes;
   }
-  assert(is_invariant_ok());
 }
 
 DMITIGR_PGFE_INLINE Data_view::Data_view(const char* const bytes,
@@ -281,7 +93,6 @@ DMITIGR_PGFE_INLINE Data_view::Data_view(const char* const bytes,
     format_ = format;
     data_ = {bytes, size};
   }
-  assert(is_invariant_ok());
 }
 
 DMITIGR_PGFE_INLINE Data_view::Data_view(const Data& data) noexcept
@@ -313,7 +124,7 @@ DMITIGR_PGFE_INLINE void Data_view::swap(Data_view& rhs) noexcept
 
 DMITIGR_PGFE_INLINE std::unique_ptr<Data> Data_view::to_data() const
 {
-  return Data::make(data_.data(), data_.size(), format_);
+  return make_string_data(std::string(data_.data(), data_.size()), format_);
 }
 
 DMITIGR_PGFE_INLINE auto Data_view::format() const noexcept -> Format

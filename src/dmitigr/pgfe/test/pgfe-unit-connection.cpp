@@ -515,13 +515,14 @@ try {
 
       // to_hex_data(), to_hex_string()
       {
-        const auto data = pgfe::Data::make(std::string{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+        const auto data = pgfe::make_string_data(std::string{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
           pgfe::Data_format::binary);
         const auto hex_data = conn->to_hex_data(*data);
-        const auto data2 = hex_data->to_bytea();
+        const auto data2 = pgfe::make_bytea_data(static_cast<const char*>(hex_data->bytes()));
         DMITIGR_ASSERT(data->size() == data2->size());
         DMITIGR_ASSERT(!std::memcmp(data->bytes(), data2->bytes(), data->size()));
-        DMITIGR_ASSERT(to<std::string_view>(*hex_data) == to<std::string_view>(conn->to_hex_data(*data)));
+        DMITIGR_ASSERT(to<std::string_view>(*hex_data) ==
+          to<std::string_view>(conn->to_hex_data(*data)));
       }
     }
 } catch (const std::exception& e) {

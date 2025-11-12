@@ -28,7 +28,7 @@ int main()
     // Data::make(std::string_view)
     {
       const std::size_t sz = std::strlen("Dmitry Igrishin");
-      const auto d = pgfe::Data::make("Dmitry Igrishin");
+      const auto d = pgfe::make_string_data("Dmitry Igrishin");
       DMITIGR_ASSERT(d->format() == pgfe::Data_format::text);
       DMITIGR_ASSERT(d->size() == sz);
       DMITIGR_ASSERT(to<std::string_view>(*d) == "Dmitry Igrishin");
@@ -38,7 +38,7 @@ int main()
     {
       const std::string name{"Dmitry Igrishin"};
       const std::size_t sz = name.size();
-      const auto d = pgfe::Data::make(name, pgfe::Data_format::text);
+      const auto d = pgfe::make_string_data(name, pgfe::Data_format::text);
       DMITIGR_ASSERT(d->format() == pgfe::Data_format::text);
       DMITIGR_ASSERT(d->size() == sz);
       DMITIGR_ASSERT(to<std::string_view>(*d) == name);
@@ -48,7 +48,7 @@ int main()
     {
       const char* const name = "Dmitry Igrishin";
       const std::size_t sz = std::strlen(name);
-      const auto d = pgfe::Data::make(std::string{name}, pgfe::Data_format::text);
+      const auto d = pgfe::make_string_data(std::string{name}, pgfe::Data_format::text);
       DMITIGR_ASSERT(d->format() == pgfe::Data_format::text);
       DMITIGR_ASSERT(d->size() == sz);
       DMITIGR_ASSERT(to<std::string_view>(*d) == name);
@@ -68,10 +68,10 @@ int main()
       DMITIGR_ASSERT(!(*lhs > *rhs));           \
       DMITIGR_ASSERT(!(*lhs >= *rhs))
 
-      auto lhs = pgfe::Data::make("dima");
-      auto rhs = pgfe::Data::make("olga");
+      auto lhs = pgfe::make_string_data("dima");
+      auto rhs = pgfe::make_string_data("olga");
       ASSERTMENTS;
-      rhs = pgfe::Data::make("olgaolga");
+      rhs = pgfe::make_string_data("olgaolga");
       ASSERTMENTS;
 #undef ASSERTMENTS
     }
@@ -86,11 +86,11 @@ int main()
       DMITIGR_ASSERT(!(*lhs > *rhs));           \
       DMITIGR_ASSERT(*lhs >= *rhs)
 
-      auto lhs = pgfe::Data::make("dima");
-      auto rhs = pgfe::Data::make("dima");
+      auto lhs = pgfe::make_string_data("dima");
+      auto rhs = pgfe::make_string_data("dima");
       ASSERTMENTS;
-      lhs = pgfe::Data::make("");
-      rhs = pgfe::Data::make("");
+      lhs = pgfe::make_string_data("");
+      rhs = pgfe::make_string_data("");
       ASSERTMENTS;
 #undef ASSERTMENTS
     }
@@ -105,10 +105,10 @@ int main()
       DMITIGR_ASSERT(*lhs > *rhs);              \
       DMITIGR_ASSERT(*lhs >= *rhs)
 
-      auto lhs = pgfe::Data::make("olga");
-      auto rhs = pgfe::Data::make("dima");
+      auto lhs = pgfe::make_string_data("olga");
+      auto rhs = pgfe::make_string_data("dima");
       ASSERTMENTS;
-      lhs = pgfe::Data::make("olgaolga");
+      lhs = pgfe::make_string_data("olgaolga");
       ASSERTMENTS;
 #undef ASSERTMENTS
     }

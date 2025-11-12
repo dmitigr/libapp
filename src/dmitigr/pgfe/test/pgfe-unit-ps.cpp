@@ -88,8 +88,8 @@ try {
   ps2.bind("supremum", 3);
   DMITIGR_ASSERT(ps2.bound(0) && to<int>(ps2.bound(0)) == 1);
   DMITIGR_ASSERT(ps2.bound(1) && to<int>(ps2.bound(1)) == 3);
-  const auto data0 = pgfe::Data::make("1");
-  const auto data1 = pgfe::Data::make("3");
+  const auto data0 = pgfe::make_string_data("1");
+  const auto data1 = pgfe::make_string_data("3");
   ps2.bind("infinum", *data0);
   ps2.bind("supremum", *data1);
   DMITIGR_ASSERT(ps2.bound(0) == *data0);

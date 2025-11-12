@@ -23,7 +23,6 @@
 
 #include <compare>
 #include <cstddef>
-#include <cstring>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -60,66 +59,8 @@ public:
     return is_valid();
   }
 
-  /// @name Constructors
-  /// @{
-
-  /**
-   * @returns A new instance of this class.
-   *
-   * @remarks bytes() of a resulting Data are null-terminated.
-   */
-  static DMITIGR_PGFE_API std::unique_ptr<Data> make(
-    std::string storage,
-    Data_format format = Data_format::text);
-
-  /**
-   * @overload
-   *
-   * @remarks The `bytes` will be copied into the modifiable internal storage.
-   * @remarks bytes() of a resulting Data are null-terminated.
-   */
-  static DMITIGR_PGFE_API std::unique_ptr<Data> make(
-    const char* bytes,
-    std::size_t size,
-    Data_format format);
-
-  /**
-   * @overload
-   *
-   * @par Requires
-   * `(storage || !size) && (format != Data_format::text || storage.get()[size] == '\0')`
-   */
-  static DMITIGR_PGFE_API std::unique_ptr<Data> make(
-    std::unique_ptr<void, void(*)(void*)> storage,
-    std::size_t size,
-    Data_format format);
-
   /// @returns The deep-copy of this instance.
   virtual std::unique_ptr<Data> to_data() const = 0;
-
-  /**
-   * @returns The result of conversion of text representation of the
-   * PostgreSQL's Bytea data type to a plain binary data.
-   *
-   * @par Requires
-   * `(format() == Data_format::text) && (bytes()[size()] == 0)`.
-   *
-   * @remarks bytes() of a resulting Data are not null-terminated.
-   */
-  DMITIGR_PGFE_API std::unique_ptr<Data> to_bytea() const;
-
-  /**
-   * @brief Similar to Data::to_bytea().
-   *
-   * @par Requires
-   * `text_data`.
-   */
-  static DMITIGR_PGFE_API std::unique_ptr<Data> to_bytea(const char* text_data);
-
-  /// @}
-
-  /// @name Observers
-  /// @{
 
   /// @returns The data format.
   virtual Data_format format() const noexcept = 0;
@@ -130,14 +71,8 @@ public:
   /// @returns `!size()`.
   virtual bool is_empty() const noexcept = 0;
 
-  /// @returns The pointer to a *unmodifiable* memory area.
+  /// @returns The pointer to a **unmodifiable** memory area.
   virtual const void* bytes() const noexcept = 0;
-
-  /// @}
-
-protected:
-  /// @returns `true` if the invariant of this instance is correct.
-  virtual bool is_invariant_ok() const;
 };
 
 /**
@@ -161,6 +96,160 @@ operator<=>(const Data& lhs, const Data& rhs) noexcept;
 DMITIGR_PGFE_API bool
 operator==(const Data& lhs, const Data& rhs) noexcept;
 
+// =============================================================================
+// Container_data
+// =============================================================================
+
+/// The base implementation of Data based on containers.
+template<class Container>
+class Container_data : public Data {
+public:
+  using Storage = Container;
+
+  template<class S>
+  Container_data(S&& storage, const Format format)
+    : format_(format)
+    , storage_(std::forward<S>(storage))
+  {}
+
+  std::unique_ptr<Data> to_data() const override
+  {
+    return std::make_unique<Container_data>(storage_, format_);
+  }
+
+  Format format() const noexcept override
+  {
+    return format_;
+  }
+
+  std::size_t size() const noexcept override
+  {
+    return storage_.size();
+  }
+
+  bool is_empty() const noexcept override
+  {
+    return storage_.empty();
+  }
+
+  const void* bytes() const noexcept override
+  {
+    return storage_.data() ? storage_.data() : "";
+  }
+
+  Storage& storage() noexcept
+  {
+    return storage_;
+  }
+
+  const Storage& storage() const noexcept
+  {
+    return storage_;
+  }
+
+private:
+  Format format_{Format::text};
+  Storage storage_;
+};
+
+/// The alias of Container_data<std::string>.
+using String_data = Container_data<std::string>;
+
+inline std::unique_ptr<Data> make_string_data(std::string storage,
+  const Data_format format = Data_format::text)
+{
+  return std::make_unique<String_data>(std::move(storage), format);
+}
+
+// =============================================================================
+// Memory_data
+// =============================================================================
+
+/// The generic implementation of Data based on a heap storage.
+template<typename T, class Deleter = std::default_delete<T>>
+class Memory_data : public Data {
+public:
+  using Storage = std::unique_ptr<T, Deleter>;
+
+  Memory_data(Storage&& storage, const std::size_t size, const Format format)
+    : format_(format)
+    , size_(size)
+    , storage_(std::move(storage))
+  {}
+
+  std::unique_ptr<Data> to_data() const override
+  {
+    return make_string_data(
+      std::string(static_cast<const char*>(bytes()), size()), format());
+  }
+
+  Format format() const noexcept override
+  {
+    return format_;
+  }
+
+  std::size_t size() const noexcept override
+  {
+    return size_;
+  }
+
+  bool is_empty() const noexcept override
+  {
+    return !size();
+  }
+
+  const void* bytes() const noexcept override
+  {
+    return storage_.get() ? storage_.get() : "";
+  }
+
+  Storage& storage() noexcept
+  {
+    return storage_;
+  }
+
+  const Storage& storage() const noexcept
+  {
+    return storage_;
+  }
+
+private:
+  const Format format_{Format::text};
+  std::size_t size_{};
+  std::unique_ptr<T, Deleter> storage_;
+};
+
+/// The alias of Memory_data<char[]>.
+using Array_data = Memory_data<char[]>;
+
+/// The alias of Memory_data<void, void(*)(void*)>.
+using Custom_data = Memory_data<void, void(*)(void*)>;
+
+template<typename ... Types>
+std::unique_ptr<Data> make_array_data(Types&& ... args)
+{
+  return std::make_unique<Array_data>(std::forward<Types>(args)...);
+}
+
+template<typename ... Types>
+std::unique_ptr<Data> make_custom_data(Types&& ... args)
+{
+  return std::make_unique<Custom_data>(std::forward<Types>(args)...);
+}
+
+/**
+ * @returns The result of conversion of text representation of the
+ * PostgreSQL's Bytea data type to a plain binary data.
+ *
+ * @par Requires
+ * `text != nullptr`. `text` must be a null-terminated C-string.
+ *
+ * @remarks bytes() of a resulting Data are not null-terminated.
+ */
+DMITIGR_PGFE_API std::unique_ptr<Data> make_bytea_data(const char* text);
+
+// =============================================================================
+// Type_data
 // =============================================================================
 
 /// A data of T.
@@ -221,6 +310,8 @@ private:
   Type data_;
 };
 
+// =============================================================================
+// Data_view
 // =============================================================================
 
 /**

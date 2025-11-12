@@ -178,7 +178,7 @@ struct Array_data_conversions_opts<Container<std::optional<T>,
   static std::unique_ptr<Data> to_data(const Type& value, Types&& ... args)
   {
     using StringConversions = Array_string_conversions_opts<Type>;
-    return Data::make(StringConversions::to_string(value,
+    return make_string_data(StringConversions::to_string(value,
       std::forward<Types>(args)...), Data_format::text);
   }
 };
@@ -243,7 +243,7 @@ struct Array_data_conversions_vals<Container<T, Allocator<T>>> final {
   static std::unique_ptr<Data> to_data(const Type& value, Types&& ... args)
   {
     using Convs = Array_string_conversions_vals<Type>;
-    return Data::make(Convs::to_string(value, std::forward<Types>(args)...),
+    return make_string_data(Convs::to_string(value, std::forward<Types>(args)...),
       Data_format::text);
   }
 

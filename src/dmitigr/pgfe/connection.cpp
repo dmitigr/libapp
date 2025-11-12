@@ -1188,7 +1188,7 @@ DMITIGR_PGFE_INLINE std::unique_ptr<Data>
 Connection::to_hex_data(const Data& data) const
 {
   auto [storage, size] = to_hex_storage(data);
-  return Data::make(std::move(storage), size, Data_format::text);
+  return make_custom_data(std::move(storage), size, Data_format::text);
 }
 
 // -----------------------------------------------------------------------------

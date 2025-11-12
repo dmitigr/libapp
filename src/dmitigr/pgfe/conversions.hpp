@@ -90,7 +90,7 @@ struct Generic_data_conversions final {
   static std::enable_if_t<std::is_same_v<Type, std::decay_t<U>>, std::unique_ptr<Data>>
   to_data(U&& value, Types&& ... args)
   {
-    return Data::make(StringConversions::to_string(std::forward<U>(value),
+    return make_string_data(StringConversions::to_string(std::forward<U>(value),
       std::forward<Types>(args)...), Data_format::text);
   }
 };
@@ -336,7 +336,7 @@ struct Char_data_conversions final {
   template<typename ... Types>
   static std::unique_ptr<Data> to_data(Type value, Types&& ...)
   {
-    return Data::make(Char_string_conversions::to_string(value),
+    return make_string_data(Char_string_conversions::to_string(value),
       Data_format::text);
   }
 };
@@ -415,7 +415,7 @@ struct Bool_data_conversions final {
   template<typename ... Types>
   static std::unique_ptr<Data> to_data(Type value, Types&& ...)
   {
-    return Data::make(Bool_string_conversions::to_string(value),
+    return make_string_data(Bool_string_conversions::to_string(value),
       Data_format::text);
   }
 };
