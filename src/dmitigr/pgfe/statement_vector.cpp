@@ -51,13 +51,10 @@ DMITIGR_PGFE_INLINE std::size_t Statement_vector::size() const noexcept
 
 DMITIGR_PGFE_INLINE std::size_t Statement_vector::non_empty_count() const noexcept
 {
-  std::size_t result{};
-  const std::size_t sz = size();
-  for (std::size_t i = 0; i < sz; ++i) {
-    if (!(operator[](i).is_query_empty()))
-      ++result;
-  }
-  return result;
+  return count_if(vector().cbegin(), vector().cend(), [](const auto& stmt)noexcept
+  {
+    return !stmt.is_query_empty();
+  });
 }
 
 DMITIGR_PGFE_INLINE bool Statement_vector::is_empty() const noexcept
@@ -110,13 +107,13 @@ Statement_vector::query_absolute_position(const std::size_t index,
   if (!(index < size()))
     throw Generic_exception{"cannot get query absolute position from Statement_vector"};
 
-  const auto junk_size = operator[](index).to_string().size() -
-    operator[](index).to_query_string(conn).size();
+  const auto junk_size = vector()[index].to_string().size() -
+    vector()[index].to_query_string(conn).size();
   const auto statement_position = [this](const std::size_t idx)
   {
     std::string::size_type result{};
     for (std::size_t i{}; i < idx; ++i)
-      result += operator[](i).to_string().size() + 1;
+      result += vector()[i].to_string().size() + 1;
     return result;
   };
   return statement_position(index) + junk_size;
