@@ -26,7 +26,7 @@ int main()
     DMITIGR_ASSERT(vec.is_empty());
     // Modifying the vec.
     DMITIGR_ASSERT(vec.size() == 0);
-    vec.append("foo", "");
+    vec.emplace_back("foo", "");
     DMITIGR_ASSERT(vec.size() == 1);
     DMITIGR_ASSERT(!vec.is_empty());
     DMITIGR_ASSERT(vec.vector()[0].first == "foo");
@@ -37,7 +37,7 @@ int main()
     DMITIGR_ASSERT(vec.value("foo") == "foo data");
     //
     DMITIGR_ASSERT(vec.size() == 1);
-    vec.append("bar", "bar data");
+    vec.emplace_back("bar", "bar data");
     DMITIGR_ASSERT(vec.size() == 2);
     DMITIGR_ASSERT(!vec.is_empty());
     DMITIGR_ASSERT(vec.vector()[1].first == "bar");
@@ -72,9 +72,9 @@ int main()
       DMITIGR_ASSERT(!(lhs >= rhs))
 
       Avector lhs;
-      lhs.append("name", "dima");
+      lhs.emplace_back("name", "dima");
       Avector rhs;
-      rhs.append("name", "olga");
+      rhs.emplace_back("name", "olga");
       ASSERTMENTS;
       rhs.value("name") = "olgaolga";
       ASSERTMENTS;
@@ -92,9 +92,9 @@ int main()
       DMITIGR_ASSERT(lhs >= rhs)
 
       Avector lhs;
-      lhs.append("name", "dima");
+      lhs.emplace_back("name", "dima");
       Avector rhs;
-      rhs.append("name", "dima");
+      rhs.emplace_back("name", "dima");
       ASSERTMENTS;
       lhs.value("name") = "";
       rhs.value("name") = "";
@@ -113,9 +113,9 @@ int main()
       DMITIGR_ASSERT(lhs >= rhs)
 
       Avector lhs;
-      lhs.append("name", "olga");
+      lhs.emplace_back("name", "olga");
       Avector rhs;
-      rhs.append("name", "dima");
+      rhs.emplace_back("name", "dima");
       ASSERTMENTS;
       lhs.value("name") = "olgaolga";
       ASSERTMENTS;

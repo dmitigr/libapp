@@ -549,7 +549,7 @@ public:
         } // for
 
         if (!matching.is_empty())
-          result.append(std::addressof(name), std::move(matching));
+          result.emplace_back(std::addressof(name), std::move(matching));
         else
           return false;
       } else if (pnf->is_text()) {

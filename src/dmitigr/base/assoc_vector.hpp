@@ -142,7 +142,7 @@ public:
    * Strong.
    */
   template<typename T>
-  void append(Key key, T&& value)
+  void emplace_back(Key key, T&& value)
   {
     elements_.emplace_back(std::move(key), std::forward<T>(value));
   }

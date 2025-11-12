@@ -61,7 +61,7 @@ int main()
       DMITIGR_ASSERT(!st.is_empty());
       DMITIGR_ASSERT(st.is_query_empty());
 
-      st.extra().append("description", std::string{"This is an unknown query"});
+      st.extra().emplace_back("description", std::string{"This is an unknown query"});
       DMITIGR_ASSERT(st.extra().size() == 1);
       DMITIGR_ASSERT(st.extra().index("description") != st.extra().size());
       DMITIGR_ASSERT(st.extra().value("description").has_value());
