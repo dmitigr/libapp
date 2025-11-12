@@ -27,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace dmitigr::pgfe {
 
@@ -93,11 +94,7 @@ public:
     std::size_t size,
     Data_format format);
 
-  /**
-   * @returns The deep-copy of this instance.
-   *
-   * @remarks bytes() of a resulting Data are null-terminated.
-   */
+  /// @returns The deep-copy of this instance.
   virtual std::unique_ptr<Data> to_data() const = 0;
 
   /**
@@ -163,6 +160,66 @@ operator<=>(const Data& lhs, const Data& rhs) noexcept;
  */
 DMITIGR_PGFE_API bool
 operator==(const Data& lhs, const Data& rhs) noexcept;
+
+// =============================================================================
+
+/// A data of T.
+template<typename T>
+class Type_data : public Data {
+public:
+  /// An alias of the underlying type.
+  using Type = T;
+
+  template<typename ... Types>
+  Type_data(Types&& ... args)
+    : data_{std::forward<Types>(args)...}
+  {}
+
+  /// @see Data::to_data().
+  std::unique_ptr<Data> to_data() const override
+  {
+    return std::make_unique<Type_data<T>>(*this);
+  }
+
+  /// @see Data::format().
+  Data_format format() const noexcept override
+  {
+    return Data_format::binary;
+  }
+
+  /// @see Data::size().
+  std::size_t size() const noexcept override
+  {
+    return sizeof(T);
+  }
+
+  /// @see Data::is_empty().
+  bool is_empty() const noexcept override
+  {
+    return false;
+  }
+
+  /// @see Data::bytes().
+  const void* bytes() const noexcept override
+  {
+    return std::addressof(data_);
+  }
+
+  /// @returns The underlying data.
+  Type& data() noexcept
+  {
+    return data_;
+  }
+
+  /// @overload
+  const Type& data() const noexcept
+  {
+    return data_;
+  }
+
+private:
+  Type data_;
+};
 
 // =============================================================================
 
