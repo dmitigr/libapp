@@ -597,7 +597,7 @@ public:
   DMITIGR_PGFE_API bool is_normalized() const noexcept;
 
 private:
-  friend Statement_vector;
+  friend Multistatement;
 
   /// A fragment.
   struct Fragment final {

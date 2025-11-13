@@ -47,6 +47,7 @@ set(dmitigr_pgfe_headers
   large_object.hpp
   message.hpp
   misc.hpp
+  multistatement.hpp
   notice.hpp
   notification.hpp
   parameterizable.hpp
@@ -59,7 +60,6 @@ set(dmitigr_pgfe_headers
   row_info.hpp
   signal.hpp
   statement.hpp
-  statement_vector.hpp
   transaction_guard.hpp
   types_fwd.hpp
   )
@@ -79,6 +79,7 @@ set(dmitigr_pgfe_implementations
   exceptions.cpp
   large_object.cpp
   misc.cpp
+  multistatement.cpp
   notice.cpp
   notification.cpp
   parameterizable.cpp
@@ -88,7 +89,6 @@ set(dmitigr_pgfe_implementations
   row.cpp
   row_info.cpp
   statement.cpp
-  statement_vector.cpp
   )
 
 # ------------------------------------------------------------------------------
@@ -143,6 +143,7 @@ if(DMITIGR_LIBS_TESTS)
     data
     exceptions
     hello_world
+    multistatement
     named_argument
     pipeline
     pq_vs_pgfe
@@ -151,7 +152,6 @@ if(DMITIGR_LIBS_TESTS)
     row
     service
     statement
-    statement_vector
     transaction_guard
     )
 
@@ -160,7 +160,7 @@ if(DMITIGR_LIBS_TESTS)
   set(prefix ${dmitigr_libs_SOURCE_DIR}/${dmitigr_libs_subroot}/pgfe/test)
   add_custom_target(dmitigr_pgfe_copy_test_resources ALL
     COMMAND cmake -E copy_if_different
-    "${prefix}/pgfe-unit-statement_vector.sql"
+    "${prefix}/pgfe-unit-multistatement.sql"
     "${dmitigr_libs_resource_destination_dir}"
     )
   add_dependencies(dmitigr_pgfe_copy_test_resources

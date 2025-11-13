@@ -27,7 +27,7 @@ try {
   // General test
   // -------------------------------------------------------------------------
 
-  pgfe::Statement_vector bunch;
+  pgfe::Multistatement bunch;
   DMITIGR_ASSERT(bunch.is_empty());
   DMITIGR_ASSERT(bunch.size() == 0);
   bunch.push_back("SELECT 1");
@@ -53,7 +53,7 @@ try {
   const auto this_exe_dir_name = this_exe_file_name.parent_path();
   const auto input = str::read_to_string(this_exe_dir_name /
     "pgfe-unit-statement_vector.sql");
-  bunch = pgfe::Statement_vector{input};
+  bunch = pgfe::Multistatement{input};
   DMITIGR_ASSERT(bunch.size() == 3);
   DMITIGR_ASSERT(bunch[0].metadata().size() == 1);
   DMITIGR_ASSERT(bunch[1].metadata().size() == 2);

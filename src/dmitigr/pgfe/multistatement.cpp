@@ -17,13 +17,13 @@
 #include "../base/assert.hpp"
 #include "conversions.hpp"
 #include "exceptions.hpp"
-#include "statement_vector.hpp"
+#include "multistatement.hpp"
 
 #include <algorithm>
 
 namespace dmitigr::pgfe {
 
-DMITIGR_PGFE_INLINE Statement_vector::Statement_vector(std::string_view input)
+DMITIGR_PGFE_INLINE Multistatement::Multistatement(std::string_view input)
 {
   while (input.data() && !input.empty()) {
     auto [st, pos] = Statement::parse_sql_input(input);
@@ -34,22 +34,22 @@ DMITIGR_PGFE_INLINE Statement_vector::Statement_vector(std::string_view input)
 }
 
 DMITIGR_PGFE_INLINE
-Statement_vector::Statement_vector(std::vector<Statement> statements)
+Multistatement::Multistatement(std::vector<Statement> statements)
   : statements_{std::move(statements)}
 {}
 
-DMITIGR_PGFE_INLINE void Statement_vector::swap(Statement_vector& rhs) noexcept
+DMITIGR_PGFE_INLINE void Multistatement::swap(Multistatement& rhs) noexcept
 {
   using std::swap;
   swap(statements_, rhs.statements_);
 }
 
-DMITIGR_PGFE_INLINE std::size_t Statement_vector::size() const noexcept
+DMITIGR_PGFE_INLINE std::size_t Multistatement::size() const noexcept
 {
   return statements_.size();
 }
 
-DMITIGR_PGFE_INLINE std::size_t Statement_vector::non_empty_count() const noexcept
+DMITIGR_PGFE_INLINE std::size_t Multistatement::non_empty_count() const noexcept
 {
   return count_if(vector().cbegin(), vector().cend(), [](const auto& stmt)noexcept
   {
@@ -57,26 +57,26 @@ DMITIGR_PGFE_INLINE std::size_t Statement_vector::non_empty_count() const noexce
   });
 }
 
-DMITIGR_PGFE_INLINE bool Statement_vector::is_empty() const noexcept
+DMITIGR_PGFE_INLINE bool Multistatement::is_empty() const noexcept
 {
   return statements_.empty();
 }
 
 DMITIGR_PGFE_INLINE const Statement&
-Statement_vector::operator[](const std::size_t index) const
+Multistatement::operator[](const std::size_t index) const
 {
   if (!(index < size()))
-    throw Generic_exception{"cannot get from Statement_vector"};
+    throw Generic_exception{"cannot get from Multistatement"};
   return statements_[index];
 }
 
 DMITIGR_PGFE_INLINE Statement&
-Statement_vector::operator[](const std::size_t index)
+Multistatement::operator[](const std::size_t index)
 {
-  return const_cast<Statement&>(static_cast<const Statement_vector&>(*this)[index]);
+  return const_cast<Statement&>(static_cast<const Multistatement&>(*this)[index]);
 }
 
-DMITIGR_PGFE_INLINE std::size_t Statement_vector::statement_index(
+DMITIGR_PGFE_INLINE std::size_t Multistatement::statement_index(
   const std::string_view metadata_key,
   const std::string_view metadata_value,
   const std::size_t offset, const std::size_t metadata_offset) const noexcept
@@ -101,11 +101,11 @@ DMITIGR_PGFE_INLINE std::size_t Statement_vector::statement_index(
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type
-Statement_vector::query_absolute_position(const std::size_t index,
+Multistatement::query_absolute_position(const std::size_t index,
   const Connection& conn) const
 {
   if (!(index < size()))
-    throw Generic_exception{"cannot get query absolute position from Statement_vector"};
+    throw Generic_exception{"cannot get query absolute position from Multistatement"};
 
   const auto junk_size = vector()[index].to_string().size() -
     vector()[index].to_query_string(conn).size();
@@ -119,31 +119,31 @@ Statement_vector::query_absolute_position(const std::size_t index,
   return statement_position(index) + junk_size;
 }
 
-DMITIGR_PGFE_INLINE void Statement_vector::push_back(Statement statement) noexcept
+DMITIGR_PGFE_INLINE void Multistatement::push_back(Statement statement) noexcept
 {
   statements_.push_back(std::move(statement));
 }
 
-DMITIGR_PGFE_INLINE void Statement_vector::insert(const std::size_t index,
+DMITIGR_PGFE_INLINE void Multistatement::insert(const std::size_t index,
   Statement statement)
 {
   if (!(index < size()))
-    throw Generic_exception{"cannot insert to Statement_vector"};
+    throw Generic_exception{"cannot insert to Multistatement"};
   const auto b = begin(statements_);
   using Diff = decltype(b)::difference_type;
   statements_.insert(b + static_cast<Diff>(index), std::move(statement));
 }
 
-DMITIGR_PGFE_INLINE void Statement_vector::remove(const std::size_t index)
+DMITIGR_PGFE_INLINE void Multistatement::remove(const std::size_t index)
 {
   if (!(index < size()))
-    throw Generic_exception{"cannot remove from Statement_vector"};
+    throw Generic_exception{"cannot remove from Multistatement"};
   const auto b = begin(statements_);
   using Diff = decltype(b)::difference_type;
   statements_.erase(b + static_cast<Diff>(index));
 }
 
-DMITIGR_PGFE_INLINE std::string Statement_vector::to_string() const
+DMITIGR_PGFE_INLINE std::string Multistatement::to_string() const
 {
   std::string result;
   if (!statements_.empty()) {
@@ -155,16 +155,17 @@ DMITIGR_PGFE_INLINE std::string Statement_vector::to_string() const
 }
 
 DMITIGR_PGFE_INLINE const std::vector<Statement>&
-Statement_vector::vector() const noexcept
+Multistatement::vector() const & noexcept
 {
   return statements_;
 }
 
-DMITIGR_PGFE_INLINE std::vector<Statement>&
-Statement_vector::vector() noexcept
+DMITIGR_PGFE_INLINE std::vector<Statement>
+Multistatement::vector() && noexcept
 {
-  return const_cast<std::vector<Statement>&>(
-    static_cast<const Statement_vector*>(this)->vector());
+  auto result = std::move(statements_);
+  statements_ = {};
+  return result;
 }
 
 } // namespace dmitigr::pgfe
