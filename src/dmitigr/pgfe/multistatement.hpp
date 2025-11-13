@@ -109,6 +109,20 @@ public:
     std::size_t offset = 0,
     std::size_t metadata_offset = 0) const noexcept;
 
+  /// @returns The statement or `nullptr`.
+  DMITIGR_PGFE_API const Statement* statement(
+    std::string_view metadata_key,
+    std::string_view metadata_value,
+    std::size_t offset = 0,
+    std::size_t metadata_offset = 0) const noexcept;
+
+  /// @overload
+  DMITIGR_PGFE_API Statement* statement(
+    std::string_view metadata_key,
+    std::string_view metadata_value,
+    std::size_t offset = 0,
+    std::size_t metadata_offset = 0) noexcept;
+
   /**
    * @returns The absolute position of the query of the speficied SQL string.
    *
@@ -145,6 +159,9 @@ public:
 
   /// @returns The underlying vector of statements.
   DMITIGR_PGFE_API const std::vector<Statement>& vector() const & noexcept;
+
+  /// @overload
+  DMITIGR_PGFE_API std::vector<Statement>& vector() & noexcept;
 
   /**
    * @returns The released underlying vector of statements.
