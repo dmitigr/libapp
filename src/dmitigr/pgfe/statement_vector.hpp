@@ -96,18 +96,18 @@ public:
    * @returns The index of the statement that owns by this vector, or `size()`
    * if no statement that meets the given criterias exists in this vector.
    *
-   * @param extra_name A name of the extra data field.
-   * @param extra_value A value of the extra data field.
+   * @param metadata_key A key of the metadata.
+   * @param metadat_value A value of the metadata.
    * @param offset A starting position of lookup in this vector.
-   * @param extra_offset A starting position of lookup in the extra data.
+   * @param metadata_offset A starting position of lookup in the metadata.
    *
-   * @see Statement::extra().
+   * @see Statement::metadata().
    */
   DMITIGR_PGFE_API std::size_t statement_index(
-    std::string_view extra_name,
-    std::string_view extra_value,
+    std::string_view metadata_key,
+    std::string_view metadata_value,
     std::size_t offset = 0,
-    std::size_t extra_offset = 0) const noexcept;
+    std::size_t metadata_offset = 0) const noexcept;
 
   /**
    * @returns The absolute position of the query of the speficied SQL string.

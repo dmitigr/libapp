@@ -130,17 +130,17 @@ bool Statement::Fragment::norm_equal(const Fragment& rhs) const
 }
 
 // =============================================================================
-// Statement::Extra
+// Statement::Comments
 // =============================================================================
 
-/// Represents an API for extraction the extra data from the comments.
-struct Statement::Extra final {
+/// Represents an API for comments processing.
+struct Statement::Comments final {
 public:
   /// Denotes the key type of the associated data.
-  using Key = Statement::Extra_data::Key;
+  using Key = Statement::Metadata::Key;
 
   /// Denotes the value type of the associated data.
-  using Value = Statement::Extra_data::Value;
+  using Value = Statement::Metadata::Value;
 
   /// Denotes the fragment type.
   using Fragment = Statement::Fragment;
@@ -148,7 +148,7 @@ public:
   /// Denotes the fragment list type.
   using Fragment_list = Statement::Fragment_list;
 
-  /// @returns The vector of associated extra data.
+  /// @returns The vector of associated metadata.
   static std::vector<std::pair<Key, Value>>
   extract(const Fragment_list& fragments)
   {
@@ -180,7 +180,7 @@ private:
    * @brief Extracts the associated data from dollar quoted literals found in
    * comments.
    *
-   * @returns Extracted data as key/value pairs.
+   * @returns Extracted data as key-value pairs.
    *
    * @param input An input string with comments.
    * @param comment_type A type of comments in the `input`.
@@ -257,7 +257,7 @@ private:
   }
 
   /**
-   * @brief Scans the extra data content to determine the indent size.
+   * @brief Scans the metadata content to determine the indent size.
    *
    * @returns The number of characters to remove after each '\n'.
    */
@@ -336,7 +336,7 @@ private:
   }
 
   /**
-   * @brief Cleans up the extra data content.
+   * @brief Cleans up the metadata content.
    *
    * Cleaning up includes:
    *   -# removing the indentation characters;
@@ -453,7 +453,7 @@ private:
    *   - the iterator that points to the fragment that follows the last comment
    *     appended to the result.
    */
-  std::pair<std::pair<std::string, Extra::Comment_type>,
+  std::pair<std::pair<std::string, Comments::Comment_type>,
     Fragment_list::const_iterator>
   static joined_comments_of_same_type(Fragment_list::const_iterator i,
     const Fragment_list::const_iterator e)
@@ -471,9 +471,9 @@ private:
     {
       switch (ft) {
       case Ft::one_line_comment:
-        return Extra::Comment_type::one_line;
+        return Comments::Comment_type::one_line;
       case Ft::multi_line_comment:
-        return Extra::Comment_type::multi_line;
+        return Comments::Comment_type::multi_line;
       default:
         DMITIGR_ASSERT(false);
       }
@@ -489,11 +489,11 @@ private:
    *   - the joined comments as first element;
    *   - the type of the joined comments as second element.
    */
-  std::vector<std::pair<std::string, Extra::Comment_type>>
+  std::vector<std::pair<std::string, Comments::Comment_type>>
   static joined_comments(Fragment_list::const_iterator i,
     const Fragment_list::const_iterator e)
   {
-    std::vector<std::pair<std::string, Extra::Comment_type>> result;
+    std::vector<std::pair<std::string, Comments::Comment_type>> result;
     while (i != e) {
       if (i->is_comment()) {
         auto comments = joined_comments_of_same_type(i, e);
@@ -651,7 +651,7 @@ DMITIGR_PGFE_INLINE void Statement::append(const Statement& appendix)
   update_cache(appendix); // can throw
 
   if (was_query_empty)
-    is_extra_data_should_be_extracted_from_comments_ = true;
+    is_metadata_should_be_extracted_from_comments_ = true;
 
   assert(is_invariant_ok());
 }
@@ -914,20 +914,15 @@ Statement::to_query_string(const Connection& conn) const
   return result;
 }
 
-DMITIGR_PGFE_INLINE auto Statement::extra() const -> const Extra_data&
+DMITIGR_PGFE_INLINE auto Statement::metadata() const -> const Metadata&
 {
-  if (!extra_)
-    extra_.emplace(Extra::extract(fragments_));
-  else if (is_extra_data_should_be_extracted_from_comments_)
-    extra_->append(Extra_data{Extra::extract(fragments_)});
-  is_extra_data_should_be_extracted_from_comments_ = false;
+  if (!metadata_)
+    metadata_.emplace(Comments::extract(fragments_));
+  else if (is_metadata_should_be_extracted_from_comments_)
+    metadata_->append(Metadata{Comments::extract(fragments_)});
+  is_metadata_should_be_extracted_from_comments_ = false;
   assert(is_invariant_ok());
-  return *extra_;
-}
-
-DMITIGR_PGFE_INLINE auto Statement::extra() -> Extra_data&
-{
-  return const_cast<Extra_data&>(static_cast<const Statement*>(this)->extra());
+  return *metadata_;
 }
 
 DMITIGR_PGFE_INLINE bool Statement::is_equivalent(const Statement& rhs) const
@@ -998,7 +993,7 @@ DMITIGR_PGFE_INLINE bool Statement::is_invariant_ok() const noexcept
     parameter_count() == (positional_parameter_count() + named_parameter_count());
   const bool bindings_ok = bindings_.size() <= named_parameter_count();
   const bool empty_ok = !is_empty() || !has_parameter();
-  const bool extra_ok = is_extra_data_should_be_extracted_from_comments_ || extra_;
+  const bool metadata_ok = is_metadata_should_be_extracted_from_comments_ || metadata_;
   const bool parameterizable_ok = Parameterizable::is_invariant_ok();
 
   return
@@ -1008,7 +1003,7 @@ DMITIGR_PGFE_INLINE bool Statement::is_invariant_ok() const noexcept
     parameters_count_ok &&
     bindings_ok &&
     empty_ok &&
-    extra_ok &&
+    metadata_ok &&
     parameterizable_ok;
 }
 

@@ -26,7 +26,6 @@
 #include "parameterizable.hpp"
 #include "types_fwd.hpp"
 
-#include <any>
 #include <compare>
 #include <cstddef>
 #include <list>
@@ -74,8 +73,8 @@ namespace dmitigr::pgfe {
  */
 class Statement final : public Parameterizable {
 public:
-  /// An alias of extra data.
-  using Extra_data = Assoc_vector<std::string, std::any>;
+  /// An alias of metadata.
+  using Metadata = Assoc_vector<std::string, std::string>;
 
   /// An alias of destructured string.
   using Destructured_string = String_vector<std::string_view>;
@@ -90,12 +89,12 @@ public:
    * @brief The constructor.
    *
    * @param text Any part of SQL statement, which may contain multiple
-   * commands and comments. Comments can contain an associated extra data.
+   * commands and comments. In turn, comments may contain a metadata.
    *
    * @remarks While the SQL input may contain multiple commands, the parser
    * stops on either first top-level semicolon or zero character.
    *
-   * @see extra().
+   * @see metadata().
    */
   DMITIGR_PGFE_API Statement(std::string_view text);
 
@@ -216,8 +215,8 @@ public:
    *
    * @par Effects
    * This instance contains the given `appendix`. If `is_query_empty()` before
-   * calling this method, then extra data of `appendix` is appended to the extra
-   * data of this instance.
+   * calling this method, then metadata of `appendix` is appended to the metadata
+   * of this instance.
    *
    * @par Exception safety guarantee
    * Basic.
@@ -302,7 +301,7 @@ public:
    *
    * @par Effects
    * This instance contains the given `replacement` instead of the parameter
-   * named by the `name`. The extra data will *not* be affected.
+   * named by the `name`. The metadata will *not* be affected.
    *
    * @par Exception safety guarantee
    * Basic.
@@ -325,13 +324,13 @@ public:
    */
   DMITIGR_PGFE_API std::string to_query_string(const Connection& conn) const;
 
-  /// @returns The extra data associated with this instance.
+  /// @returns The metadata associated with this instance.
   ///
-  /// @details An any data can be associated with an object of type Statement.
-  /// The initial associations can be specified in the *related comments*. The
-  /// related comment - is comment that have no more than one newline
-  /// character in between themself and the following content. The content
-  /// following the related comments must not be empty or consists only of spaces.
+  /// @details A statement can be associated with a metadata, which is a set of
+  /// text key-value pairs specified in the *related comments*. The related
+  /// comment - is a comment that have no more than one newline character in
+  /// between themself and the following content. The content following the
+  /// related comments must not be empty or consists only of spaces.
   ///
   /// Consider the example of the SQL input:
   /// @code{sql}
@@ -416,10 +415,7 @@ public:
   /// @endcode
   ///
   /// The content of the `text3` association is "one\n two\n three".
-  DMITIGR_PGFE_API const Extra_data& extra() const;
-
-  /// @overload
-  DMITIGR_PGFE_API Extra_data& extra();
+  DMITIGR_PGFE_API const Metadata& metadata() const;
 
   /**
    * @brief Tests instances on equivalency.
@@ -651,8 +647,8 @@ private:
   std::unordered_map<std::string, std::string> bindings_;
   std::vector<bool> positional_parameters_; // cache
   std::vector<Named_parameter> named_parameters_; // cache
-  mutable bool is_extra_data_should_be_extracted_from_comments_{true};
-  mutable std::optional<Extra_data> extra_; // cache
+  mutable bool is_metadata_should_be_extracted_from_comments_{true};
+  mutable std::optional<Metadata> metadata_; // cache
 
   static std::pair<Statement, std::string_view::size_type>
   parse_sql_input(std::string_view);
@@ -695,11 +691,11 @@ private:
   static bool is_quote_char(const unsigned char c) noexcept;
 
   // ---------------------------------------------------------------------------
-  // Extra data
+  // Metadata
   // ---------------------------------------------------------------------------
 
-  /// Represents an API for extraction the extra data from the comments.
-  struct Extra;
+  /// Represents an API for comments processing.
+  struct Comments;
 };
 
 } // namespace dmitigr::pgfe

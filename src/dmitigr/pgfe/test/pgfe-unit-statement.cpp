@@ -61,16 +61,13 @@ int main()
       DMITIGR_ASSERT(!st.is_empty());
       DMITIGR_ASSERT(st.is_query_empty());
 
-      st.extra().emplace_back("description", std::string{"This is an unknown query"});
-      DMITIGR_ASSERT(st.extra().size() == 1);
-      DMITIGR_ASSERT(st.extra().index("description") != st.extra().size());
-      DMITIGR_ASSERT(st.extra().value("description").has_value());
+      DMITIGR_ASSERT(st.metadata().size() == 0);
+      DMITIGR_ASSERT(st.metadata().index("description") == st.metadata().size());
 
       st.append("SELECT 1");
-      DMITIGR_ASSERT(st.extra().size() == 2);
-      DMITIGR_ASSERT(st.extra().index("id") != st.extra().size());
-      DMITIGR_ASSERT(st.extra().value("id").has_value());
-      DMITIGR_ASSERT(std::any_cast<std::string>(st.extra().value("id")) == "unknown-query");
+      DMITIGR_ASSERT(st.metadata().size() == 1);
+      DMITIGR_ASSERT(st.metadata().index("id") != st.metadata().size());
+      DMITIGR_ASSERT(st.metadata().value("id") == "unknown-query");
     }
 
     {

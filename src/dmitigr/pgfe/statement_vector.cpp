@@ -77,9 +77,9 @@ Statement_vector::operator[](const std::size_t index)
 }
 
 DMITIGR_PGFE_INLINE std::size_t Statement_vector::statement_index(
-  const std::string_view extra_name,
-  const std::string_view extra_value,
-  const std::size_t offset, const std::size_t extra_offset) const noexcept
+  const std::string_view metadata_key,
+  const std::string_view metadata_value,
+  const std::size_t offset, const std::size_t metadata_offset) const noexcept
 {
   const auto sz = size();
   const auto b = cbegin(statements_);
@@ -87,13 +87,13 @@ DMITIGR_PGFE_INLINE std::size_t Statement_vector::statement_index(
   using Diff = decltype(b)::difference_type;
   const auto i = find_if(std::min(b + static_cast<Diff>(offset),
       b + static_cast<Diff>(sz)), e,
-    [&extra_name, &extra_value, extra_offset](const auto& statement)
+    [&metadata_key, &metadata_value, metadata_offset](const auto& statement)
     {
-      if (const auto& extra = statement.extra(); extra_offset < extra.size()) {
-        const auto index = extra.index(extra_name, extra_offset);
-        return (index < extra.size()) &&
-          *std::any_cast<std::string>(
-            std::addressof(extra.vector()[index].second)) == extra_value;
+      const auto& metadata = statement.metadata();
+      if (metadata_offset < metadata.size()) {
+        const auto index = metadata.index(metadata_key, metadata_offset);
+        return (index < metadata.size()) &&
+          (metadata.vector()[index].second == metadata_value);
       } else
         return false;
     });
