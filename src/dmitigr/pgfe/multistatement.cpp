@@ -23,14 +23,13 @@
 
 namespace dmitigr::pgfe {
 
-DMITIGR_PGFE_INLINE Multistatement::Multistatement(std::string_view input)
+DMITIGR_PGFE_INLINE Multistatement::Multistatement(const std::string_view input)
 {
-  while (input.data() && !input.empty()) {
-    auto [st, pos] = Statement::parse_sql_input(input);
-    statements_.emplace_back(std::move(st));
-    DMITIGR_ASSERT(pos <= input.size());
-    input = input.substr(pos);
-  }
+  Statement::parse([this](auto&& stmt)
+  {
+    statements_.emplace_back(std::move(stmt));
+    return true;
+  }, input);
 }
 
 DMITIGR_PGFE_INLINE

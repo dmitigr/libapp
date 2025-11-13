@@ -86,10 +86,10 @@ public:
   Statement() = default;
 
   /**
-   * @brief The constructor.
+   * @brief Constructs a single statement from `text`.
    *
-   * @param text Any part of SQL statement, which may contain multiple
-   * commands and comments. In turn, comments may contain a metadata.
+   * @param text Any part of SQL input, which may contain multiple commands and
+   * comments. In turn, comments may contain a metadata.
    *
    * @remarks While the SQL input may contain multiple commands, the parser
    * stops on either first top-level semicolon or zero character.
@@ -103,6 +103,32 @@ public:
 
   /// @overload
   DMITIGR_PGFE_API Statement(const char* text);
+
+  /**
+   * @brief Constructs multiple multiple statements from `input`.
+   *
+   * @param callback A function with signature
+   * `bool callback(Statement&&)` which called for every parsed statement.
+   * Returns `false` to stop the parsing process.
+   * @param input An SQL input, which may contain multiple commands and
+   * comments. In turn, comments may contain a metadata.
+   *
+   * @returns The number of constructed (parsed) statements.
+   */
+  template<typename F>
+  static std::size_t parse(F&& callback, std::string_view input)
+  {
+    std::size_t count{};
+    while (input.data() && !input.empty()) {
+      auto [stmt, pos] = parse_sql_input(input);
+      if (!callback(std::move(stmt)))
+        break;
+      DMITIGR_ASSERT(pos <= input.size());
+      input = input.substr(pos);
+      ++count;
+    }
+    return count;
+  }
 
   /// @}
 
@@ -441,7 +467,8 @@ public:
    *
    * @param callback A function with signature
    * `bool callback(const std::string& name, const Destructured_string&)`
-   * which called for every matching found.
+   * which called for every matching found. Returns `false` to stop the
+   * destructurization process.
    *
    * @par Requires
    *   -# `!has_unbound_parameter()`;
@@ -597,8 +624,6 @@ public:
   DMITIGR_PGFE_API bool is_normalized() const noexcept;
 
 private:
-  friend Multistatement;
-
   /// A fragment.
   struct Fragment final {
     enum class Type {

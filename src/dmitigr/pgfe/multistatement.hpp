@@ -40,7 +40,7 @@ public:
   Multistatement() = default;
 
   /**
-   * @brief Parses the input to make the Multistatement.
+   * @brief Constructs the Multistatement from `input`.
    *
    * @details For example, consider the following input:
    *   @code{sql}
@@ -59,8 +59,9 @@ public:
    *   -# the `SELECT 1` statement with Comment 2 and Comment 3;
    *   -# empty statement with Comment 4.
    *
-   * @param input Any part of SQL statement, such as a content of a file with
-   * multiple SQL commands and comments.
+   * @param input Similar to `input` of Statement::parse().
+   *
+   * @see Statement::parse().
    */
   explicit DMITIGR_PGFE_API Multistatement(std::string_view input);
 
