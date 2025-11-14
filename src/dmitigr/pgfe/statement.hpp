@@ -105,7 +105,7 @@ public:
   DMITIGR_PGFE_API Statement(const char* text);
 
   /**
-   * @brief Constructs multiple multiple statements from `input`.
+   * @brief Constructs multiple statements from `input`.
    *
    * @param callback A function with signature
    * `bool callback(Statement&&)` which called for every parsed statement.
