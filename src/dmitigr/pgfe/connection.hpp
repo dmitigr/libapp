@@ -548,7 +548,7 @@ public:
           Error err;
           Generic_exception process_responses_error{""};
           try {
-            // std::function is used as the workaround for GCC 7.5
+            // std::function is used for the recursive call.
             std::function<void(Row&&, Error&&)> f = [&err](auto&&, auto&& e)
             {
               if (e)
