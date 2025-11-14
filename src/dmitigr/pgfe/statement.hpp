@@ -534,7 +534,7 @@ public:
             name+" and "+pnf->str};
 
         Destructured_string matching;
-        matching.reserve(16);
+        matching.reserve(8);
         for (; nf != nf_end; ++nf) {
           if (nf->is_text()) {
             if (pnf != pnf_end && pnf->is_text()) {
