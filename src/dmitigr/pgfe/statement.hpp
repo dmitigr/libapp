@@ -599,7 +599,7 @@ public:
         break;
     }
     return true;
-   }
+  }
 
   /**
    * @brief Normalizes this statement.
