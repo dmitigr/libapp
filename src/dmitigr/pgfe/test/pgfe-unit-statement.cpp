@@ -351,6 +351,19 @@ update task_step_log
 
     {
       int called{};
+      const Statement pattern{":{param}"};
+      const Statement stmt{""};
+      const auto matched = stmt.destructure([&called](const auto&, const auto&)
+      {
+        ++called;
+        return true;
+      }, pattern);
+      ASSERT(!matched);
+      ASSERT(!called);
+    }
+
+    {
+      int called{};
       const Statement pattern{""};
       const Statement stmt{"select 1"};
       ASSERT(!stmt.destructure([&called](const auto&, const auto&)
