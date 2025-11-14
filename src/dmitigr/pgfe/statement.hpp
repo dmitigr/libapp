@@ -524,10 +524,10 @@ public:
       if (pnf->is_named_parameter()) {
         const auto& name = pnf->str;
 
-        // Skip empty text fragments which follows the parameter name.
-        ++pnf;
-        while (pnf != pnf_end && pnf->is_text() && pnf->norm_str().empty())
+        // Skip empty text fragments which follows the named parameter.
+        do {
           ++pnf;
+        } while (pnf != pnf_end && pnf->is_text() && pnf->norm_str().empty());
         if (pnf != pnf_end && pnf->is_named_parameter())
           throw Generic_exception{"cannot destructure statement: pattern has "
             "adjacent named parameters without non-space text between them: "+
