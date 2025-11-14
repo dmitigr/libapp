@@ -570,11 +570,7 @@ public:
           } else
             push_back_if_not_empty(matching, nf->str);
         } // for
-
-        if (!matching.is_empty())
-          result.emplace_back(std::addressof(name), std::move(matching));
-        else
-          return false;
+        result.emplace_back(std::addressof(name), std::move(matching));
       } else if (pnf->is_text()) {
         if (nf->depth != pnf->depth)
           return false;
@@ -598,7 +594,7 @@ public:
 
     for (const auto& [name, mtch] : result.vector()) {
       DMITIGR_ASSERT(name);
-      DMITIGR_ASSERT(!mtch.is_empty());
+      DMITIGR_ASSERT(!name->empty());
       if (!callback(*name, mtch))
         break;
     }
