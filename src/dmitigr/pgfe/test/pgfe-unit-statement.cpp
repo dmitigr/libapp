@@ -552,6 +552,24 @@ update task_step_log
     }
 
     {
+      int called_where{};
+      const Statement pattern{"select 1 :{where}"};
+      const Statement stmt{"select 1"};
+      const auto matched = stmt.destructure([&](const auto& name, const auto& match)
+      {
+        if (name == "where") {
+          ++called_where;
+          const auto where = match.to_string();
+          ASSERT(where == "");
+        } else
+          ASSERT(false);
+        return true;
+      }, pattern);
+      ASSERT(!matched);
+      ASSERT(!called_where);
+    }
+
+    {
       int called_with_name{};
       int called_subquery{};
       int called_query{};
