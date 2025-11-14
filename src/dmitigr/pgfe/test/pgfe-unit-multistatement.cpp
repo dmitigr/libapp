@@ -52,7 +52,7 @@ try {
   const std::filesystem::path this_exe_file_name{argv[0]};
   const auto this_exe_dir_name = this_exe_file_name.parent_path();
   const auto input = str::read_to_string(this_exe_dir_name /
-    "pgfe-unit-statement_vector.sql");
+    "pgfe-unit-multistatement.sql");
   bunch = pgfe::Multistatement{input};
   DMITIGR_ASSERT(bunch.size() == 3);
   DMITIGR_ASSERT(bunch[0].metadata().size() == 1);
