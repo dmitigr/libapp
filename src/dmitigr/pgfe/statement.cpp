@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <iterator>
 #include <memory>
 
 namespace dmitigr::pgfe {
@@ -88,10 +89,21 @@ Statement::Fragment::is_parameter() const noexcept
 }
 
 DMITIGR_PGFE_INLINE bool
+Statement::Fragment::is_one_line_comment() const noexcept
+{
+  return type == Fragment::Type::one_line_comment;
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::Fragment::is_multi_line_comment() const noexcept
+{
+  return type == Fragment::Type::multi_line_comment;
+}
+
+DMITIGR_PGFE_INLINE bool
 Statement::Fragment::is_comment() const noexcept
 {
-  return type == Fragment::Type::one_line_comment ||
-    type == Fragment::Type::multi_line_comment;
+  return is_one_line_comment() || is_multi_line_comment();
 }
 
 DMITIGR_PGFE_INLINE
@@ -410,7 +422,7 @@ private:
     const auto e = cend(fragments);
     auto result = std::make_pair(e, e);
 
-    static const auto is_nearby_string = [](const std::string_view str)noexcept
+    static const auto is_nearby_string = [](const std::string_view str) noexcept
     {
       int count{};
       for (const auto c : str) {
@@ -424,17 +436,30 @@ private:
       return true;
     };
 
-    // Try to find the first fragment with nearby comment.
-    auto i = find_if(b, e, [](const Fragment& f)noexcept
+    static const auto has_newline = [](const std::string_view str) noexcept
+    {
+      return std::any_of(cbegin(str), cend(str), [](const auto c) noexcept
+      {
+        return c == '\n';
+      });
+    };
+
+    // Try to find the first fragment which is the "nearby string".
+    const auto first_nearby = find_if(b, e, [](const Fragment& f) noexcept
     {
       return !f.is_comment() && is_nearby_string(f.str) && !str::is_blank(f.str);
     });
-    if (i != b && i != e) {
-      result.second = i;
+    if (first_nearby != b) {
+      auto i = first_nearby;
+      result.second = first_nearby;
       do {
         --i;
-        DMITIGR_ASSERT(i->is_comment() || (i->is_text() && str::is_blank(i->str)));
-        if (i->is_text()) {
+        if (i->is_one_line_comment()) {
+          const auto next = std::next(i);
+          if (next != first_nearby && has_newline(next->str))
+            break;
+        } else if (!i->is_multi_line_comment()) {
+          DMITIGR_ASSERT(str::is_blank(i->str));
           if (!is_nearby_string(i->str))
             break;
         }
@@ -643,16 +668,9 @@ Statement::has_duplicate_named_parameter() const noexcept
 
 DMITIGR_PGFE_INLINE void Statement::append(const Statement& appendix)
 {
-  const bool was_query_empty{is_query_empty()};
-
-  // Update fragments.
   fragments_.insert(cend(fragments_), cbegin(appendix.fragments_),
     cend(appendix.fragments_));
   update_cache(appendix); // can throw
-
-  if (was_query_empty)
-    is_metadata_should_be_extracted_from_comments_ = true;
-
   assert(is_invariant_ok());
 }
 
@@ -918,10 +936,6 @@ DMITIGR_PGFE_INLINE auto Statement::metadata() const -> const Metadata&
 {
   if (!metadata_)
     metadata_.emplace(Comments::extract(fragments_));
-  else if (is_metadata_should_be_extracted_from_comments_)
-    metadata_->append(Metadata{Comments::extract(fragments_)});
-  is_metadata_should_be_extracted_from_comments_ = false;
-  assert(is_invariant_ok());
   return *metadata_;
 }
 
@@ -993,7 +1007,6 @@ DMITIGR_PGFE_INLINE bool Statement::is_invariant_ok() const noexcept
     parameter_count() == (positional_parameter_count() + named_parameter_count());
   const bool bindings_ok = bindings_.size() <= named_parameter_count();
   const bool empty_ok = !is_empty() || !has_parameter();
-  const bool metadata_ok = is_metadata_should_be_extracted_from_comments_ || metadata_;
   const bool parameterizable_ok = Parameterizable::is_invariant_ok();
 
   return
@@ -1003,7 +1016,6 @@ DMITIGR_PGFE_INLINE bool Statement::is_invariant_ok() const noexcept
     parameters_count_ok &&
     bindings_ok &&
     empty_ok &&
-    metadata_ok &&
     parameterizable_ok;
 }
 

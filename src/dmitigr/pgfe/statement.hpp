@@ -240,9 +240,7 @@ public:
    * @brief Appends the specified statement.
    *
    * @par Effects
-   * This instance contains the given `appendix`. If `is_query_empty()` before
-   * calling this method, then metadata of `appendix` is appended to the metadata
-   * of this instance.
+   * This instance contains the given `appendix`.
    *
    * @par Exception safety guarantee
    * Basic.
@@ -643,6 +641,8 @@ private:
     bool is_quoted_named_parameter(const std::string_view name) const noexcept;
     bool is_positional_parameter() const noexcept;
     bool is_parameter() const noexcept;
+    bool is_one_line_comment() const noexcept;
+    bool is_multi_line_comment() const noexcept;
     bool is_comment() const noexcept;
 
     const std::string& norm_str() const;
@@ -668,7 +668,6 @@ private:
   std::unordered_map<std::string, std::string> bindings_;
   std::vector<bool> positional_parameters_; // cache
   std::vector<Named_parameter> named_parameters_; // cache
-  mutable bool is_metadata_should_be_extracted_from_comments_{true};
   mutable std::optional<Metadata> metadata_; // cache
 
   static std::pair<Statement, std::string_view::size_type>

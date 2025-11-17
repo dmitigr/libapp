@@ -54,14 +54,16 @@ try {
   const auto input = str::read_to_string(this_exe_dir_name /
     "pgfe-unit-multistatement.sql");
   bunch = pgfe::Multistatement{input};
-  DMITIGR_ASSERT(bunch.size() == 3);
+  DMITIGR_ASSERT(bunch.size() == 4);
   DMITIGR_ASSERT(bunch[0].metadata().size() == 1);
   DMITIGR_ASSERT(bunch[1].metadata().size() == 2);
   DMITIGR_ASSERT(bunch[2].metadata().size() == 1);
+  DMITIGR_ASSERT(bunch[3].metadata().size() == 1);
   //
   DMITIGR_ASSERT(bunch.statement_index("id", "plus_one") == 0);
   DMITIGR_ASSERT(bunch.statement_index("id", "digit") == 1);
-  DMITIGR_ASSERT(bunch.statement_index("id", "any-data") == 2);
+  DMITIGR_ASSERT(bunch.statement_index("id", "empty-statement") == 2);
+  DMITIGR_ASSERT(bunch.statement_index("id", "any-data") == 3);
   DMITIGR_ASSERT(bunch[0].metadata().index("id") == 0);
   DMITIGR_ASSERT(bunch[1].metadata().index("id") == 0);
   DMITIGR_ASSERT(bunch[1].metadata().index("cond") == 1);
@@ -69,7 +71,8 @@ try {
 
   const auto& plus_one = bunch[0];
   auto& digit = bunch[1];
-  auto& any_data = bunch[2];
+  const auto& empty_statement = bunch[2];
+  auto& any_data = bunch[3];
   const auto conn = pgfe::test::make_connection();
   conn->connect();
 
@@ -92,6 +95,12 @@ try {
     }, digit);
   }
 
+  // empty-statement
+  {
+    const auto is_query_empty = empty_statement.is_query_empty();
+    DMITIGR_ASSERT(is_query_empty);
+  }
+
   // any-data
   {
     any_data.replace("data", "select :{num}");
@@ -106,11 +115,11 @@ try {
   // -------------------------------------------------------------------------
 
   bunch.insert(1, "SELECT 2");
-  DMITIGR_ASSERT(bunch.size() == 4);
+  DMITIGR_ASSERT(bunch.size() == 5);
   auto i = bunch.statement_index("id", "plus_one");
   DMITIGR_ASSERT(i != bunch.size());
   bunch.remove(i);
-  DMITIGR_ASSERT(bunch.size() == 3); // {"SELECT 2", digit} are still here
+  DMITIGR_ASSERT(bunch.size() == 4); // {"SELECT 2", digit} are still here
   DMITIGR_ASSERT(bunch.statement_index("id", "plus_one") == bunch.size());
   DMITIGR_ASSERT(bunch[0].to_string() == "SELECT 2"); // SELECT 2
   DMITIGR_ASSERT(bunch.statement_index("id", "digit") == 1);

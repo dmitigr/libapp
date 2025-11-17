@@ -61,12 +61,12 @@ int main()
       DMITIGR_ASSERT(!st.is_empty());
       DMITIGR_ASSERT(st.is_query_empty());
 
-      DMITIGR_ASSERT(st.metadata().size() == 0);
-      DMITIGR_ASSERT(st.metadata().index("description") == st.metadata().size());
+      DMITIGR_ASSERT(st.metadata().size() == 1);
+      DMITIGR_ASSERT(st.metadata().index("id") == 0);
 
       st.append("SELECT 1");
       DMITIGR_ASSERT(st.metadata().size() == 1);
-      DMITIGR_ASSERT(st.metadata().index("id") != st.metadata().size());
+      DMITIGR_ASSERT(st.metadata().index("id") == 0);
       DMITIGR_ASSERT(st.metadata().value("id") == "unknown-query");
     }
 

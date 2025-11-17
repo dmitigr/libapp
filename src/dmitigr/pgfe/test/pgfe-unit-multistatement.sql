@@ -14,6 +14,11 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- This (unrelated) comment is a part of the first query that follows it.
+-- But the metadata specified in this comment is not a part of the metadata
+-- specified in the related comment below.
+-- $id$nonsence-since-the-comment-is-unrelated$id$
+
 -- This query calculates :{n} + 1.
 --
 -- $id$plus_one$id$
@@ -30,6 +35,11 @@ SELECT :{n}::int + 1, 'semicolons in qoutes like these: ;;; are ignored';
  * $cond$
  */
 SELECT n FROM (SELECT generate_series(1,9) n) foo WHERE :{cond};
+
+-- This is an empty statement.
+--
+-- $id$empty-statement$id$
+;
 
 -- This is a placeholder for any data.
 --
