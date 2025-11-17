@@ -97,8 +97,8 @@ try {
 
   // empty-statement
   {
-    const auto is_query_empty = empty_statement.is_query_empty();
-    DMITIGR_ASSERT(is_query_empty);
+    DMITIGR_ASSERT(!empty_statement.is_empty());
+    DMITIGR_ASSERT(empty_statement.is_query_empty());
   }
 
   // any-data
