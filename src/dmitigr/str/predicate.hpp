@@ -75,7 +75,7 @@ inline bool is_not_zero(const int ch) noexcept
   return !is_zero(ch);
 }
 
-/// @returns `true` if `str` is a blank string.
+/// @returns `true` if `str` is a blank or empty string.
 inline bool is_blank(const std::string_view str) noexcept
 {
   return std::all_of(cbegin(str), cend(str), is_space);
