@@ -27,8 +27,8 @@
   #include <filesystem>
 #endif
 
-#include <locale>
 #include <fstream>
+#include <locale>
 #include <optional>
 #include <stdexcept>
 #include <vector>
@@ -36,56 +36,66 @@
 namespace dmitigr::filesystem {
 
 /**
- * @returns The vector of the paths.
+ * @brief Calls the `callback` for each file under the `root`.
  *
- * @param root - the search root;
- * @param extension - the extension of files to be included into the result;
- * @param recursive - if `true` then do the recursive search;
- * @param include_heading - if `true` then include the "heading file" (see
- * remarks) into the result.
- *
- * @remarks The "heading file" - is a regular file with the given `extension`
- * which has the same parent directory as the `root`.
+ * @param callback A function with signature
+ * `bool callback(const std::filesystem::path&)`.
+ * @param root A root directory.
+ * @param recursive A recursive traversal indicator.
  */
-inline std::vector<std::filesystem::path>
-file_paths_by_extension(const std::filesystem::path& root,
-  const std::filesystem::path& extension,
-  const bool recursive, const bool include_heading = false)
+template<typename F>
+void for_each(F&& callback,
+  const std::filesystem::path& root,
+  const bool recursive = false)
 {
-  std::vector<std::filesystem::path> result;
-
-  if (is_regular_file(root) && root.extension() == extension)
-    return {root};
-
-  if (include_heading) {
-    auto heading_file = root;
-    heading_file.replace_extension(extension);
-    if (is_regular_file(heading_file))
-      result.push_back(heading_file);
-  }
-
   if (is_directory(root)) {
-    const auto traverse = [&](auto iterator)
+    const auto traverse = [&callback](const auto& iterator)
     {
       for (const auto& dirent : iterator) {
-        const auto& path = dirent.path();
-        if (is_regular_file(path) && path.extension() == extension)
-          result.push_back(dirent);
+        if (!callback(dirent))
+          break;
       }
     };
-
     if (recursive)
       traverse(std::filesystem::recursive_directory_iterator{root});
     else
       traverse(std::filesystem::directory_iterator{root});
   }
-  return result;
 }
 
 /**
- * @brief Searches for the `dir` directory starting from `path` up to the root.
+ * @brief Calls the `callback` for each regular file under the `root`.
  *
- * @returns A first path to a directory in which `dir` directory found, or
+ * @details If the `root` represents the regular file, it's the only value
+ * passed to the `callback`.
+ *
+ * @param callback A function with signature
+ * `bool callback(const std::filesystem::path&)`.
+ * @param root A search root.
+ * @param recursive A recursive traversal indicator.
+ */
+template<typename F>
+void for_each_regular_file(F&& callback,
+  const std::filesystem::path& root,
+  const bool recursive = false)
+{
+  if (is_regular_file(root)) {
+    (void)callback(root);
+    return;
+  }
+
+  for_each([&callback](const std::filesystem::path& path)
+  {
+    if (is_regular_file(path))
+      return callback(path);
+    return true;
+  }, root, recursive);
+}
+
+/**
+ * @brief Searches for the `child` directory starting from `path` up to the root.
+ *
+ * @returns A first path to a directory in which `child` directory found, or
  * `std::nullopt` if no such a directory found.
  */
 inline std::optional<std::filesystem::path>
@@ -102,11 +112,29 @@ first_parent(std::filesystem::path path, const std::filesystem::path& child)
 }
 
 /**
+ * @returns If there is a directory `root` and a regular file `root.extension`
+ * under the directory `root.parent_path()`, the returned value is the path to
+ * such a file.
+ */
+inline std::filesystem::path heading_file(const std::filesystem::path& root,
+  const std::filesystem::path& extension)
+{
+  if (is_directory(root)) {
+    auto result = root;
+    result.replace_extension(extension);
+    if (is_regular_file(result))
+      return result;
+  }
+  return std::filesystem::path{};
+}
+
+/**
  * @brief Uppercases the root name of `path`.
  *
  * @remarks Useful on Windows.
  */
-inline std::filesystem::path to_uppercase_root_name(const std::filesystem::path& path,
+inline std::filesystem::path
+to_uppercase_root_name(const std::filesystem::path& path,
   const std::locale& loc = {})
 {
   if (!path.has_root_name())
@@ -127,12 +155,12 @@ inline void overwrite(const std::filesystem::path& path,
 {
   if (!data.data())
     throw std::invalid_argument{"cannot overwrite file "+path.string()+":"
-        " invalid data"};
+      " invalid data"};
   else if (std::ofstream pf{path, std::ios_base::trunc})
     pf.write(data.data(), data.size());
   else
     throw std::runtime_error{"cannot overwrite file "+path.string()+":"
-        " cannot open file"};
+      " cannot open file"};
 }
 
 } // namespace dmitigr::filesystem
