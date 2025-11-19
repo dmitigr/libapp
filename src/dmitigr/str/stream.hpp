@@ -32,6 +32,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace dmitigr::str {
@@ -39,22 +40,20 @@ namespace dmitigr::str {
 /**
  * @brief Reads the file into the vector of strings.
  *
- * @param path The path to the file to read the data from.
- * @param pred The predicate of form `pred(line)` that returns `true` to
- * indicate that `line` read from the file must be appended to the result.
+ * @param input The input stream to read the data from.
+ * @param callback The function of signature `bool callback(std::string&&)` that
+ * returns `true` to continue the reading.
  * @param delimiter The delimiter character.
  */
-template<typename Pred>
-std::vector<std::string>
-read_lines_if(std::istream& input, const Pred& pred, const char delimiter = '\n')
+template<typename F, typename Pred>
+void read_lines_if(F&& callback, std::istream& input, const char delimiter = '\n')
 {
-  std::vector<std::string> result;
   std::string line;
   while (getline(input, line, delimiter)) {
-    if (pred(line))
-      result.emplace_back(std::move(line));
+    if (!callback(std::move(line)))
+      break;
+    line = {};
   }
-  return result;
 }
 
 /**
@@ -63,37 +62,13 @@ read_lines_if(std::istream& input, const Pred& pred, const char delimiter = '\n'
  * @param path The path to the file to read the data from.
  * @param is_binary The indicator of binary read mode.
  */
-template<typename Pred>
-std::vector<std::string>
-read_lines_if(const std::filesystem::path& path,
-  const Pred& pred, const char delimiter = '\n', const bool is_binary = true)
+template<typename F>
+void read_lines_if(F&& callback, const std::filesystem::path& path,
+  const char delimiter = '\n', const bool is_binary = true)
 {
   constexpr std::ios_base::openmode in{std::ios_base::in};
   std::ifstream input{path, is_binary ? in | std::ios_base::binary : in};
-  return read_lines_if(input, pred, delimiter);
-}
-
-/**
- * @brief The convenient shortcut of read_lines_if().
- *
- * @see read_lines_if().
- */
-inline std::vector<std::string>
-read_lines(std::istream& input, const char delimiter = '\n')
-{
-  return read_lines_if(input, [](const auto&){return true;}, delimiter);
-}
-
-/**
- * @brief The convenient shortcut of read_lines_if().
- *
- * @see read_lines_if().
- */
-inline std::vector<std::string>
-read_lines(const std::filesystem::path& path,
-  const char delimiter = '\n', const bool is_binary = true)
-{
-  return read_lines_if(path, [](const auto&){return true;}, delimiter, is_binary);
+  return read_lines_if(std::forward<F>(callback), input, delimiter);
 }
 
 /**
