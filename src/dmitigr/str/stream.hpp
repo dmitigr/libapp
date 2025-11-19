@@ -40,9 +40,9 @@ namespace dmitigr::str {
 /**
  * @brief Reads the file into the vector of strings.
  *
- * @param input The input stream to read the data from.
  * @param callback The function of signature `bool callback(std::string&&)` that
  * returns `true` to continue the reading.
+ * @param input The input stream to read the data from.
  * @param delimiter The delimiter character.
  */
 template<typename F, typename Pred>
@@ -57,105 +57,63 @@ void read_lines_if(F&& callback, std::istream& input, const char delimiter = '\n
 }
 
 /**
- * @overload
+ * @brief Reads the `input` stream by chunks of size `BufSize`.
  *
- * @param path The path to the file to read the data from.
- * @param is_binary The indicator of binary read mode.
- */
-template<typename F>
-void read_lines_if(F&& callback, const std::filesystem::path& path,
-  const char delimiter = '\n', const bool is_binary = true)
-{
-  constexpr std::ios_base::openmode in{std::ios_base::in};
-  std::ifstream input{path, is_binary ? in | std::ios_base::binary : in};
-  return read_lines_if(std::forward<F>(callback), input, delimiter);
-}
-
-/**
- * @brief Reads a whole `input` stream to a string.
+ * @tparam ChunkSize The chunk size.
+ * @param callback The function of signature
+ * `bool callback(const char*, const std::size_t)` that returns `true`
+ * to continue the reading.
+ * @param input The input stream to read the data from.
+ * @param delimiter The delimiter character.
  *
  * @par Requires
- * `!(BufSize % 8)`.
+ * `ChunkSize && !(ChunkSize % 8)`.
  *
- * @returns The string with the content read from the `input`.
+ * @returns The number of bytes read.
  */
-template<std::size_t BufSize = 4096>
-std::string read_to_string(std::istream& input, const std::optional<Trim> trim = {})
+template<std::size_t ChunkSize, typename F>
+void read(F&& callback, std::istream& input)
+{
+  static_assert(ChunkSize);
+  std::array<char, ChunkSize> buffer;
+  static_assert(!(buffer.size() % 8));
+  const auto append = [&]
+  {
+    return callback(buffer.data(), static_cast<std::size_t>(input.gcount()));
+  };
+  while (input.read(buffer.data(), buffer.size())) {
+    if (!append())
+      return;
+  }
+  if (!append())
+    return;
+}
+
+/// @overload
+template<typename F>
+void read(F&& callback, std::istream& input)
+{
+  return read<4096>(std::forward<F>(callback), input);
+}
+
+/// Reads the whole `input` to string.
+inline std::string read_to_string(std::istream& input)
 {
   std::string result;
-  std::array<char, BufSize> buffer;
-  static_assert(!(buffer.size() % 8));
-  bool lhs_trimmed{};
-  const auto append_buffer = [&]
+  read([&result](const char* const data, const std::size_t size)
   {
-    std::size_t space_count{};
-    if (trim && !lhs_trimmed && static_cast<bool>(*trim & Trim::lhs)) {
-      for (const auto ch : buffer) {
-        if (!is_space(ch)) {
-          lhs_trimmed = true;
-          break;
-        } else
-          ++space_count;
-      }
-    }
-    result.append(buffer.data() + space_count,
-      static_cast<std::size_t>(input.gcount()) - space_count);
-  };
-  while (input.read(buffer.data(), buffer.size()))
-    append_buffer();
-  append_buffer();
-
-  if (trim && static_cast<bool>(*trim & Trim::rhs)) {
-    const auto rb = crbegin(result);
-    const auto re = crend(result);
-    const auto te = find_if(rb, re, is_not_visible).base();
-    result.resize(te - cbegin(result));
-  }
-
+    result.append(data, size);
+    return true;
+  }, input);
   return result;
 }
 
-/**
- * @brief Reads the file into an instance of `std::string`.
- *
- * @param path The path to the file to read the data from.
- * @param is_binary The indicator of binary read mode.
- *
- * @returns The string with the file data.
- */
-template<std::size_t BufSize = 4096>
-Ret<std::string> read_to_string_nothrow(const std::filesystem::path& path,
-  const bool is_binary = true,
-  const std::optional<Trim> trim = {})
+/// @overload
+inline std::string read_to_string(const std::filesystem::path& path)
 {
-  using Ret = Ret<std::string>;
-  constexpr std::ios_base::openmode in{std::ios_base::in};
-  std::ifstream input{path, is_binary ? in | std::ios_base::binary : in};
-  if (input)
-    return Ret::make_result(read_to_string<BufSize>(input, trim));
-  else
-    return Ret::make_error(Err{Errc::generic,
-        "unable to open \"" + path.generic_string() + "\""});
-}
-
-/**
- * @brief Reads the file into an instance of `std::string`.
- *
- * @param path The path to the file to read the data from.
- * @param is_binary The indicator of binary read mode.
- *
- * @returns The string with the file data.
- */
-template<std::size_t BufSize = 4096>
-std::string read_to_string(const std::filesystem::path& path,
-  const bool is_binary = true,
-  const std::optional<Trim> trim = {})
-{
-  auto [err, res] = read_to_string_nothrow<BufSize>(path, is_binary, trim);
-  if (!err)
-    return res;
-  else
-    throw Exception{err};
+  if (std::ifstream input{path, std::ios_base::binary})
+    return read_to_string(input);
+  throw std::runtime_error{"cannot open file "+path.string()+" for reading"};
 }
 
 } // namespace dmitigr::str
