@@ -17,6 +17,7 @@
 #ifndef DMITIGR_LISP_LIB_HPP
 #define DMITIGR_LISP_LIB_HPP
 
+#include "../base/utility.hpp"
 #include "../str/stream.hpp"
 #include "expr.hpp"
 
@@ -50,6 +51,13 @@ inline void push_back_recursive(Tuple& dst, const Tuple& src)
     else
       dst.push_back(e);
   }
+}
+
+inline auto read_to_str(const std::filesystem::path& path)
+{
+  static const auto read = static_cast<
+    std::string(*)(const std::filesystem::path&)>(&str::read_to_string);
+  return call_noexcept(read, path);
 }
 
 } // namespace detail
@@ -1090,8 +1098,7 @@ inline Ret_expr fun_fs_file_data(const Tup_expr& fun, Env& env)
   if (auto r = (*arg)->eval(env)) {
     if (is_str(r.res)) {
       const auto& file_name = r.res->str();
-      constexpr bool is_binary{true};
-      auto [err, data] = str::read_to_string_nothrow(file_name, is_binary);
+      auto [err, data] = detail::read_to_str(file_name);
       if (!err)
         return make_expr<Str_expr>(std::move(data));
       else // throw by default
