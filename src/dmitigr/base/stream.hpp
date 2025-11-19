@@ -80,8 +80,6 @@ std::istream& read_lines_if(F&& callback, std::istream& input,
  *
  * @par Requires
  * `ChunkSize && !(ChunkSize % 8)`.
- *
- * @returns The number of bytes read.
  */
 template<std::size_t ChunkSize, typename F>
 std::istream& read(F&& callback, std::istream& input)
