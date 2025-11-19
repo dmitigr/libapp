@@ -236,7 +236,7 @@ tpl(const std::filesystem::path& tplfile, lisp::Env& env)
     return Err{Errc::file_not_found, stack_graph(stack, docroot)};
 
   // Read the template into memory.
-  const auto input = str::read_to_string(tplfile, true, str::Trim::all);
+  const auto input = str::read_to_string(tplfile);
   auto [err, result] = tpl::Generic::make(input, "<{{", "}}>");
   if (err)
     return err;
@@ -286,6 +286,13 @@ inline std::filesystem::path tplfile(const std::filesystem::path& tplfile,
   return root / tplfile.relative_path();
 }
 
+inline auto read_to_str(const std::filesystem::path& path)
+{
+  static const auto read = static_cast<
+    std::string(*)(const std::filesystem::path&)>(&str::read_to_string);
+  return call_noexcept(read, path);
+}
+
 } // namespace detail
 
 /// Function `web-raw`.
@@ -301,7 +308,7 @@ inline lisp::Ret_expr fun_web_raw(const lisp::Tup_expr& fun, lisp::Env& env)
     if (is_str(r.res)) {
       namespace fs = std::filesystem;
       const auto tplfile = detail::tplfile(r.res->str(), env);
-      auto [err, res] = str::read_to_string_nothrow(tplfile, true, str::Trim::all);
+      auto [err, res] = detail::read_to_str(tplfile);
       if (err)
         return err;
       else if (std::any_of(cbegin(res), cend(res), str::is_zero))
@@ -327,7 +334,7 @@ inline lisp::Ret_expr fun_web_esc(const lisp::Tup_expr& fun, lisp::Env& env)
     if (is_str(r.res)) {
       namespace fs = std::filesystem;
       const auto tplfile = detail::tplfile(r.res->str(), env);
-      auto [err, res] = str::read_to_string_nothrow(tplfile, true, str::Trim::all);
+      auto [err, res] = detail::read_to_str(tplfile);
       if (err)
         return err;
       else if (std::any_of(cbegin(res), cend(res), str::is_zero))
