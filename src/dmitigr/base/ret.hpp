@@ -19,9 +19,18 @@
 
 #include "error.hpp"
 
+#include <system_error>
 #include <type_traits>
+#include <utility>
 
 namespace dmitigr {
+
+struct Nothing final {
+  using Type = void;
+};
+
+template<typename T>
+using Ret_result = std::conditional_t<std::is_void_v<T>, Nothing, T>;
 
 /**
  * @brief A function return value.
@@ -31,19 +40,19 @@ namespace dmitigr {
  */
 template<typename T>
 struct Ret final {
-  static_assert(!std::is_same_v<T, void>);
-
   /// The alias of the error type.
   using Error = Err;
 
   /// The alias of the result type.
-  using Result = T;
+  using Result = Ret_result<T>;
 
-  /// Holds not an error and a default-constructed value of type T.
+  static_assert(!std::is_same_v<std::decay_t<Result>, Error>);
+
+  /// Holds not an error and a default-constructed value of type Result.
   Ret() noexcept = default;
 
-  /// Holds an error and a default-constructed value of type T.
-  Ret(Err err) noexcept
+  /// Holds an error and a default-constructed value of type Result.
+  Ret(Error err) noexcept
     : err{std::move(err)}
   {}
 
@@ -55,7 +64,7 @@ struct Ret final {
   {}
 
   /// Holds not an error and a given value of type T.
-  Ret(T res) noexcept
+  Ret(Result res) noexcept
     : res{std::move(res)}
   {}
 
@@ -65,7 +74,7 @@ struct Ret final {
    * @details This constructor is useful to return an error with an information
    * provided by `res`.
    */
-  Ret(Err err, T res) noexcept
+  Ret(Error err, Result res) noexcept
     : err{err}
     , res{std::move(res)}
   {}
@@ -74,14 +83,14 @@ struct Ret final {
   template<typename E, typename ... Types>
   static auto make_error(E e, Types&& ... res_args) noexcept
   {
-    return Ret{Err{std::move(e)}, T{std::forward<Types>(res_args)...}};
+    return Ret{Error{std::move(e)}, Result{std::forward<Types>(res_args)...}};
   }
 
   /// @returns The result.
   template<typename ... Types>
   static auto make_result(Types&& ... res_args) noexcept
   {
-    return Ret{T{std::forward<Types>(res_args)...}};
+    return Ret{Result{std::forward<Types>(res_args)...}};
   }
 
   /// @returns `true` if this instance is not an error.
