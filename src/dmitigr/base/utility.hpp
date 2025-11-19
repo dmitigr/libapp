@@ -17,7 +17,12 @@
 #ifndef DMITIGR_BASE_UTILITY_HPP
 #define DMITIGR_BASE_UTILITY_HPP
 
+#include "exceptions.hpp"
+#include "ret.hpp"
+
 #include <chrono>
+#include <functional>
+#include <type_traits>
 #include <utility>
 
 namespace dmitigr {
@@ -52,6 +57,32 @@ auto with_measure(const F& f)
   f();
   const auto end = chrono::high_resolution_clock::now();
   return chrono::duration_cast<D>(end - start);
+}
+
+/**
+ * @returns The value of type `Ret<R>`, where `R` is a type of value returned
+ * by `func`.
+ */
+template<typename F, typename ... Types>
+auto call_noexcept(F&& func, Types&& ... args) noexcept
+{
+  using F_result = std::invoke_result_t<F, Types...>;
+  using Ret = Ret<F_result>;
+  try {
+    if constexpr (std::is_same_v<F_result, void>) {
+      std::invoke(std::forward<F>(func), std::forward<Types>(args)...);
+      return Ret{};
+    } else
+      return Ret{std::invoke(std::forward<F>(func), std::forward<Types>(args)...)};
+  } catch (const Exception& e) {
+    return Ret{e.err()};
+  } catch (const std::system_error& e) {
+    return Ret{Err{e.code(), e.what()}};
+  } catch (const std::exception& e) {
+    return Ret{Err{Errc::generic, e.what()}};
+  } catch (...) {
+    return Ret{Err{Errc::generic, "unknown error"}};
+  }
 }
 
 } // namespace dmitigr
