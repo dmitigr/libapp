@@ -74,8 +74,8 @@ public:
   /// @returns The count of statements this instance contains.
   DMITIGR_PGFE_API std::size_t size() const noexcept;
 
-  /// @returns The count of non-empty statements this instance contains.
-  DMITIGR_PGFE_API std::size_t non_empty_count() const noexcept;
+  /// @returns The count of empty statements this instance contains.
+  DMITIGR_PGFE_API std::size_t empty_count() const noexcept;
 
   /// @returns `true` if this instance is empty.
   DMITIGR_PGFE_API bool is_empty() const noexcept;

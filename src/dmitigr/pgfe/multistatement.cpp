@@ -48,11 +48,11 @@ DMITIGR_PGFE_INLINE std::size_t Multistatement::size() const noexcept
   return statements_.size();
 }
 
-DMITIGR_PGFE_INLINE std::size_t Multistatement::non_empty_count() const noexcept
+DMITIGR_PGFE_INLINE std::size_t Multistatement::empty_count() const noexcept
 {
   return count_if(vector().cbegin(), vector().cend(), [](const auto& stmt)noexcept
   {
-    return !stmt.is_query_empty();
+    return stmt.is_query_empty();
   });
 }
 
