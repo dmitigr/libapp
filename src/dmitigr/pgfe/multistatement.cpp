@@ -99,27 +99,6 @@ DMITIGR_PGFE_INLINE std::size_t Multistatement::statement_index(
   return static_cast<std::size_t>(i - b);
 }
 
-DMITIGR_PGFE_INLINE const Statement* Multistatement::statement(
-  const std::string_view metadata_key,
-  const std::string_view metadata_value,
-  const std::size_t offset,
-  const std::size_t metadata_offset) const noexcept
-{
-  const auto idx = statement_index(metadata_key, metadata_value, offset,
-    metadata_offset);
-  return idx != size() ? std::addressof(statements_[idx]) : nullptr;
-}
-
-DMITIGR_PGFE_INLINE Statement* Multistatement::statement(
-  const std::string_view metadata_key,
-  const std::string_view metadata_value,
-  const std::size_t offset,
-  const std::size_t metadata_offset) noexcept
-{
-  return const_cast<Statement*>(static_cast<const Multistatement*>(this)->
-    statement(metadata_key, metadata_value, offset, metadata_offset));
-}
-
 DMITIGR_PGFE_INLINE std::string::size_type
 Multistatement::query_absolute_position(const std::size_t index,
   const Connection& conn) const
