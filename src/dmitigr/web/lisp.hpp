@@ -17,8 +17,8 @@
 #ifndef DMITIGR_WEB_LISP_HPP
 #define DMITIGR_WEB_LISP_HPP
 
+#include "../base/stream.hpp"
 #include "../lisp/lisp.hpp"
-#include "../str/stream.hpp"
 #include "../tpl/generic.hpp"
 #include "errc.hpp"
 #include "util.hpp"
@@ -236,7 +236,7 @@ tpl(const std::filesystem::path& tplfile, lisp::Env& env)
     return Err{Errc::file_not_found, stack_graph(stack, docroot)};
 
   // Read the template into memory.
-  const auto input = str::read_to_string(tplfile);
+  const auto input = read_to_string(tplfile);
   auto [err, result] = tpl::Generic::make(input, "<{{", "}}>");
   if (err)
     return err;
@@ -289,7 +289,7 @@ inline std::filesystem::path tplfile(const std::filesystem::path& tplfile,
 inline auto read_to_str(const std::filesystem::path& path)
 {
   static const auto read = static_cast<
-    std::string(*)(const std::filesystem::path&)>(&str::read_to_string);
+    std::string(*)(const std::filesystem::path&)>(&read_to_string);
   return call_noexcept(read, path);
 }
 

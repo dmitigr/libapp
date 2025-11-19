@@ -17,8 +17,8 @@
 #ifndef DMITIGR_LISP_LIB_HPP
 #define DMITIGR_LISP_LIB_HPP
 
+#include "../base/stream.hpp"
 #include "../base/utility.hpp"
-#include "../str/stream.hpp"
 #include "expr.hpp"
 
 #include <cassert>
@@ -56,7 +56,7 @@ inline void push_back_recursive(Tuple& dst, const Tuple& src)
 inline auto read_to_str(const std::filesystem::path& path)
 {
   static const auto read = static_cast<
-    std::string(*)(const std::filesystem::path&)>(&str::read_to_string);
+    std::string(*)(const std::filesystem::path&)>(&read_to_string);
   return call_noexcept(read, path);
 }
 

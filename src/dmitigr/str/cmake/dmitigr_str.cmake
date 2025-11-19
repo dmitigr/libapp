@@ -33,7 +33,6 @@ set(dmitigr_str_headers
   numeric.hpp
   predicate.hpp
   sequence.hpp
-  stream.hpp
   substr.hpp
   transform.hpp
   walker.hpp

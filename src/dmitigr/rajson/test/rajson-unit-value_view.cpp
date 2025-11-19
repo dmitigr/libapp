@@ -15,8 +15,8 @@
 // limitations under the License.
 
 #include "../../base/assert.hpp"
+#include "../../base/stream.hpp"
 #include "../../rajson/rajson.hpp"
-#include "../../str/stream.hpp"
 
 #include <iostream>
 
@@ -44,11 +44,10 @@ int main(int, char* const argv[])
 {
   try {
     namespace rajson = dmitigr::rajson;
-    namespace str = dmitigr::str;
 
     const std::filesystem::path this_exe_file_name{argv[0]};
     const auto this_exe_dir_name = this_exe_file_name.parent_path();
-    const auto input = str::read_to_string(this_exe_dir_name /
+    const auto input = dmitigr::read_to_string(this_exe_dir_name /
       "rajson-unit-value_view.json");
     auto document = rajson::document_from_text(input);
 

@@ -14,13 +14,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../str/stream.hpp"
+#include "../../base/stream.hpp"
 #include "pgfe-unit.hpp"
 
 int main(int, char* argv[])
 try {
   namespace pgfe = dmitigr::pgfe;
-  namespace str = dmitigr::str;
   using pgfe::to;
 
   // -------------------------------------------------------------------------
@@ -51,7 +50,7 @@ try {
 
   const std::filesystem::path this_exe_file_name{argv[0]};
   const auto this_exe_dir_name = this_exe_file_name.parent_path();
-  const auto input = str::read_to_string(this_exe_dir_name /
+  const auto input = dmitigr::read_to_string(this_exe_dir_name /
     "pgfe-unit-multistatement.sql");
   bunch = pgfe::Multistatement{input};
   DMITIGR_ASSERT(bunch.size() == 4);

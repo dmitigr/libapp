@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../str/stream.hpp"
+#include "../../base/stream.hpp"
 #include "pgfe-unit.hpp"
 
 #include <string_view>
@@ -24,7 +24,6 @@
 int main(const int, char* argv[])
 try {
   namespace pgfe = dmitigr::pgfe;
-  namespace str = dmitigr::str;
 
   // Prepare.
   char buf[128];
@@ -104,7 +103,7 @@ try {
   conn->execute("end");
 
   // Compare.
-  const auto input = str::read_to_string(lob_txt);
+  const auto input = dmitigr::read_to_string(lob_txt);
   ASSERT(input == "dmitigr");
 
   // Import.

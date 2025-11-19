@@ -15,8 +15,8 @@
 // limitations under the License.
 
 #include "../../base/assert.hpp"
+#include "../../base/stream.hpp"
 #include "../../mulf/mulf.hpp"
-#include "../../str/stream.hpp"
 
 #include <filesystem>
 
@@ -24,12 +24,11 @@ int main(int, char* argv[])
 {
   try {
     namespace mulf = dmitigr::mulf;
-    namespace str = dmitigr::str;
     using mulf::Form_data;
 
     const std::filesystem::path this_exe_file_name{argv[0]};
     const auto this_exe_dir_name = this_exe_file_name.parent_path();
-    const auto form_data = str::read_to_string(this_exe_dir_name /
+    const auto form_data = dmitigr::read_to_string(this_exe_dir_name /
       "mulf-form-data-valid1.txt");
 
     const std::string boundary{"AaB03x"};

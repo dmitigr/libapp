@@ -25,7 +25,6 @@
 #include "numeric.hpp"
 #include "predicate.hpp"
 #include "sequence.hpp"
-#include "stream.hpp"
 #include "substr.hpp"
 #include "transform.hpp"
 #include "walker.hpp"
