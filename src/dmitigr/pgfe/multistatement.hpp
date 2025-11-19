@@ -21,6 +21,7 @@
 #include "statement.hpp"
 #include "types_fwd.hpp"
 
+#include <cstddef>
 #include <string>
 #include <string_view>
 #include <vector>
