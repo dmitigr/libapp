@@ -17,6 +17,7 @@
 #ifndef DMITIGR_BASE_ERROR_HPP
 #define DMITIGR_BASE_ERROR_HPP
 
+#include <algorithm>
 #include <cstring> // std::strlen
 #include <string>
 #include <system_error>
@@ -151,10 +152,75 @@ public:
   Err() noexcept = default;
 
   /// The constructor.
-  explicit Err(std::error_code code, std::string what = {}) noexcept
+  explicit Err(std::error_code code) noexcept
+    : Err{std::move(code), std::string{}}
+  {}
+
+  /// @overload
+  Err(std::error_code code, std::string&& what) noexcept
     : code_{std::move(code)}
     , what_{std::move(what)}
   {}
+
+  /// @overload
+  Err(std::error_code code, const std::string& what) noexcept
+    : code_{std::move(code)}
+  {
+    try {
+      what_ = what;
+    } catch (...) {}
+  }
+
+  /// @overload
+  Err(std::error_code code, const char* const what) noexcept
+    : code_{std::move(code)}
+  {
+    try {
+      if (what)
+        what_ = what;
+    } catch (...) {}
+  }
+
+  Err(const Err& rhs) noexcept
+    : code_{rhs.code_}
+  {
+    try {
+      what_ = rhs.what_;
+      message_ = rhs.message_;
+    } catch (...) {}
+  }
+
+  Err& operator=(const Err& rhs) noexcept
+  {
+    if (std::addressof(rhs) != this) {
+      Err tmp{rhs};
+      swap(tmp);
+    }
+    return *this;
+  }
+
+  Err(Err&& rhs) noexcept
+    : code_{std::move(rhs.code_)}
+    , what_{std::move(rhs.what_)}
+    , message_{std::move(rhs.message_)}
+  {}
+
+  Err& operator=(Err&& rhs) noexcept
+  {
+    if (std::addressof(rhs) != this) {
+      Err tmp{std::move(rhs)};
+      swap(tmp);
+    }
+    return *this;
+  }
+
+  void swap(Err& rhs) noexcept
+  {
+    using std::swap;
+    swap(code_, rhs.code_);
+    swap(what_, rhs.what_);
+    swap(message_, rhs.message_);
+  }
 
   /// @returns `true` if the instance represents an error.
   explicit operator bool() const noexcept
@@ -163,7 +229,7 @@ public:
   }
 
   /// @returns The error code.
-  std::error_code code() const noexcept
+  const std::error_code& code() const noexcept
   {
     return code_;
   }
