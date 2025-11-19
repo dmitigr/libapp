@@ -40,20 +40,22 @@ namespace dmitigr::str {
 /**
  * @brief Reads the file into the vector of strings.
  *
- * @param callback The function of signature `bool callback(std::string&&)` that
- * returns `true` to continue the reading.
+ * @param callback The function of signature `bool callback(const std::string&)`
+ * that returns `true` to continue the reading.
  * @param input The input stream to read the data from.
  * @param delimiter The delimiter character.
  */
 template<typename F, typename Pred>
-void read_lines_if(F&& callback, std::istream& input, const char delimiter = '\n')
+std::istream& read_lines_if(F&& callback, std::istream& input,
+  const char delimiter = '\n')
 {
   std::string line;
   while (getline(input, line, delimiter)) {
-    if (!callback(std::move(line)))
+    if (!callback(line))
       break;
-    line = {};
+    line.clear();
   }
+  return input;
 }
 
 /**
@@ -72,7 +74,7 @@ void read_lines_if(F&& callback, std::istream& input, const char delimiter = '\n
  * @returns The number of bytes read.
  */
 template<std::size_t ChunkSize, typename F>
-void read(F&& callback, std::istream& input)
+std::istream& read(F&& callback, std::istream& input)
 {
   static_assert(ChunkSize);
   std::array<char, ChunkSize> buffer;
@@ -83,15 +85,16 @@ void read(F&& callback, std::istream& input)
   };
   while (input.read(buffer.data(), buffer.size())) {
     if (!append())
-      return;
+      return input;
   }
-  if (!append())
-    return;
+  if (input.gcount())
+    append();
+  return input;
 }
 
 /// @overload
 template<typename F>
-void read(F&& callback, std::istream& input)
+std::istream& read(F&& callback, std::istream& input)
 {
   return read<4096>(std::forward<F>(callback), input);
 }
