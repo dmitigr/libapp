@@ -48,7 +48,7 @@ inline auto seekg_size(std::istream& in, const std::istream::off_type offset = 0
 }
 
 /**
- * @brief Reads the file into the vector of strings.
+ * @brief Reads lines from the `input` stream.
  *
  * @param callback The function of signature `bool callback(const std::string&)`
  * that returns `true` to continue the reading.
