@@ -35,6 +35,12 @@ enum class Byte_format {
   hex
 };
 
+enum class Fepsep_type {
+  all,
+  any,
+  none
+};
+
 } // namespace str
 
 template<> struct Is_bitmask_enum<str::Trim> : std::true_type {};

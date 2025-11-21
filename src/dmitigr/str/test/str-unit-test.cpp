@@ -203,16 +203,91 @@ int main()
     }
 
     // -------------------------------------------------------------------------
-    // Walker
+    // for_each_part
     // -------------------------------------------------------------------------
 
+    for_each_part([i=0](const auto part)mutable
     {
-      str::Walker w{"1,2,3", ","};
-      DMITIGR_ASSERT(w.next() == "1");
-      DMITIGR_ASSERT(w.next() == "2");
-      DMITIGR_ASSERT(w.next() == "3");
-      DMITIGR_ASSERT(w.next().empty());
-    }
+      DMITIGR_ASSERT(i != 0 || part == "1");
+      DMITIGR_ASSERT(i != 1 || part == "23");
+      DMITIGR_ASSERT(i != 2 || part == "456");
+      DMITIGR_ASSERT(0 <= i && i <= 2);
+      ++i;
+      return true;
+    }, "1,23,456", str::Fepsep_all{","});
+
+    for_each_part([i=0](const auto part)mutable
+    {
+      DMITIGR_ASSERT(i != 0 || part == "1");
+      DMITIGR_ASSERT(i != 1 || part == "23");
+      DMITIGR_ASSERT(i != 2 || part == "456");
+      DMITIGR_ASSERT(0 <= i && i <= 2);
+      ++i;
+      return true;
+    }, "1-~-23-~-456", str::Fepsep_all{"-~-"});
+
+    for_each_part_reverse([i=0](const auto part)mutable
+    {
+      DMITIGR_ASSERT(i != 0 || part == "456");
+      DMITIGR_ASSERT(i != 1 || part == "23");
+      DMITIGR_ASSERT(i != 2 || part == "1");
+      DMITIGR_ASSERT(0 <= i && i <= 2);
+      ++i;
+      return true;
+    }, "1,23,456", str::Fepsep_all{","});
+
+    for_each_part_reverse([i=0](const auto part)mutable
+    {
+      DMITIGR_ASSERT(i != 0 || part == "456");
+      DMITIGR_ASSERT(i != 1 || part == "23");
+      DMITIGR_ASSERT(i != 2 || part == "1");
+      DMITIGR_ASSERT(0 <= i && i <= 2);
+      ++i;
+      return true;
+    }, "1-~-23-~-456", str::Fepsep_all{"-~-"});
+
+    for_each_part([i=0](const auto part)mutable
+    {
+      DMITIGR_ASSERT(i != 0 || part == "1");
+      DMITIGR_ASSERT(i != 1 || part == "23");
+      DMITIGR_ASSERT(i != 2 || part == "456");
+      DMITIGR_ASSERT(0 <= i && i <= 2);
+      ++i;
+      return true;
+    }, "1\r\n\r\n23\n\n\n\r456\n", str::Fepsep_any{"\r\n"});
+
+    for_each_part_reverse([i=0](const auto part)mutable
+    {
+      DMITIGR_ASSERT(i != 0 || part == "");
+      DMITIGR_ASSERT(i != 1 || part == "456");
+      DMITIGR_ASSERT(i != 2 || part == "23");
+      DMITIGR_ASSERT(i != 3 || part == "1");
+      DMITIGR_ASSERT(0 <= i && i <= 3);
+      ++i;
+      return true;
+    }, "1\r\n\r\n23\n\n\n\r456\n", str::Fepsep_any{"\r\n"});
+
+    for_each_part([i=0](const auto part)mutable
+    {
+      DMITIGR_ASSERT(i != 0 || part == "");
+      DMITIGR_ASSERT(i != 1 || part == "abc");
+      DMITIGR_ASSERT(i != 2 || part == "bc");
+      DMITIGR_ASSERT(i != 3 || part == "b");
+      DMITIGR_ASSERT(0 <= i && i <= 3);
+      ++i;
+      return true;
+    }, "1abc23bc456b", str::Fepsep_none{"abc"});
+
+    for_each_part_reverse([i=0](const auto part)mutable
+    {
+      DMITIGR_ASSERT(i != 0 || part == "b");
+      DMITIGR_ASSERT(i != 1 || part == "bc");
+      DMITIGR_ASSERT(i != 2 || part == "abc");
+      DMITIGR_ASSERT(i != 3 || part == "");
+      DMITIGR_ASSERT(0 <= i && i <= 3);
+      ++i;
+      return true;
+    }, "1abc23bc456b", str::Fepsep_none{"abc"});
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;
     return 1;

@@ -27,6 +27,5 @@
 #include "sequence.hpp"
 #include "substr.hpp"
 #include "transform.hpp"
-#include "walker.hpp"
 
 #endif  // DMITIGR_STR_STR_HPP

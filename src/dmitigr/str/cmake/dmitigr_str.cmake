@@ -35,7 +35,6 @@ set(dmitigr_str_headers
   sequence.hpp
   substr.hpp
   transform.hpp
-  walker.hpp
   )
 
 # ------------------------------------------------------------------------------
