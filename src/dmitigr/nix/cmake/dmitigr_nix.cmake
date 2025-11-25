@@ -46,7 +46,7 @@ set(dmitigr_nix_implementations
 # Dependencies
 # ------------------------------------------------------------------------------
 
-set(dmitigr_libs_nix_deps base str)
+set(dmitigr_libs_nix_deps base)
 
 list(APPEND dmitigr_nix_target_link_libraries_interface dl)
 

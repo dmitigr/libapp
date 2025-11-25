@@ -18,9 +18,9 @@
 #define DMITIGR_HTTP_SET_COOKIE_HPP
 
 #include "../base/assert.hpp"
+#include "../base/str.hpp"
 #include "../dt/timestamp.hpp"
 #include "../net/util.hpp"
-#include "../str/str.hpp"
 #include "basics.hpp"
 #include "exceptions.hpp"
 #include "header.hpp"

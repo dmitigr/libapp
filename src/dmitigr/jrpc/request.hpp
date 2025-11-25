@@ -20,7 +20,7 @@
 #include "../base/algorithm.hpp"
 #include "../base/assert.hpp"
 #include "../base/math.hpp"
-#include "../str/str.hpp"
+#include "../base/str.hpp"
 #include "exceptions.hpp"
 #include "response.hpp"
 

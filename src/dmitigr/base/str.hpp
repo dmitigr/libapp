@@ -14,13 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DMITIGR_STR_STR_HPP
-#define DMITIGR_STR_STR_HPP
+#ifndef DMITIGR_BASE_STR_HPP
+#define DMITIGR_BASE_STR_HPP
 
-#include "../base/assert.hpp"
-#include "../base/enum.hpp"
-#include "../base/exceptions.hpp"
-#include "../base/traits.hpp"
+#include "assert.hpp"
+#include "enum.hpp"
+#include "exceptions.hpp"
+#include "traits.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -41,6 +41,7 @@
 
 namespace dmitigr {
 namespace str {
+
 // =============================================================================
 // Basics
 // =============================================================================
@@ -865,4 +866,4 @@ inline bool is_uppercased(const std::string_view str) noexcept
 
 } // namespace dmitigr::str
 
-#endif  // DMITIGR_STR_STR_HPP
+#endif  // DMITIGR_BASE_STR_HPP

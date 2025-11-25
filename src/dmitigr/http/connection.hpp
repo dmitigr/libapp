@@ -18,8 +18,8 @@
 #define DMITIGR_HTTP_CONNECTION_HPP
 
 #include "../base/assert.hpp"
+#include "../base/str.hpp"
 #include "../net/descriptor.hpp"
-#include "../str/str.hpp"
 #include "basics.hpp"
 #include "exceptions.hpp"
 #include "types_fwd.hpp"

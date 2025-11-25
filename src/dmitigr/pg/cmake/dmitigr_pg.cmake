@@ -35,7 +35,7 @@ set(dmitigr_pg_implementations
 # Dependencies
 # ------------------------------------------------------------------------------
 
-set(dmitigr_libs_pg_deps base str)
+set(dmitigr_libs_pg_deps base)
 
 # ------------------------------------------------------------------------------
 # Tests

@@ -47,7 +47,7 @@ set(dmitigr_http_implementations
 # Dependencies
 # ------------------------------------------------------------------------------
 
-set(dmitigr_libs_http_deps base dt net str)
+set(dmitigr_libs_http_deps base dt net)
 
 # ------------------------------------------------------------------------------
 # Tests

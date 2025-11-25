@@ -3,8 +3,8 @@
 // Copyright 2025 Dmitry Igrishin
 
 #include "../../base/assert.hpp"
+#include "../../base/str.hpp"
 #include "../../msg/msg.hpp"
-#include "../../str/str.hpp"
 
 #include <iostream>
 

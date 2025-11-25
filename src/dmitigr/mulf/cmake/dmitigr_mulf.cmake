@@ -33,7 +33,7 @@ set(dmitigr_mulf_headers
 # Dependencies
 # ------------------------------------------------------------------------------
 
-set(dmitigr_libs_mulf_deps base str)
+set(dmitigr_libs_mulf_deps base)
 
 # ------------------------------------------------------------------------------
 # Tests
@@ -41,7 +41,7 @@ set(dmitigr_libs_mulf_deps base str)
 
 if(DMITIGR_LIBS_TESTS)
   set(dmitigr_mulf_tests valid)
-  set(dmitigr_mulf_tests_target_link_libraries dmitigr_base dmitigr_str)
+  set(dmitigr_mulf_tests_target_link_libraries dmitigr_base)
 
   set(prefix ${dmitigr_libs_SOURCE_DIR}/${dmitigr_libs_subroot}/mulf/test)
   add_custom_target(dmitigr_mulf_copy_test_resources ALL

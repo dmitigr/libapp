@@ -50,7 +50,7 @@ set(dmitigr_libs_rajson_deps base 3rdparty_rapidjson)
 # ------------------------------------------------------------------------------
 
 if(DMITIGR_LIBS_TESTS)
-  list(APPEND dmitigr_libs_rajson_deps str)
+  list(APPEND dmitigr_libs_rajson_deps)
 
   set(dmitigr_rajson_tests conversions document emplace value_view)
 

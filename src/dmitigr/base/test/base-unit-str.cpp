@@ -15,7 +15,7 @@
 // limitations under the License.
 
 #include "../../base/assert.hpp"
-#include "../../str/str.hpp"
+#include "../../base/str.hpp"
 
 int main()
 {

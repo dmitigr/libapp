@@ -19,6 +19,7 @@
 
 #include "../base/assert.hpp"
 #include "../base/log.hpp"
+#include "../base/str.hpp"
 #include "../base/stream.hpp"
 #include "../base/thread.hpp"
 #include "../http/cookie.hpp"
@@ -26,7 +27,6 @@
 #include "../http/errctg.hpp"
 #include "../jrpc/jrpc.hpp"
 #include "../net/address.hpp"
-#include "../str/str.hpp"
 #include "../tpl/generic.hpp"
 #include "../url/query_string.hpp"
 #include "../ws/http_io.hpp"

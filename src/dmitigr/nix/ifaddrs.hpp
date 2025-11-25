@@ -21,7 +21,7 @@
 #ifndef DMITIGR_NIX_IFADDRS_HPP
 #define DMITIGR_NIX_IFADDRS_HPP
 
-#include "../str/str.hpp"
+#include "../base/str.hpp"
 
 #include <memory>
 #include <stdexcept>

@@ -33,7 +33,7 @@ set(dmitigr_url_headers
 # Dependencies
 # ------------------------------------------------------------------------------
 
-set(dmitigr_libs_url_deps base str)
+set(dmitigr_libs_url_deps base)
 
 # ------------------------------------------------------------------------------
 # Tests
@@ -41,5 +41,5 @@ set(dmitigr_libs_url_deps base str)
 
 if(DMITIGR_LIBS_TESTS)
   set(dmitigr_url_tests query_string)
-  set(dmitigr_url_tests_target_link_libraries dmitigr_base dmitigr_str)
+  set(dmitigr_url_tests_target_link_libraries dmitigr_base)
 endif()

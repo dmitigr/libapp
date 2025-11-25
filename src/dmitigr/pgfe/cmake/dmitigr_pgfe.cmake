@@ -95,7 +95,7 @@ set(dmitigr_pgfe_implementations
 # Dependencies
 # ------------------------------------------------------------------------------
 
-set(dmitigr_libs_pgfe_deps base net str)
+set(dmitigr_libs_pgfe_deps base net)
 
 if(DMITIGR_LIBS_PQ)
   if(Pq_ROOT)
@@ -155,7 +155,7 @@ if(DMITIGR_LIBS_TESTS)
     transaction_guard
     )
 
-  set(dmitigr_pgfe_tests_target_link_libraries dmitigr_base dmitigr_os dmitigr_str)
+  set(dmitigr_pgfe_tests_target_link_libraries dmitigr_base dmitigr_os)
 
   set(prefix ${dmitigr_libs_SOURCE_DIR}/${dmitigr_libs_subroot}/pgfe/test)
   add_custom_target(dmitigr_pgfe_copy_test_resources ALL

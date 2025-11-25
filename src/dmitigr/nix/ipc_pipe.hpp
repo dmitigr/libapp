@@ -21,7 +21,7 @@
 #ifndef DMITIGR_NIX_IPC_PIPE_HPP
 #define DMITIGR_NIX_IPC_PIPE_HPP
 
-#include "../str/str.hpp"
+#include "../base/str.hpp"
 #include "error.hpp"
 
 #include <algorithm>

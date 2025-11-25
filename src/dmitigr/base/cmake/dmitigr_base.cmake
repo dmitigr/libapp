@@ -42,6 +42,8 @@ set(dmitigr_base_headers
   ret.hpp
   rnd.hpp
   stack.hpp
+  str.h
+  str.hpp
   stream.hpp
   thread.hpp
   traits.hpp
@@ -62,5 +64,5 @@ endif()
 
 if(DMITIGR_LIBS_TESTS)
   set(dmitigr_base_tests assoc_vector buffer chrono filesystem
-    fifo_array fifo_string hash math rnd thread utility)
+    fifo_array fifo_string hash math rnd str thread utility)
 endif()
