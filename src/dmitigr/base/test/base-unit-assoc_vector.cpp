@@ -51,7 +51,7 @@ int main()
     DMITIGR_ASSERT(!vec.value("baz").empty());
     DMITIGR_ASSERT(vec.value("baz") == "1983");
     //
-    vec.for_each([](const auto idx, const auto& val)
+    vec.for_each([](const auto& val, const auto idx)
     {
       std::cout << "Index of bar = " << idx << ", value = " << val << std::endl;
       return true;

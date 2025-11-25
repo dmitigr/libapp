@@ -127,7 +127,7 @@ public:
   /**
    * @brief Calls `callback` for each element with key `key`.
    *
-   * @param callback A function with signature `bool(Size index, Value&& value)`.
+   * @param callback A function with signature `bool(Value&& value, Size index)`.
    * @param key A key, for the associated values of which the `callback` is called.
    */
   template<typename F, typename KeyType>
@@ -253,7 +253,7 @@ private:
     const Size sz = elements.size();
     for (Size i{}; i < sz; ++i) {
       auto& [ky, value] = elements[i];
-      if (ky == key && !callback(i, value))
+      if (ky == key && !callback(value, i))
         break;
     }
   }
