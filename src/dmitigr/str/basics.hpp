@@ -22,14 +22,14 @@
 namespace dmitigr {
 namespace str {
 
-/// Denotes trimming mode bitmask.
+/// A trimming mode bitmask.
 enum class Trim {
   lhs = 0x1,
   rhs = 0x2,
   all = lhs | rhs
 };
 
-/// Denotes a byte format.
+/// A byte format.
 enum class Byte_format {
   raw = 1,
   hex
