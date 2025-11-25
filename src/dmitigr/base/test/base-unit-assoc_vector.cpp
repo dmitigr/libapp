@@ -46,9 +46,16 @@ int main()
     DMITIGR_ASSERT(vec.value("bar") == "bar data");
     //
     vec.insert(vec.index("bar"), "baz", "1983");
+    DMITIGR_ASSERT(vec.index("bar") == 2);
     DMITIGR_ASSERT(vec.size() == 3);
     DMITIGR_ASSERT(!vec.value("baz").empty());
     DMITIGR_ASSERT(vec.value("baz") == "1983");
+    //
+    vec.for_each([](const auto idx, const auto& val)
+    {
+      std::cout << "Index of bar = " << idx << ", value = " << val << std::endl;
+      return true;
+    }, "bar");
     vec.remove_each("foo");
     DMITIGR_ASSERT(vec.size() == 2);
     DMITIGR_ASSERT(vec.index("foo") == vec.size());

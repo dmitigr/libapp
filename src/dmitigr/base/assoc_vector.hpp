@@ -121,18 +121,23 @@ public:
       static_cast<const Assoc_vector*>(this)->value(key, offset));
   }
 
-  /// Calls `callback` for each element with key `key`.
-  template<typename KeyType, typename F>
-  void for_each(const KeyType& key, F&& callback) const
+  /**
+   * @brief Calls `callback` for each element with key `key`.
+   *
+   * @param callback A function with signature `bool(Size index, Value&& value)`.
+   * @param key A key, for the associated values of which the `callback` is called.
+   */
+  template<typename F, typename KeyType>
+  void for_each(F&& callback, const KeyType& key) const
   {
-    for_each(elements_, key, std::forward<F>(callback));
+    for_each(std::forward<F>(callback), elements_, key);
   }
 
   /// @overload
-  template<typename KeyType, typename F>
-  void for_each(const KeyType& key, F&& callback)
+  template<typename F, typename KeyType>
+  void for_each(F&& callback, const KeyType& key)
   {
-    for_each(elements_, key, std::forward<F>(callback));
+    for_each(std::forward<F>(callback), elements_, key);
   }
 
   /**
@@ -239,14 +244,14 @@ public:
 private:
   std::vector<Element> elements_;
 
-  template<class E, typename KeyType, typename F>
-  static void for_each(E&& elements, const KeyType& key, F&& callback)
+  template<typename F, class E, typename KeyType>
+  static void for_each(F&& callback, E&& elements, const KeyType& key)
   {
     const Size sz = elements.size();
     for (Size i{}; i < sz; ++i) {
-      auto& [ky, value] = elements;
-      if (ky == key)
-        callback(i, value);
+      auto& [ky, value] = elements[i];
+      if (ky == key && !callback(i, value))
+        break;
     }
   }
 };
