@@ -60,12 +60,15 @@ public:
     : elements_{std::move(elements)}
   {}
 
-  /// Swaps this with `rhs`.
+  /// Swaps `*this` with `rhs`.
   void swap(Assoc_vector& rhs) noexcept
   {
     using std::swap;
     swap(elements_, rhs.elements_);
   }
+
+  /// Compares `*this` with `rhs`.
+  auto operator<=>(const Assoc_vector& rhs) const noexcept = default;
 
   /// @returns The number of elements.
   Size size() const noexcept
@@ -255,48 +258,6 @@ private:
     }
   }
 };
-
-/// @returns `true` if `lhs < rhs`.
-template<typename K, typename V>
-bool operator<(const Assoc_vector<K, V>& lhs, const Assoc_vector<K, V>& rhs) noexcept
-{
-  return lhs.vector() < rhs.vector();
-}
-
-/// @returns `true` if `lhs <= rhs`.
-template<typename K, typename V>
-bool operator<=(const Assoc_vector<K, V>& lhs, const Assoc_vector<K, V>& rhs) noexcept
-{
-  return lhs.vector() <= rhs.vector();
-}
-
-/// @returns `true` if `lhs == rhs`.
-template<typename K, typename V>
-bool operator==(const Assoc_vector<K, V>& lhs, const Assoc_vector<K, V>& rhs) noexcept
-{
-  return lhs.vector() == rhs.vector();
-}
-
-/// @returns `true` if `lhs != rhs`.
-template<typename K, typename V>
-bool operator!=(const Assoc_vector<K, V>& lhs, const Assoc_vector<K, V>& rhs) noexcept
-{
-  return !(lhs == rhs);
-}
-
-/// @returns `true` if `lhs > rhs`.
-template<typename K, typename V>
-bool operator>(const Assoc_vector<K, V>& lhs, const Assoc_vector<K, V>& rhs) noexcept
-{
-  return lhs.vector() > rhs.vector();
-}
-
-/// @returns `true` if `lhs >= rhs`.
-template<typename K, typename V>
-bool operator>=(const Assoc_vector<K, V>& lhs, const Assoc_vector<K, V>& rhs) noexcept
-{
-  return lhs.vector() >= rhs.vector();
-}
 
 /// Swaps `lhs` and `rhs`.
 template<typename K, typename V>
