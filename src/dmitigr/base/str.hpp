@@ -464,16 +464,16 @@ first_non_space_pos(const std::string_view str, const std::string_view::size_typ
 // -----------------------------------------------------------------------------
 
 /// A for_each_part() (FEP) separator.
-template<Fepsep_type T, typename CharT, class TraitsT = std::char_traits<CharT>>
+template<Fepsep_type Ft, typename Ch, class Tr = std::char_traits<Ch>>
 struct Fepsep final {
-  constexpr static Fepsep_type Type = T;
-  using String_view = std::basic_string_view<CharT, TraitsT>;
+  constexpr static Fepsep_type Type = Ft;
+  using String_view = std::basic_string_view<Ch, Tr>;
 
   String_view str;
 
   Fepsep() = default;
 
-  explicit Fepsep(const CharT* const s)
+  explicit Fepsep(const Ch* const s)
     : Fepsep{String_view{s}}
   {}
 
@@ -483,40 +483,38 @@ struct Fepsep final {
 };
 
 /// An alias for a FEP-separator represented by the exact string specified.
-template<typename C, class T = std::char_traits<C>>
-using Fepsep_all = Fepsep<Fepsep_type::all, C, T>;
+template<typename Ch, class Tr = std::char_traits<Ch>>
+using Fepsep_all = Fepsep<Fepsep_type::all, Ch, Tr>;
 
 /**
  * An alias for a FEP-separator represented by any character of the
  * specified string.
  */
-template<typename C, class T = std::char_traits<C>>
-using Fepsep_any = Fepsep<Fepsep_type::any, C, T>;
+template<typename Ch, class Tr = std::char_traits<Ch>>
+using Fepsep_any = Fepsep<Fepsep_type::any, Ch, Tr>;
 
 /**
  * An alias for a FEP-separator represented by none of characters of the
  * specified string.
  */
-template<typename C, class T = std::char_traits<C>>
-using Fepsep_none = Fepsep<Fepsep_type::none, C, T>;
+template<typename Ch, class Tr = std::char_traits<Ch>>
+using Fepsep_none = Fepsep<Fepsep_type::none, Ch, Tr>;
 
 /**
  * @brief Splits the string `str` into parts according to the separator `sep`.
  *
  * @tparam IsForward Specifies the direction of the string traversal.
  * @param callback The function with signature
- * `bool(std::basic_string_view<CharT, Traits> part)` which is called to each
+ * `bool(std::basic_string_view<Ch, Tr> part)` which is called to each
  * part of `str`.
  * @param str The string to split.
  * @param sep The separator.
  */
-template<bool IsForward = true,
-  typename F, Fepsep_type Type, typename CharT, class Traits>
-void for_each_part(F&& callback,
-  const std::basic_string_view<CharT, Traits> str,
-  const Fepsep<Type, CharT, Traits> sep)
+template<bool IsForward = true, typename F, typename Ch, class Tr, Fepsep_type Ft>
+void for_each_part(F&& callback, const std::basic_string_view<Ch, Tr> str,
+  const Fepsep<Ft, Ch, Tr>& sep)
 {
-  using String_view = std::basic_string_view<CharT, Traits>;
+  using String_view = std::basic_string_view<Ch, Tr>;
   using Size = typename String_view::size_type;
 
   const auto str_sz = str.size();
@@ -527,8 +525,8 @@ void for_each_part(F&& callback,
   else if (!sep_sz)
     throw std::invalid_argument{"invalid separtor for dmitigr::str::for_each_part"};
 
-  constexpr auto is_all = Type == Fepsep_type::all;
-  constexpr auto is_not = Type == Fepsep_type::none;
+  constexpr auto is_all = Ft == Fepsep_type::all;
+  constexpr auto is_not = Ft == Fepsep_type::none;
   const auto in_sep = [b = sep.str.cbegin(), e = sep.str.cend()](const auto ch) noexcept
   {
     return std::any_of(b, e, [c = ch](const auto ch) noexcept
@@ -539,23 +537,23 @@ void for_each_part(F&& callback,
 
   const auto find_sep = [str, sep = sep.str](const auto offset)
   {
-    if constexpr (Type == Fepsep_type::all)
+    if constexpr (Ft == Fepsep_type::all)
       if constexpr (IsForward)
         return str.find(sep, offset);
       else
         return str.rfind(sep, offset);
-    else if constexpr (Type == Fepsep_type::any)
+    else if constexpr (Ft == Fepsep_type::any)
       if constexpr (IsForward)
         return str.find_first_of(sep, offset);
       else
         return str.find_last_of(sep, offset);
-    else if constexpr (Type == Fepsep_type::none)
+    else if constexpr (Ft == Fepsep_type::none)
       if constexpr (IsForward)
         return str.find_first_not_of(sep, offset);
       else
         return str.find_last_not_of(sep, offset);
     else
-      static_assert(false_value<CharT>, "invalid FEP-separator type");
+      static_assert(false_value<Ch>, "invalid FEP-separator type");
   };
 
   Size offset = IsForward ? 0 : str.empty() ? 0 : str.size() - 1;
@@ -603,17 +601,16 @@ void for_each_part(F&& callback,
 }
 
 /// @overload
-template<bool IsForward = true, typename F, typename CharT, class Traits, class S, class Alloc>
-void for_each_part(F&& callback,
-  const std::basic_string<CharT, Traits, Alloc>& str, S&& sep)
+template<bool IsForward = true, typename F, typename Ch, class Tr, class S, class Al>
+void for_each_part(F&& callback, const std::basic_string<Ch, Tr, Al>& str, S&& sep)
 {
   for_each_part<IsForward>(std::forward<F>(callback),
-    std::basic_string_view<CharT, Traits>{str}, std::forward<S>(sep));
+    std::basic_string_view<Ch, Tr>{str}, std::forward<S>(sep));
 }
 
 /// @overload
-template<bool IsForward = true, typename F, typename CharT, class S>
-void for_each_part(F&& callback, const CharT* const str, S&& sep)
+template<bool IsForward = true, typename F, typename Ch, class S>
+void for_each_part(F&& callback, const Ch* const str, S&& sep)
 {
   for_each_part<IsForward>(std::forward<F>(callback),
     std::basic_string_view{str}, std::forward<S>(sep));
@@ -764,9 +761,8 @@ inline std::string trimmed(std::string str, const Trim tr = Trim::all)
 }
 
 /// @overload
-template<typename CharT, class Traits, typename Predicate>
-std::basic_string_view<CharT, Traits>
-trimmed(const std::basic_string_view<CharT, Traits> str,
+template<typename Ch, class Tr, typename Predicate>
+std::basic_string_view<Ch, Tr> trimmed(const std::basic_string_view<Ch, Tr> str,
   const Trim tr, const Predicate& predicate) noexcept
 {
   if (str.empty())
@@ -787,9 +783,8 @@ trimmed(const std::basic_string_view<CharT, Traits> str,
 }
 
 /// @overload
-template<typename CharT, class Traits>
-std::basic_string_view<CharT, Traits>
-trimmed(const std::basic_string_view<CharT, Traits> str,
+template<typename Ch, class Tr>
+std::basic_string_view<Ch, Tr> trimmed(const std::basic_string_view<Ch, Tr> str,
   const Trim tr = Trim::all) noexcept
 {
   return trimmed(str, tr, is_not_visible);
