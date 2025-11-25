@@ -603,6 +603,15 @@ void for_each_part(F&& callback,
 }
 
 /// @overload
+template<bool IsForward = true, typename F, typename CharT, class Traits, class S, class Alloc>
+void for_each_part(F&& callback,
+  const std::basic_string<CharT, Traits, Alloc>& str, S&& sep)
+{
+  for_each_part<IsForward>(std::forward<F>(callback),
+    std::basic_string_view<CharT, Traits>{str}, std::forward<S>(sep));
+}
+
+/// @overload
 template<bool IsForward = true, typename F, typename CharT, class S>
 void for_each_part(F&& callback, const CharT* const str, S&& sep)
 {
