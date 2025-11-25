@@ -206,7 +206,7 @@ void for_each_part(F&& callback, const CharT* const str, S&& sep)
 
 /// A convenient shortcut of for_each_part<false>().
 template<typename ... Types>
-void for_each_part_reverse(Types&& ... args)
+void for_each_part_backward(Types&& ... args)
 {
   for_each_part<false>(std::forward<Types>(args)...);
 }
