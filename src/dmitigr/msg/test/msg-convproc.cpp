@@ -4,7 +4,7 @@
 
 #include "../../base/assert.hpp"
 #include "../../msg/msg.hpp"
-#include "../../str/sequence.hpp"
+#include "../../str/str.hpp"
 
 #include <iostream>
 

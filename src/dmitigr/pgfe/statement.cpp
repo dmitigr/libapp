@@ -15,7 +15,7 @@
 // limitations under the License.
 
 #include "../base/assert.hpp"
-#include "../str/predicate.hpp"
+#include "../str/str.hpp"
 #include "connection.hpp"
 #include "statement.hpp"
 

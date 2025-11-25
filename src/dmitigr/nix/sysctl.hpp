@@ -21,7 +21,7 @@
 #ifndef DMITIGR_NIX_SYSCTL_HPP
 #define DMITIGR_NIX_SYSCTL_HPP
 
-#include "../str/transform.hpp"
+#include "../str/str.hpp"
 
 #include <string>
 #include <system_error>

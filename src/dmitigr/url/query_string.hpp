@@ -18,7 +18,7 @@
 #define DMITIGR_URL_QUERY_STRING_HPP
 
 #include "../base/assert.hpp"
-#include "../str/numeric.hpp"
+#include "../str/str.hpp"
 #include "exceptions.hpp"
 
 #include <algorithm>

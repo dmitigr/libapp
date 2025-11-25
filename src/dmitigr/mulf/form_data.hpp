@@ -18,7 +18,7 @@
 #define DMITIGR_MULF_FORM_DATA_HPP
 
 #include "../base/assert.hpp"
-#include "../str/transform.hpp"
+#include "../str/str.hpp"
 #include "exceptions.hpp"
 
 #include <algorithm>

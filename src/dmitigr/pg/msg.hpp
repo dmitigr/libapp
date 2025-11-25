@@ -18,7 +18,7 @@
 #define DMITIGR_PG_MSG_HPP
 
 #include "../base/endianness.hpp"
-#include "../str/sequence.hpp"
+#include "../str/str.hpp"
 
 #include <cassert>
 #include <climits>

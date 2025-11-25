@@ -15,7 +15,7 @@
 // limitations under the License.
 
 #include "../../base/assert.hpp"
-#include "../../str/transform.hpp"
+#include "../../str/str.hpp"
 #include "../../url/query_string.hpp"
 
 int main()

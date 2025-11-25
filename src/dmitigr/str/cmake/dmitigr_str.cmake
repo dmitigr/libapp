@@ -25,16 +25,7 @@ dmitigr_libs_set_library_info(str 0 0 0 "Standard string extensions")
 # ------------------------------------------------------------------------------
 
 set(dmitigr_str_headers
-  basics.hpp
   c_str.h
-  c_str.hpp
-  exceptions.hpp
-  line.hpp
-  numeric.hpp
-  predicate.hpp
-  sequence.hpp
-  substr.hpp
-  transform.hpp
   )
 
 # ------------------------------------------------------------------------------

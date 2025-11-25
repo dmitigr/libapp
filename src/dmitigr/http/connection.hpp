@@ -19,7 +19,7 @@
 
 #include "../base/assert.hpp"
 #include "../net/descriptor.hpp"
-#include "../str/transform.hpp"
+#include "../str/str.hpp"
 #include "basics.hpp"
 #include "exceptions.hpp"
 #include "types_fwd.hpp"

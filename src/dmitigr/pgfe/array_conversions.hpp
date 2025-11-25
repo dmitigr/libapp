@@ -18,8 +18,7 @@
 #define DMITIGR_PGFE_ARRAY_CONVERSIONS_HPP
 
 #include "../base/assert.hpp"
-#include "../str/c_str.hpp"
-#include "../str/predicate.hpp"
+#include "../str/str.hpp"
 #include "basic_conversions.hpp"
 #include "conversions_api.hpp"
 #include "data.hpp"
