@@ -61,7 +61,7 @@ enum class Byte_format {
 
 /// A for_each_part() separator type.
 enum class Fepsep_type {
-  all,
+  exact,
   any,
   none
 };
@@ -484,7 +484,7 @@ struct Fepsep final {
 
 /// An alias for a FEP-separator represented by the exact string specified.
 template<typename Ch, class Tr = std::char_traits<Ch>>
-using Fepsep_all = Fepsep<Fepsep_type::all, Ch, Tr>;
+using Fepsep_exact = Fepsep<Fepsep_type::exact, Ch, Tr>;
 
 /**
  * An alias for a FEP-separator represented by any character of the
@@ -525,8 +525,9 @@ void for_each_part(F&& callback, const std::basic_string_view<Ch, Tr> str,
   else if (!sep_sz)
     throw std::invalid_argument{"invalid separtor for dmitigr::str::for_each_part"};
 
-  constexpr auto is_all = Ft == Fepsep_type::all;
-  constexpr auto is_not = Ft == Fepsep_type::none;
+  constexpr bool is_exact{Ft == Fepsep_type::exact};
+  constexpr bool is_any{Ft == Fepsep_type::any};
+  constexpr bool is_none{Ft == Fepsep_type::none};
   const auto in_sep = [b = sep.str.cbegin(), e = sep.str.cend()](const auto ch) noexcept
   {
     return std::any_of(b, e, [c = ch](const auto ch) noexcept
@@ -537,17 +538,17 @@ void for_each_part(F&& callback, const std::basic_string_view<Ch, Tr> str,
 
   const auto find_sep = [str, sep = sep.str](const auto offset)
   {
-    if constexpr (Ft == Fepsep_type::all)
+    if constexpr (is_exact)
       if constexpr (IsForward)
         return str.find(sep, offset);
       else
         return str.rfind(sep, offset);
-    else if constexpr (Ft == Fepsep_type::any)
+    else if constexpr (is_any)
       if constexpr (IsForward)
         return str.find_first_of(sep, offset);
       else
         return str.find_last_of(sep, offset);
-    else if constexpr (Ft == Fepsep_type::none)
+    else if constexpr (is_none)
       if constexpr (IsForward)
         return str.find_first_not_of(sep, offset);
       else
@@ -560,10 +561,10 @@ void for_each_part(F&& callback, const std::basic_string_view<Ch, Tr> str,
   while (true) {
     auto sep_pos = find_sep(offset);
     const auto count = sep_pos != String_view::npos ?
-      (IsForward ? sep_pos - offset : offset + 1 - sep_pos - (is_all ? sep_sz : 1)) :
+      (IsForward ? sep_pos - offset : offset + 1 - sep_pos - (is_exact ? sep_sz : 1)) :
       (IsForward ? String_view::npos : offset + 1);
     const auto substr_offset = IsForward ? offset :
-      sep_pos != String_view::npos ? sep_pos + (is_all ? sep_sz : 1) : 0;
+      sep_pos != String_view::npos ? sep_pos + (is_exact ? sep_sz : 1) : 0;
     const auto result = str.substr(substr_offset, count);
     if (!callback(result))
       break;
@@ -572,18 +573,18 @@ void for_each_part(F&& callback, const std::basic_string_view<Ch, Tr> str,
       break;
 
     if constexpr (IsForward) {
-      if constexpr (is_all) {
+      if constexpr (is_exact) {
         offset = sep_pos + sep.str.size();
       } else {
         for (offset = sep_pos + 1; offset < str_sz; ++offset) {
-          if (is_not ^ !in_sep(str[offset]))
+          if (is_none ^ !in_sep(str[offset]))
             break;
         }
       }
       if (!(offset < str_sz))
         break;
     } else {
-      if constexpr (is_all) {
+      if constexpr (is_exact) {
         if (sep_pos >= 1)
           offset = sep_pos - 1;
         else
@@ -592,7 +593,7 @@ void for_each_part(F&& callback, const std::basic_string_view<Ch, Tr> str,
         if (!(sep_pos >= 1))
           break;
         for (offset = sep_pos - 1;; --offset) {
-          if (offset == 0 || is_not ^ !in_sep(str[offset]))
+          if (offset == 0 || is_none ^ !in_sep(str[offset]))
             break;
         }
       }

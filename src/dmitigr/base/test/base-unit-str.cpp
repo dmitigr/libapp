@@ -214,7 +214,7 @@ int main()
       DMITIGR_ASSERT(0 <= i && i <= 2);
       ++i;
       return true;
-    }, std::string{"1,23,456"}, str::Fepsep_all{","});
+    }, std::string{"1,23,456"}, str::Fepsep_exact{","});
 
     for_each_part([i=0](const auto part)mutable
     {
@@ -224,7 +224,7 @@ int main()
       DMITIGR_ASSERT(0 <= i && i <= 2);
       ++i;
       return true;
-    }, "1-~-23-~-456", str::Fepsep_all{"-~-"});
+    }, "1-~-23-~-456", str::Fepsep_exact{"-~-"});
 
     for_each_part_backward([i=0](const auto part)mutable
     {
@@ -234,7 +234,7 @@ int main()
       DMITIGR_ASSERT(0 <= i && i <= 2);
       ++i;
       return true;
-    }, std::string{"1,23,456"}, str::Fepsep_all{","});
+    }, std::string{"1,23,456"}, str::Fepsep_exact{","});
 
     for_each_part_backward([i=0](const auto part)mutable
     {
@@ -244,7 +244,7 @@ int main()
       DMITIGR_ASSERT(0 <= i && i <= 2);
       ++i;
       return true;
-    }, "1-~-23-~-456", str::Fepsep_all{"-~-"});
+    }, "1-~-23-~-456", str::Fepsep_exact{"-~-"});
 
     for_each_part([i=0](const auto part)mutable
     {
