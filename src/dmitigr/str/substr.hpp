@@ -57,8 +57,9 @@ first_non_space_pos(const std::string_view str, const std::string_view::size_typ
 // for_each_part()
 // =============================================================================
 
+/// A for_each_part() (FEP) separator.
 template<Fepsep_type T, typename CharT, class TraitsT = std::char_traits<CharT>>
-struct Fepsep {
+struct Fepsep final {
   constexpr static Fepsep_type Type = T;
   using String_view = std::basic_string_view<CharT, TraitsT>;
 
@@ -75,15 +76,34 @@ struct Fepsep {
   {}
 };
 
+/// An alias for a FEP-separator represented by the exact string specified.
 template<typename C, class T = std::char_traits<C>>
 using Fepsep_all = Fepsep<Fepsep_type::all, C, T>;
 
+/**
+ * An alias for a FEP-separator represented by any character of the
+ * specified string.
+ */
 template<typename C, class T = std::char_traits<C>>
 using Fepsep_any = Fepsep<Fepsep_type::any, C, T>;
 
+/**
+ * An alias for a FEP-separator represented by none of characters of the
+ * specified string.
+ */
 template<typename C, class T = std::char_traits<C>>
 using Fepsep_none = Fepsep<Fepsep_type::none, C, T>;
 
+/**
+ * @brief Splits the string `str` into parts according to the separator `sep`.
+ *
+ * @tparam IsForward Specifies the direction of the string traversal.
+ * @param callback The function with signature
+ * `bool(std::basic_string_view<CharT, Traits> part)` which is called to each
+ * part of `str`.
+ * @param str The string to split.
+ * @param sep The separator.
+ */
 template<bool IsForward = true,
   typename F, Fepsep_type Type, typename CharT, class Traits>
 void for_each_part(F&& callback,
@@ -129,7 +149,7 @@ void for_each_part(F&& callback,
       else
         return str.find_last_not_of(sep, offset);
     else
-      static_assert(false_value<CharT>, "invalid separator type");
+      static_assert(false_value<CharT>, "invalid FEP-separator type");
   };
 
   Size offset = IsForward ? 0 : str.empty() ? 0 : str.size() - 1;
@@ -176,6 +196,7 @@ void for_each_part(F&& callback,
   }
 }
 
+/// @overload
 template<bool IsForward = true, typename F, typename CharT, class S>
 void for_each_part(F&& callback, const CharT* const str, S&& sep)
 {
@@ -183,6 +204,7 @@ void for_each_part(F&& callback, const CharT* const str, S&& sep)
     std::basic_string_view{str}, std::forward<S>(sep));
 }
 
+/// A convenient shortcut of for_each_part<false>().
 template<typename ... Types>
 void for_each_part_reverse(Types&& ... args)
 {

@@ -35,6 +35,7 @@ enum class Byte_format {
   hex
 };
 
+/// A for_each_part() separator type.
 enum class Fepsep_type {
   all,
   any,
