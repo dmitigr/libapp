@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DMITIGR_STR_C_STR_H
-#define DMITIGR_STR_C_STR_H
+#ifndef DMITIGR_STR_STR_H
+#define DMITIGR_STR_STR_H
 
 #include <string.h>
 
@@ -39,4 +39,4 @@ inline void *memmem(const void *const haystack, const size_t haystacklen,
 
 #endif
 
-#endif  /* DMITIGR_STR_C_STR_H */
+#endif  /* DMITIGR_STR_STR_H */

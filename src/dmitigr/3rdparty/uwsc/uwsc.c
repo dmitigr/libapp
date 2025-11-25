@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "../../str/c_str.h" // memmem
+#include "../../str/str.h" // memmem
 
 #include "uwsc.h"
 #include "sha1.h"
