@@ -153,6 +153,17 @@ DMITIGR_PGFE_INLINE std::string Multistatement::to_string() const
   return result;
 }
 
+DMITIGR_PGFE_INLINE std::string Multistatement::to_query_string(const Connection& conn) const
+{
+  std::string result;
+  if (!statements_.empty()) {
+    for (const auto& statement : statements_)
+      result.append(statement.to_query_string(conn)).append(";");
+    result.pop_back();
+  }
+  return result;
+}
+
 DMITIGR_PGFE_INLINE const std::vector<Statement>&
 Multistatement::vector() const & noexcept
 {

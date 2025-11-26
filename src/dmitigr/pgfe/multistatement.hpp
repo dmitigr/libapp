@@ -145,6 +145,9 @@ public:
   /// @returns The string of multiple statements.
   DMITIGR_PGFE_API std::string to_string() const;
 
+  /// @returns The query string of multiple statements.
+  DMITIGR_PGFE_API std::string to_query_string(const Connection& conn) const;
+
   /// @returns The underlying vector of statements.
   DMITIGR_PGFE_API const std::vector<Statement>& vector() const & noexcept;
 
