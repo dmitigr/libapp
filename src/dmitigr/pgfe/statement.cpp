@@ -932,17 +932,17 @@ Statement::query_string_capacity() const
         result += value->size();
         break;
       }
-      result += (std::size("$") - 1) + (std::size("65535") - 1);
+      result += str::len("$") + str::len("65535");
       break;
     case named_parameter_literal:
       [[fallthrough]];
     case named_parameter_identifier:
       if (const auto* const value = bound(fragment.str))
         result += value->size() * 2;
-      result += 2 * (std::size("'") - 1);
+      result += 2 * str::len("'");
       break;
     case positional_parameter:
-      result += (std::size("$") - 1) + fragment.str.size();
+      result += str::len("$") + fragment.str.size();
       break;
     }
   }
