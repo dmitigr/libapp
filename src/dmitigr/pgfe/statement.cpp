@@ -865,31 +865,36 @@ DMITIGR_PGFE_INLINE std::string Statement::to_string() const
 }
 
 DMITIGR_PGFE_INLINE std::string
-Statement::to_query_string(const Connection& conn) const
+Statement::to_query_string(const Connection* const conn) const
 {
   using Ft = Fragment::Type;
 
   if (has_missing_parameter())
     throw Generic_exception{"cannot convert Statement to query string: "
       "has missing parameter"};
-  else if (!conn.is_connected())
-    throw Generic_exception{"cannot convert Statement to query string: "
-      "not connected"};
 
-  static const auto check_value_bound = [](const auto& fragment, const auto* const value)
+  static const auto check_quoted_named_parameter = [](const auto& fragment,
+    const auto* const conn, const auto* const value)
   {
-    DMITIGR_ASSERT(fragment.is_named_parameter());
+    DMITIGR_ASSERT(fragment.is_quoted_named_parameter());
+    const bool is_conn_ok{conn && conn->is_connected()};
+    if (is_conn_ok && value)
+      return;
+
+    const char* const type_str =
+      fragment.type == Ft::named_parameter_literal ? "literal" :
+      fragment.type == Ft::named_parameter_identifier ? "identifier" : nullptr;
+    DMITIGR_ASSERT(type_str);
+    std::string what{"named parameter "};
+    what.append(fragment.str).append(" declared as ").append(type_str);
+    if (!is_conn_ok)
+      what.append(" cannot be quoted without the active Connection object");
     if (!value) {
-      std::string what{"named parameter "};
-      what.append(fragment.str);
-      const char* const type_str =
-        fragment.type == Ft::named_parameter_literal ? "literal" :
-        fragment.type == Ft::named_parameter_identifier ? "identifier" : nullptr;
-      if (type_str)
-        what.append(" declared as ").append(type_str);
+      if (!is_conn_ok)
+        what.append(" and");
       what.append(" has no value bound");
-      throw Generic_exception{what};
     }
+    throw Generic_exception{what};
   };
 
   std::string result;
@@ -923,14 +928,14 @@ Statement::to_query_string(const Connection& conn) const
     }
     case Ft::named_parameter_literal: {
       const auto* const value = bound(fragment.str);
-      check_value_bound(fragment, value);
-      result += conn.to_quoted_literal(*value);
+      check_quoted_named_parameter(fragment, conn, value);
+      result += conn->to_quoted_literal(*value);
       break;
     }
     case Ft::named_parameter_identifier: {
       const auto* const value = bound(fragment.str);
-      check_value_bound(fragment, value);
-      result += conn.to_quoted_identifier(*value);
+      check_quoted_named_parameter(fragment, conn, value);
+      result += conn->to_quoted_identifier(*value);
       break;
     }
     case Ft::positional_parameter:
@@ -941,6 +946,17 @@ Statement::to_query_string(const Connection& conn) const
   }
   DMITIGR_ASSERT(bound_counter <= bound_parameter_count());
   return result;
+}
+
+DMITIGR_PGFE_INLINE std::string
+Statement::to_query_string(const Connection& conn) const
+{
+  return to_query_string(std::addressof(conn));
+}
+
+DMITIGR_PGFE_INLINE std::string Statement::to_query_string() const
+{
+  return to_query_string(nullptr);
 }
 
 DMITIGR_PGFE_INLINE auto Statement::metadata() const -> const Metadata&

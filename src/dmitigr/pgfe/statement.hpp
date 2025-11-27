@@ -348,6 +348,14 @@ public:
    */
   DMITIGR_PGFE_API std::string to_query_string(const Connection& conn) const;
 
+  /**
+   * @overload
+   *
+   * @throws If `is_parameter_literal(i) || is_parameter_identifier(i)` for any
+   * `i` in range `[positional_parameter_count(), parameter_count())`.
+   */
+  DMITIGR_PGFE_API std::string to_query_string() const;
+
   /// @returns The metadata associated with this instance.
   ///
   /// @details A statement can be associated with a metadata, which is a set of
@@ -697,12 +705,14 @@ private:
   void update_cache(const Statement& rhs);
 
   // ---------------------------------------------------------------------------
-  // Named parameters helpers
+  // Helpers
   // ---------------------------------------------------------------------------
 
   Fragment::Type named_parameter_type(const std::size_t index) const noexcept;
   std::size_t named_parameter_index(const std::string_view name) const noexcept;
   std::vector<Named_parameter> named_parameters() const;
+
+  std::string to_query_string(const Connection* const conn) const;
 
   // ---------------------------------------------------------------------------
   // Predicates
