@@ -51,29 +51,40 @@ Statement::Fragment::is_quoted_text() const noexcept
 }
 
 DMITIGR_PGFE_INLINE bool
-Statement::Fragment::is_named_parameter() const noexcept
+Statement::Fragment::is_unquoted_named_parameter() const noexcept
 {
-  using Ft = Fragment::Type;
-  return type == Ft::named_parameter || is_quoted_named_parameter();
+  return type == Fragment::Type::named_parameter_unquoted;
 }
 
 DMITIGR_PGFE_INLINE bool
-Statement::Fragment::is_named_parameter(const std::string_view name) const noexcept
+Statement::Fragment::is_unquoted_named_parameter(const std::string_view name) const noexcept
 {
-  return is_named_parameter() && str == name;
+  return is_unquoted_named_parameter() && str == name;
 }
 
 DMITIGR_PGFE_INLINE bool
 Statement::Fragment::is_quoted_named_parameter() const noexcept
 {
-  using Ft = Fragment::Type;
-  return type == Ft::named_parameter_literal || type == Ft::named_parameter_identifier;
+  using enum Fragment::Type;
+  return type == named_parameter_literal || type == named_parameter_identifier;
 }
 
 DMITIGR_PGFE_INLINE bool
 Statement::Fragment::is_quoted_named_parameter(const std::string_view name) const noexcept
 {
   return is_quoted_named_parameter() && str == name;
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::Fragment::is_named_parameter() const noexcept
+{
+  return is_unquoted_named_parameter() || is_quoted_named_parameter();
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::Fragment::is_named_parameter(const std::string_view name) const noexcept
+{
+  return is_named_parameter() && str == name;
 }
 
 DMITIGR_PGFE_INLINE bool
@@ -825,7 +836,7 @@ DMITIGR_PGFE_INLINE std::string Statement::to_string() const
       result += fragment.str;
       result += "*/";
       break;
-    case Ft::named_parameter:
+    case Ft::named_parameter_unquoted:
       result += ':';
       result += '{';
       result += fragment.str;
@@ -896,7 +907,7 @@ Statement::to_query_string(const Connection& conn) const
       [[fallthrough]];
     case Ft::multi_line_comment:
       break;
-    case Ft::named_parameter: {
+    case Ft::named_parameter_unquoted: {
       const auto* const value = bound(fragment.str);
       if (!has_bound || !value) {
         const auto idx = named_parameter_index(fragment.str);
@@ -1084,10 +1095,10 @@ Statement::push_named_parameter(const int depth, const std::string& str,
   DMITIGR_ASSERT(!quote_char || is_quote_char(quote_char));
 
   if (parameter_count() < max_parameter_count()) {
-    using Ft = Fragment::Type;
+    using enum Fragment::Type;
     const auto type =
-      quote_char == '\'' ? Ft::named_parameter_literal :
-      quote_char == '\"' ? Ft::named_parameter_identifier : Ft::named_parameter;
+      quote_char == '\'' ? named_parameter_literal :
+      quote_char == '\"' ? named_parameter_identifier : named_parameter_unquoted;
     push_back_fragment(type, depth, str);
     const auto e = end(named_parameters_);
     const auto p = find_if(begin(named_parameters_), e,

@@ -465,8 +465,8 @@ public:
    *
    * @param callback A function with signature
    * `bool callback(const std::string& name, const Destructured_string&)`
-   * which called for every matching found. Returns `false` to stop the
-   * destructurization process.
+   * which is called for every matching found. Returns `true` to call the
+   * callback for next matching if any.
    *
    * @par Requires
    *   -# `!has_unbound_parameter()`;
@@ -625,7 +625,7 @@ private:
       quoted_text,
       one_line_comment,
       multi_line_comment,
-      named_parameter,
+      named_parameter_unquoted,
       named_parameter_literal,
       named_parameter_identifier,
       positional_parameter
@@ -635,10 +635,12 @@ private:
 
     bool is_text() const noexcept;
     bool is_quoted_text() const noexcept;
-    bool is_named_parameter() const noexcept;
-    bool is_named_parameter(const std::string_view name) const noexcept;
+    bool is_unquoted_named_parameter() const noexcept;
+    bool is_unquoted_named_parameter(const std::string_view name) const noexcept;
     bool is_quoted_named_parameter() const noexcept;
     bool is_quoted_named_parameter(const std::string_view name) const noexcept;
+    bool is_named_parameter() const noexcept;
+    bool is_named_parameter(const std::string_view name) const noexcept;
     bool is_positional_parameter() const noexcept;
     bool is_parameter() const noexcept;
     bool is_one_line_comment() const noexcept;
