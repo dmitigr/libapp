@@ -81,7 +81,7 @@ namespace dmitigr::str {
 template<std::size_t Size>
 constexpr auto len(const char(&str)[Size]) noexcept
 {
-  return std::size(str) - 1;
+  return std::size(str) - sizeof(char);
 }
 static_assert(len("") == 0 && len("dmitigr") == 7);
 
