@@ -1162,8 +1162,6 @@ Connection::to_quoted_literal(const std::string_view literal) const
   if (const auto p = Uptr{PQescapeLiteral(conn(), literal.data(),
         literal.size()), &PQfreemem})
     return p.get();
-  else if (is_out_of_memory())
-    throw std::bad_alloc{};
   else
     throw Generic_exception{error_message()};
 }
@@ -1178,8 +1176,6 @@ Connection::to_quoted_identifier(const std::string_view identifier) const
   if (const auto p = Uptr{PQescapeIdentifier(conn(), identifier.data(),
         identifier.size()), &PQfreemem})
     return p.get();
-  else if (is_out_of_memory())
-    throw std::bad_alloc{};
   else
     throw Generic_exception{error_message()};
 }
@@ -1411,12 +1407,6 @@ DMITIGR_PGFE_INLINE std::string Connection::error_message() const
    * something like "connection pointer is NULL\n".
    */
   return conn() ? str::value_or_empty(PQerrorMessage(conn())) : std::string{};
-}
-
-DMITIGR_PGFE_INLINE bool Connection::is_out_of_memory() const noexcept
-{
-  constexpr const char msg[] = "out of memory";
-  return !std::strncmp(PQerrorMessage(conn()), msg, sizeof(msg) - 1);
 }
 
 DMITIGR_PGFE_INLINE std::pair<std::unique_ptr<void, void(*)(void*)>, std::size_t>

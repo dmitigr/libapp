@@ -1460,7 +1460,6 @@ private:
   void throw_if_error();
   static Completion&& completion_or_throw(Completion&& comp);
   std::string error_message() const;
-  bool is_out_of_memory() const noexcept;
 
   std::pair<std::unique_ptr<void, void(*)(void*)>, std::size_t>
   to_hex_storage(const pgfe::Data& data) const;
