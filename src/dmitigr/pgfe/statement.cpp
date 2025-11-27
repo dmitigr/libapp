@@ -938,7 +938,7 @@ Statement::query_string_capacity() const
       [[fallthrough]];
     case named_parameter_identifier:
       if (const auto* const value = bound(fragment.str))
-        result += value->size() * 2;
+        result += 2 * value->size();
       result += 2 * str::len("'");
       break;
     case positional_parameter:
