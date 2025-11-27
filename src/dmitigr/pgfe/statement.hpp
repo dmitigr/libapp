@@ -340,6 +340,9 @@ public:
    */
   DMITIGR_PGFE_API std::string to_string() const;
 
+  /// @returns The estimated capacity of a string returned by to_string().
+  DMITIGR_PGFE_API std::string::size_type string_capacity() const;
+
   /**
    * @returns The query string that's actually passed to a PostgreSQL server.
    *

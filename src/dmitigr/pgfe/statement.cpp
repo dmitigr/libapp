@@ -814,12 +814,60 @@ Statement::replace(const std::string_view name, const Statement& replacement)
   assert(is_invariant_ok());
 }
 
+DMITIGR_PGFE_INLINE std::string::size_type Statement::string_capacity() const
+{
+  std::string::size_type result{};
+  for (const auto& fragment : fragments_) {
+    using enum Fragment::Type;
+    switch (fragment.type) {
+    case text:
+      [[fallthrough]];
+    case quoted_text:
+      result += fragment.str.size();
+      break;
+    case one_line_comment:
+      result += str::len("--");
+      result += fragment.str.size();
+      result += str::len("\n");
+      break;
+    case multi_line_comment:
+      result += str::len("/*");
+      result += fragment.str.size();
+      result += str::len("*/");
+      break;
+    case named_parameter_unquoted:
+      result += str::len(":");
+      result += str::len("{");
+      result += fragment.str.size();
+      result += str::len("}");
+      break;
+    case named_parameter_literal:
+      result += str::len(":");
+      result += str::len("'");
+      result += fragment.str.size();
+      result += str::len("'") ;
+      break;
+    case named_parameter_identifier:
+      result += str::len(":");
+      result += str::len("\"");
+      result += fragment.str.size();
+      result += str::len("\"");
+      break;
+    case positional_parameter:
+      result += str::len("$");
+      result += fragment.str.size();
+      break;
+    }
+  }
+  return result;
+}
+
 DMITIGR_PGFE_INLINE std::string Statement::to_string() const
 {
-  using enum Fragment::Type;
   std::string result;
-  result.reserve(2048);
+  result.reserve(string_capacity());
   for (const auto& fragment : fragments_) {
+    using enum Fragment::Type;
     switch (fragment.type) {
     case text:
       [[fallthrough]];
