@@ -864,6 +864,44 @@ DMITIGR_PGFE_INLINE std::string Statement::to_string() const
   return result;
 }
 
+DMITIGR_PGFE_INLINE std::string::size_type
+Statement::query_string_capacity() const
+{
+  std::string::size_type result{};
+  for (const auto& fragment : fragments_) {
+    using enum Fragment::Type;
+    switch (fragment.type) {
+    case text:
+      [[fallthrough]];
+    case quoted_text:
+      result += fragment.str.size();
+      break;
+    case one_line_comment:
+      [[fallthrough]];
+    case multi_line_comment:
+      break;
+    case named_parameter_unquoted:
+      if (const auto* const value = bound(fragment.str)) {
+        result += value->size();
+        break;
+      }
+      result += (std::size("$") - 1) + (std::size("65535") - 1);
+      break;
+    case named_parameter_literal:
+      [[fallthrough]];
+    case named_parameter_identifier:
+      if (const auto* const value = bound(fragment.str))
+        result += value->size() * 2;
+      result += 2 * (std::size("'") - 1);
+      break;
+    case positional_parameter:
+      result += (std::size("$") - 1) + fragment.str.size();
+      break;
+    }
+  }
+  return result;
+}
+
 DMITIGR_PGFE_INLINE std::string
 Statement::to_query_string(const Connection* const conn) const
 {

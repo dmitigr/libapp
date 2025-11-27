@@ -356,6 +356,9 @@ public:
    */
   DMITIGR_PGFE_API std::string to_query_string() const;
 
+  /// @returns The estimated capacity of a string returned by to_query_string().
+  DMITIGR_PGFE_API std::string::size_type query_string_capacity() const;
+
   /// @returns The metadata associated with this instance.
   ///
   /// @details A statement can be associated with a metadata, which is a set of
