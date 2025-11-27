@@ -816,45 +816,45 @@ Statement::replace(const std::string_view name, const Statement& replacement)
 
 DMITIGR_PGFE_INLINE std::string Statement::to_string() const
 {
-  using Ft = Fragment::Type;
+  using enum Fragment::Type;
   std::string result;
   result.reserve(2048);
   for (const auto& fragment : fragments_) {
     switch (fragment.type) {
-    case Ft::text:
+    case text:
       [[fallthrough]];
-    case Ft::quoted_text:
+    case quoted_text:
       result += fragment.str;
       break;
-    case Ft::one_line_comment:
+    case one_line_comment:
       result += "--";
       result += fragment.str;
       result += '\n';
       break;
-    case Ft::multi_line_comment:
+    case multi_line_comment:
       result += "/*";
       result += fragment.str;
       result += "*/";
       break;
-    case Ft::named_parameter_unquoted:
+    case named_parameter_unquoted:
       result += ':';
       result += '{';
       result += fragment.str;
       result += '}';
       break;
-    case Ft::named_parameter_literal:
+    case named_parameter_literal:
       result += ":";
       result += '\'';
       result += fragment.str;
       result += '\'';
       break;
-    case Ft::named_parameter_identifier:
+    case named_parameter_identifier:
       result += ":";
       result += '"';
       result += fragment.str;
       result += '"';
       break;
-    case Ft::positional_parameter:
+    case positional_parameter:
       result += '$';
       result += fragment.str;
       break;
@@ -905,7 +905,7 @@ Statement::query_string_capacity() const
 DMITIGR_PGFE_INLINE std::string
 Statement::to_query_string(const Connection* const conn) const
 {
-  using Ft = Fragment::Type;
+  using enum Fragment::Type;
 
   if (has_missing_parameter())
     throw Generic_exception{"cannot convert Statement to query string: "
@@ -920,8 +920,8 @@ Statement::to_query_string(const Connection* const conn) const
       return;
 
     const char* const type_str =
-      fragment.type == Ft::named_parameter_literal ? "literal" :
-      fragment.type == Ft::named_parameter_identifier ? "identifier" : nullptr;
+      fragment.type == named_parameter_literal ? "literal" :
+      fragment.type == named_parameter_identifier ? "identifier" : nullptr;
     DMITIGR_ASSERT(type_str);
     std::string what{"named parameter "};
     what.append(fragment.str).append(" declared as ").append(type_str);
@@ -936,23 +936,21 @@ Statement::to_query_string(const Connection* const conn) const
   };
 
   std::string result;
-  result.reserve(2048);
+  result.reserve(query_string_capacity());
   std::size_t bound_counter{};
-  const bool has_bound{has_bound_parameter()};
   for (const auto& fragment : fragments_) {
     switch (fragment.type) {
-    case Ft::text:
+    case text:
       [[fallthrough]];
-    case Ft::quoted_text:
+    case quoted_text:
       result += fragment.str;
       break;
-    case Ft::one_line_comment:
+    case one_line_comment:
       [[fallthrough]];
-    case Ft::multi_line_comment:
+    case multi_line_comment:
       break;
-    case Ft::named_parameter_unquoted: {
-      const auto* const value = bound(fragment.str);
-      if (!has_bound || !value) {
+    case named_parameter_unquoted:
+      if (const auto* const value = bound(fragment.str); !value) {
         const auto idx = named_parameter_index(fragment.str);
         DMITIGR_ASSERT(idx >= positional_parameter_count());
         DMITIGR_ASSERT(idx < parameter_count());
@@ -963,20 +961,19 @@ Statement::to_query_string(const Connection* const conn) const
         ++bound_counter;
       }
       break;
-    }
-    case Ft::named_parameter_literal: {
+    case named_parameter_literal: {
       const auto* const value = bound(fragment.str);
       check_quoted_named_parameter(fragment, conn, value);
       result += conn->to_quoted_literal(*value);
       break;
     }
-    case Ft::named_parameter_identifier: {
+    case named_parameter_identifier: {
       const auto* const value = bound(fragment.str);
       check_quoted_named_parameter(fragment, conn, value);
       result += conn->to_quoted_identifier(*value);
       break;
     }
-    case Ft::positional_parameter:
+    case positional_parameter:
       result += '$';
       result += fragment.str;
       break;
