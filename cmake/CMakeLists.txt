@@ -391,16 +391,26 @@ macro(dmitigr_process_lib lib)
       target_include_directories(${dmlib}
         PRIVATE ${${dmlib}_target_include_directories_private}
         PUBLIC  ${${dmlib}_target_include_directories_public}
-        PUBLIC  $<BUILD_INTERFACE:${${dmlib}_target_include_directories_public}>
         PUBLIC  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${DMITIGR_LIBS_ROOT}>)
+
+      # Including the list of multiple paths directly to the command above
+      # confuses CMake. So, traverse it with foreach().
+      foreach(path ${${dmlib}_target_include_directories_public})
+        target_include_directories(${dmlib} PUBLIC $<BUILD_INTERFACE:${path}>)
+      endforeach()
     else() # header-only
       target_compile_definitions(${dmlib}
         INTERFACE ${${dmlib}_target_compile_definitions_interface})
 
       target_include_directories(${dmlib}
         INTERFACE ${${dmlib}_target_include_directories_interface}
-        INTERFACE $<BUILD_INTERFACE:${${dmlib}_target_include_directories_interface}>
         INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${DMITIGR_LIBS_ROOT}>)
+
+      # Including the list of multiple paths directly to the command above
+      # confuses CMake. So, traverse it with foreach().
+      foreach(path ${${dmlib}_target_include_directories_interface})
+        target_include_directories(${dmlib} INTERFACE $<BUILD_INTERFACE:${path}>)
+      endforeach()
     endif()
 
     # ------------------------------------
