@@ -860,7 +860,6 @@ DMITIGR_PGFE_INLINE std::string Statement::to_string() const
       break;
     }
   }
-  result.shrink_to_fit();
   return result;
 }
 
