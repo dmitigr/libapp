@@ -74,6 +74,17 @@ template<> struct Is_bitmask_enum<str::Trim> : std::true_type {};
 
 namespace dmitigr::str {
 
+// ============================================================================
+// Constexpr
+// ============================================================================
+
+template<std::size_t Size>
+constexpr auto len(const char(&str)[Size]) noexcept
+{
+  return std::size(str) - 1;
+}
+static_assert(len("") == 0 && len("dmitigr") == 7);
+
 // =============================================================================
 // C-strings
 // =============================================================================
