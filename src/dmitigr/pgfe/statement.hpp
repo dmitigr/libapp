@@ -519,7 +519,7 @@ public:
     };
 
     while (nf != nf_end && pnf != pnf_end) {
-      if (pnf->is_named_parameter()) {
+      if (pnf->is_unquoted_named_parameter()) {
         const auto& name = pnf->str;
 
         // Skip empty text fragments which follows the named parameter.
