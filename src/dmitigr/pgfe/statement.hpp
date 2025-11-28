@@ -332,7 +332,11 @@ public:
    */
   DMITIGR_PGFE_API void replace(std::string_view name, const Statement& replacement);
 
-  /// @returns The estimated capacity of a string returned by to_string().
+  /**
+   * @returns The estimated capacity of a string returned by to_string().
+   *
+   * @see write_string(), to_string().
+   */
   DMITIGR_PGFE_API std::string::size_type string_capacity() const noexcept;
 
   /**
@@ -344,17 +348,28 @@ public:
    * @returns The number of characters written.
    *
    * @warning Neither '\0' nor ';' characters are written to the `result`!
+   *
+   * @see string_capacity(), to_string().
    */
   DMITIGR_PGFE_API std::string::size_type write_string(char* result) const;
 
   /**
    * @returns The result of converting this instance to an instance of
    * type `std::string`.
+   *
+   * @see write_string().
    */
   DMITIGR_PGFE_API std::string to_string() const;
 
-  /// @returns The estimated capacity of a string returned by to_query_string().
-  DMITIGR_PGFE_API std::string::size_type query_string_capacity() const noexcept;
+  /**
+   * @returns The estimated capacity of a string returned by to_query_string().
+   *
+   * @par Requires `!is_parameter_identifier(i) || bound(parameter_name(i))`
+   * for any `i` in range `[positional_parameter_count(), parameter_count())`.
+   *
+   * @see write_query_string(), to_query_string().
+   */
+  DMITIGR_PGFE_API std::string::size_type query_string_capacity() const;
 
   /**
    * @brief Writes the query string that's actually passed to a PostgreSQL server
@@ -364,37 +379,32 @@ public:
    * least `query_string_capacity()` bytes.
    *
    * @par Requires
-   * `!has_missing_parameter() && conn.is_connected()`.
+   * `!has_missing_parameter() && conn.is_connected()` and requirements of
+   * query_string_capacity().
    *
    * @returns The number of characters written.
    *
    * @warning Neither '\0' nor ';' characters are written to the `result`!
+   *
+   * @see query_string_capacity(), to_query_string().
    */
   DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
     const Connection& conn) const;
 
-  /**
-   * @overload
-   *
-   * @throws If `is_parameter_literal(i) || is_parameter_identifier(i)` for any
-   * `i` in range `[positional_parameter_count(), parameter_count())`.
-   */
+  /// @overload
   DMITIGR_PGFE_API std::string::size_type write_query_string(char* result) const;
 
   /**
    * @returns The query string that's actually passed to a PostgreSQL server.
    *
    * @par Requires
-   * `!has_missing_parameter() && conn.is_connected()`.
+   * The requiremens of write_query_string().
+   *
+   * @see write_query_string().
    */
   DMITIGR_PGFE_API std::string to_query_string(const Connection& conn) const;
 
-  /**
-   * @overload
-   *
-   * @throws If `is_parameter_literal(i) || is_parameter_identifier(i)` for any
-   * `i` in range `[positional_parameter_count(), parameter_count())`.
-   */
+  /// @overload
   DMITIGR_PGFE_API std::string to_query_string() const;
 
   /// @returns The metadata associated with this instance.

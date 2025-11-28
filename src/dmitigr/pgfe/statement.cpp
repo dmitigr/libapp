@@ -956,7 +956,7 @@ DMITIGR_PGFE_INLINE std::string Statement::to_string() const
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type
-Statement::query_string_capacity() const noexcept
+Statement::query_string_capacity() const
 {
   std::string::size_type result{};
   for (const auto& fragment : fragments_) {
@@ -979,11 +979,20 @@ Statement::query_string_capacity() const noexcept
       result += str::len("$") + str::len("65535");
       break;
     case named_parameter_literal:
-      [[fallthrough]];
-    case named_parameter_identifier:
+      result += 2 * str::len("'");
       if (const auto* const value = bound(fragment.str))
         result += 2 * value->size();
-      result += 2 * str::len("'");
+      else
+        result += str::len("NULL");
+      break;
+    case named_parameter_identifier:
+      result += 2 * str::len("\"");
+      if (const auto* const value = bound(fragment.str))
+        result += 2 * value->size();
+      else
+        throw Generic_exception{"cannot calculate query string capacity: "
+          "named parameter "+fragment.str+" declared as identifier has no "
+          "value bound"};
       break;
     case positional_parameter:
       result += str::len("$") + fragment.str.size();
@@ -1022,7 +1031,7 @@ Statement::write_query_string(char* result, const Connection* const connection) 
     if (!value) {
       if (!is_conn_ok)
         what.append(" and");
-      what.append(" has no value bound");
+      what.append(" value bound");
     }
     throw Generic_exception{what};
   };
@@ -1052,12 +1061,12 @@ Statement::write_query_string(char* result, const Connection* const connection) 
         ++bound_counter;
       }
       break;
-    case named_parameter_literal: {
-      const auto* const value = bound(fragment.str);
-      check_quoted_named_parameter(fragment, connection, value);
-      append_str(&result, connection->to_quoted_literal(*value));
+    case named_parameter_literal:
+      if (const auto* const value = bound(fragment.str))
+        append_str(&result, connection->to_quoted_literal(*value));
+      else
+        append_lit(&result, "NULL");
       break;
-    }
     case named_parameter_identifier: {
       const auto* const value = bound(fragment.str);
       check_quoted_named_parameter(fragment, connection, value);
