@@ -335,7 +335,19 @@ public:
   DMITIGR_PGFE_API void replace(std::string_view name, const Statement& replacement);
 
   /**
-   * @returns The result of conversion of this instance to the instance of
+   * @brief Writes the result of converting this instance to a character sequence.
+   *
+   * @param result The pointer to a resulting memory space which must fit at
+   * least `string_capacity()` bytes.
+   *
+   * @returns The number of characters written.
+   *
+   * @warning Neither '\0' nor ';' characters are written to the `result`!
+   */
+  DMITIGR_PGFE_API std::string::size_type write_string(char* result) const;
+
+  /**
+   * @returns The result of converting this instance to an instance of
    * type `std::string`.
    */
   DMITIGR_PGFE_API std::string to_string() const;

@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <cstring>
 #include <iterator>
 #include <memory>
 
@@ -862,52 +863,75 @@ DMITIGR_PGFE_INLINE std::string::size_type Statement::string_capacity() const
   return result;
 }
 
-DMITIGR_PGFE_INLINE std::string Statement::to_string() const
+DMITIGR_PGFE_INLINE std::string::size_type
+Statement::write_string(char* result) const
 {
-  std::string result;
-  result.reserve(string_capacity());
+  const auto append_str = [&result](const std::string& str) noexcept
+  {
+    std::memcpy(result, str.data(), str.size());
+    result += str.size();
+  };
+  const auto append_lit = [&result](const auto& lit) noexcept
+  {
+    std::memcpy(result, lit, str::len(lit));
+    result += str::len(lit);
+  };
+  const auto append_chr = [&result](const char ch) noexcept
+  {
+    *result = ch;
+    ++result;
+  };
+
+  const char* const begin{result};
   for (const auto& fragment : fragments_) {
     using enum Fragment::Type;
     switch (fragment.type) {
     case text:
       [[fallthrough]];
     case quoted_text:
-      result += fragment.str;
+      append_str(fragment.str);
       break;
     case one_line_comment:
-      result += "--";
-      result += fragment.str;
-      result += '\n';
+      append_lit("--");
+      append_str(fragment.str);
+      append_chr('\n');
       break;
     case multi_line_comment:
-      result += "/*";
-      result += fragment.str;
-      result += "*/";
+      append_lit("/*");
+      append_str(fragment.str);
+      append_lit("*/");
       break;
     case named_parameter_unquoted:
-      result += ':';
-      result += '{';
-      result += fragment.str;
-      result += '}';
+      append_chr(':');
+      append_chr('{');
+      append_str(fragment.str);
+      append_chr('}');
       break;
     case named_parameter_literal:
-      result += ":";
-      result += '\'';
-      result += fragment.str;
-      result += '\'';
+      append_chr(':');
+      append_chr('\'');
+      append_str(fragment.str);
+      append_chr('\'');
       break;
     case named_parameter_identifier:
-      result += ":";
-      result += '"';
-      result += fragment.str;
-      result += '"';
+      append_chr(':');
+      append_chr('"');
+      append_str(fragment.str);
+      append_chr('"');
       break;
     case positional_parameter:
-      result += '$';
-      result += fragment.str;
+      append_chr('$');
+      append_str(fragment.str);
       break;
     }
   }
+  return result - begin;
+}
+
+DMITIGR_PGFE_INLINE std::string Statement::to_string() const
+{
+  std::string result(string_capacity(), '\0');
+  result.resize(write_string(result.data()));
   return result;
 }
 
