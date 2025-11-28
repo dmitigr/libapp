@@ -952,7 +952,9 @@ Statement::write_string(char* result) const
 DMITIGR_PGFE_INLINE std::string Statement::to_string() const
 {
   std::string result(string_capacity(), '\0');
-  result.resize(write_string(result.data()));
+  const auto size = write_string(result.data());
+  DMITIGR_ASSERT(size <= result.capacity());
+  result.resize(size);
   return result;
 }
 
@@ -994,8 +996,9 @@ Statement::query_string_capacity() const
   return result;
 }
 
-DMITIGR_PGFE_INLINE std::string
-Statement::to_query_string(const Connection* const connection) const
+// private
+DMITIGR_PGFE_INLINE std::string::size_type
+Statement::write_query_string(char* result, const Connection* const connection) const
 {
   using enum Fragment::Type;
 
@@ -1027,15 +1030,14 @@ Statement::to_query_string(const Connection* const connection) const
     throw Generic_exception{what};
   };
 
-  std::string result;
-  result.reserve(query_string_capacity());
+  const char* const begin{result};
   std::size_t bound_counter{};
   for (const auto& fragment : fragments_) {
     switch (fragment.type) {
     case text:
       [[fallthrough]];
     case quoted_text:
-      result += fragment.str;
+      append_str(&result, fragment.str);
       break;
     case one_line_comment:
       [[fallthrough]];
@@ -1046,32 +1048,55 @@ Statement::to_query_string(const Connection* const connection) const
         const auto idx = named_parameter_index(fragment.str);
         DMITIGR_ASSERT(idx >= positional_parameter_count());
         DMITIGR_ASSERT(idx < parameter_count());
-        result += '$';
-        result += std::to_string(idx - bound_counter + 1);
+        append_chr(&result, '$');
+        append_str(&result, std::to_string(idx - bound_counter + 1));
       } else {
-        result += *value;
+        append_str(&result, *value);
         ++bound_counter;
       }
       break;
     case named_parameter_literal: {
       const auto* const value = bound(fragment.str);
       check_quoted_named_parameter(fragment, connection, value);
-      result += connection->to_quoted_literal(*value);
+      append_str(&result, connection->to_quoted_literal(*value));
       break;
     }
     case named_parameter_identifier: {
       const auto* const value = bound(fragment.str);
       check_quoted_named_parameter(fragment, connection, value);
-      result += connection->to_quoted_identifier(*value);
+      append_str(&result, connection->to_quoted_identifier(*value));
       break;
     }
     case positional_parameter:
-      result += '$';
-      result += fragment.str;
+      append_chr(&result, '$');
+      append_str(&result, fragment.str);
       break;
     }
   }
   DMITIGR_ASSERT(bound_counter <= bound_parameter_count());
+  return result - begin;
+}
+
+DMITIGR_PGFE_INLINE std::string::size_type
+Statement::write_query_string(char* const result, const Connection& conn) const
+{
+  return write_query_string(result, std::addressof(conn));
+}
+
+DMITIGR_PGFE_INLINE std::string::size_type
+Statement::write_query_string(char* const result) const
+{
+  return write_query_string(result, nullptr);
+}
+
+// private
+DMITIGR_PGFE_INLINE std::string
+Statement::to_query_string(const Connection* const conn) const
+{
+  std::string result(query_string_capacity(), '\0');
+  const auto size = write_query_string(result.data(), conn);
+  DMITIGR_ASSERT(size <= result.capacity());
+  result.resize(size);
   return result;
 }
 

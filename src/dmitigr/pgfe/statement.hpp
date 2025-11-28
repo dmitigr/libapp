@@ -359,6 +359,31 @@ public:
   DMITIGR_PGFE_API std::string::size_type query_string_capacity() const;
 
   /**
+   * @brief Writes the query string that's actually passed to a PostgreSQL server
+   * to a character sequence.
+   *
+   * @param result The pointer to a resulting memory space which must fit at
+   * least `query_string_capacity()` bytes.
+   *
+   * @par Requires
+   * `!has_missing_parameter() && conn.is_connected()`.
+   *
+   * @returns The number of characters written.
+   *
+   * @warning Neither '\0' nor ';' characters are written to the `result`!
+   */
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
+    const Connection& conn) const;
+
+  /**
+   * @overload
+   *
+   * @throws If `is_parameter_literal(i) || is_parameter_identifier(i)` for any
+   * `i` in range `[positional_parameter_count(), parameter_count())`.
+   */
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result) const;
+
+  /**
    * @returns The query string that's actually passed to a PostgreSQL server.
    *
    * @par Requires
@@ -729,7 +754,9 @@ private:
   Fragment::Type named_parameter_type(const std::size_t index) const noexcept;
   std::size_t named_parameter_index(const std::string_view name) const noexcept;
   std::vector<Named_parameter> named_parameters() const;
-  std::string to_query_string(const Connection* const conn) const;
+
+  std::string::size_type write_query_string(char*, const Connection*) const;
+  std::string to_query_string(const Connection*) const;
 
   // ---------------------------------------------------------------------------
   // Metadata
