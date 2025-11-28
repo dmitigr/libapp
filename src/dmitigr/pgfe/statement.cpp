@@ -28,6 +28,43 @@
 
 namespace dmitigr::pgfe {
 
+namespace {
+
+inline bool is_ident_char(const unsigned char c) noexcept
+{
+  return std::isalnum(c) || c == '_' || c == '$';
+}
+
+inline bool is_named_param_char(const unsigned char c) noexcept
+{
+  return std::isalnum(c) || c == '_' || c == '-';
+}
+
+inline bool is_quote_char(const unsigned char c) noexcept
+{
+  return c == '\'' || c == '\"';
+}
+
+inline void append_str(char** result, const std::string& str) noexcept
+{
+  std::memcpy(*result, str.data(), str.size());
+  *result += str.size();
+}
+
+inline void append_lit(char** result, const auto& lit) noexcept
+{
+  std::memcpy(*result, lit, str::len(lit));
+  *result += str::len(lit);
+}
+
+inline void append_chr(char** result, const char ch) noexcept
+{
+  **result = ch;
+  ++(*result);
+}
+
+} // namespace
+
 // =============================================================================
 // Statement::Fragment
 // =============================================================================
@@ -866,22 +903,6 @@ DMITIGR_PGFE_INLINE std::string::size_type Statement::string_capacity() const
 DMITIGR_PGFE_INLINE std::string::size_type
 Statement::write_string(char* result) const
 {
-  const auto append_str = [&result](const std::string& str) noexcept
-  {
-    std::memcpy(result, str.data(), str.size());
-    result += str.size();
-  };
-  const auto append_lit = [&result](const auto& lit) noexcept
-  {
-    std::memcpy(result, lit, str::len(lit));
-    result += str::len(lit);
-  };
-  const auto append_chr = [&result](const char ch) noexcept
-  {
-    *result = ch;
-    ++result;
-  };
-
   const char* const begin{result};
   for (const auto& fragment : fragments_) {
     using enum Fragment::Type;
@@ -889,39 +910,39 @@ Statement::write_string(char* result) const
     case text:
       [[fallthrough]];
     case quoted_text:
-      append_str(fragment.str);
+      append_str(&result, fragment.str);
       break;
     case one_line_comment:
-      append_lit("--");
-      append_str(fragment.str);
-      append_chr('\n');
+      append_lit(&result, "--");
+      append_str(&result, fragment.str);
+      append_chr(&result, '\n');
       break;
     case multi_line_comment:
-      append_lit("/*");
-      append_str(fragment.str);
-      append_lit("*/");
+      append_lit(&result, "/*");
+      append_str(&result, fragment.str);
+      append_lit(&result, "*/");
       break;
     case named_parameter_unquoted:
-      append_chr(':');
-      append_chr('{');
-      append_str(fragment.str);
-      append_chr('}');
+      append_chr(&result, ':');
+      append_chr(&result, '{');
+      append_str(&result, fragment.str);
+      append_chr(&result, '}');
       break;
     case named_parameter_literal:
-      append_chr(':');
-      append_chr('\'');
-      append_str(fragment.str);
-      append_chr('\'');
+      append_chr(&result, ':');
+      append_chr(&result, '\'');
+      append_str(&result, fragment.str);
+      append_chr(&result, '\'');
       break;
     case named_parameter_identifier:
-      append_chr(':');
-      append_chr('"');
-      append_str(fragment.str);
-      append_chr('"');
+      append_chr(&result, ':');
+      append_chr(&result, '"');
+      append_str(&result, fragment.str);
+      append_chr(&result, '"');
       break;
     case positional_parameter:
-      append_chr('$');
-      append_str(fragment.str);
+      append_chr(&result, '$');
+      append_str(&result, fragment.str);
       break;
     }
   }
@@ -1278,7 +1299,7 @@ DMITIGR_PGFE_INLINE void Statement::update_cache(const Statement& rhs)
 }
 
 // ---------------------------------------------------------------------------
-// Statement's named parameters helpers
+// Statement helpers
 // ---------------------------------------------------------------------------
 
 DMITIGR_PGFE_INLINE auto
@@ -1327,28 +1348,6 @@ Statement::named_parameters() const -> std::vector<Named_parameter>
     }
   }
   return result;
-}
-
-// ---------------------------------------------------------------------------
-// Statement predicates
-// ---------------------------------------------------------------------------
-
-DMITIGR_PGFE_INLINE bool
-Statement::is_ident_char(const unsigned char c) noexcept
-{
-  return std::isalnum(c) || c == '_' || c == '$';
-}
-
-DMITIGR_PGFE_INLINE bool
-Statement::is_named_param_char(const unsigned char c) noexcept
-{
-  return std::isalnum(c) || c == '_' || c == '-';
-}
-
-DMITIGR_PGFE_INLINE bool
-Statement::is_quote_char(const unsigned char c) noexcept
-{
-  return c == '\'' || c == '\"';
 }
 
 // -----------------------------------------------------------------------------

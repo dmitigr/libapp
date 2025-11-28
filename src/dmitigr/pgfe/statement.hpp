@@ -729,16 +729,7 @@ private:
   Fragment::Type named_parameter_type(const std::size_t index) const noexcept;
   std::size_t named_parameter_index(const std::string_view name) const noexcept;
   std::vector<Named_parameter> named_parameters() const;
-
   std::string to_query_string(const Connection* const conn) const;
-
-  // ---------------------------------------------------------------------------
-  // Predicates
-  // ---------------------------------------------------------------------------
-
-  static bool is_ident_char(const unsigned char c) noexcept;
-  static bool is_named_param_char(const unsigned char c) noexcept;
-  static bool is_quote_char(const unsigned char c) noexcept;
 
   // ---------------------------------------------------------------------------
   // Metadata
