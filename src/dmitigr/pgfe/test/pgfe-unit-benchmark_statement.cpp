@@ -22,10 +22,10 @@ int main(const int argc, char* const argv[])
 try {
   namespace pgfe = dmitigr::pgfe;
   const unsigned long iteration_count{(argc >= 2) ? std::stoul(argv[1]) : 1};
-  pgfe::Statement s;
   for (unsigned long i{}; i < iteration_count; ++i)
-    const pgfe::Statement s{
-      R"(SELECT column1, :{list_} FROM :{t1_} t1 JOIN :{t2_} t2 ON (t1.t2 = t2.id) WHERE :{where_})"};
+    const pgfe::Statement stmt{
+R"(SELECT column1, :{list_} FROM :{t1_} t1
+JOIN :{t2_} t2 ON (t1.t2 = t2.id) WHERE :{where_})"};
 } catch (const std::exception& e) {
   std::cerr << e.what() << std::endl;
   return 1;
