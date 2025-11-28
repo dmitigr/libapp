@@ -749,11 +749,8 @@ Statement::unbind(const std::string& name)
 }
 
 DMITIGR_PGFE_INLINE const std::string*
-Statement::bound(const std::string& name) const
+Statement::bound(const std::string& name) const noexcept
 {
-  if (!has_parameter(name))
-    throw Generic_exception{"cannot get bound Statement parameter"};
-
   const auto i = bindings_.find(name);
   return i != bindings_.cend() ? std::addressof(i->second) : nullptr;
 }
@@ -852,7 +849,7 @@ Statement::replace(const std::string_view name, const Statement& replacement)
   assert(is_invariant_ok());
 }
 
-DMITIGR_PGFE_INLINE std::string::size_type Statement::string_capacity() const
+DMITIGR_PGFE_INLINE std::string::size_type Statement::string_capacity() const noexcept
 {
   std::string::size_type result{};
   for (const auto& fragment : fragments_) {
@@ -959,7 +956,7 @@ DMITIGR_PGFE_INLINE std::string Statement::to_string() const
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type
-Statement::query_string_capacity() const
+Statement::query_string_capacity() const noexcept
 {
   std::string::size_type result{};
   for (const auto& fragment : fragments_) {

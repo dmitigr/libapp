@@ -286,14 +286,12 @@ public:
   DMITIGR_PGFE_API Statement& unbind(const std::string& name);
 
   /**
-   * @returns The value bound to parameter, or `nullptr` if no value bound.
-   *
-   * @par Requires
-   * `has_parameter(name)`.
+   * @returns The value bound to parameter, or `nullptr` if either
+   * `!has_parameter(name)` or no value bound.
    *
    * @see bind().
    */
-  DMITIGR_PGFE_API const std::string* bound(const std::string& name) const;
+  DMITIGR_PGFE_API const std::string* bound(const std::string& name) const noexcept;
 
   /**
    * @returns The number of bound parameters.
@@ -335,7 +333,7 @@ public:
   DMITIGR_PGFE_API void replace(std::string_view name, const Statement& replacement);
 
   /// @returns The estimated capacity of a string returned by to_string().
-  DMITIGR_PGFE_API std::string::size_type string_capacity() const;
+  DMITIGR_PGFE_API std::string::size_type string_capacity() const noexcept;
 
   /**
    * @brief Writes the result of converting this instance to a character sequence.
@@ -356,7 +354,7 @@ public:
   DMITIGR_PGFE_API std::string to_string() const;
 
   /// @returns The estimated capacity of a string returned by to_query_string().
-  DMITIGR_PGFE_API std::string::size_type query_string_capacity() const;
+  DMITIGR_PGFE_API std::string::size_type query_string_capacity() const noexcept;
 
   /**
    * @brief Writes the query string that's actually passed to a PostgreSQL server
