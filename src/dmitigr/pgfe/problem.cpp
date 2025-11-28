@@ -179,7 +179,7 @@ DMITIGR_PGFE_INLINE int Problem::sqlstate_string_to_int(const char* const sqlsta
     throw Generic_exception{"cannot convert SQLSTATE to int"};
 
   errno = 0;
-  const long int result{std::strtol(state.data(), nullptr, 36)};
+  const int result{std::stoi(state.data(), nullptr, 36)};
   DMITIGR_ASSERT(errno == 0);
   DMITIGR_ASSERT(is_sqlstate(result));
   return result;

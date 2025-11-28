@@ -55,7 +55,7 @@ public:
    *
    * @see end(), Connection::copier().
    */
-  DMITIGR_PGFE_API ~Copier() noexcept;
+  DMITIGR_PGFE_API ~Copier() noexcept override;
 
   /// Constructs invalid instance.
   Copier() = default;
@@ -168,7 +168,7 @@ private:
   /// The constructor.
   Copier(Connection&, detail::pq::Result&&) noexcept;
 
-  static void dummy_free(void*) noexcept {};
+  static void dummy_free(void*) noexcept {}
   void check_send() const;
   void check_receive() const;
 };

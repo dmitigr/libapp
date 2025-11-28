@@ -26,7 +26,7 @@ namespace dmitigr::nix {
 inline std::string error_message(const int code)
 {
   char buf[1024];
-#if ((_POSIX_C_SOURCE >= 200112L) && !_GNU_SOURCE) || __APPLE__
+#if __APPLE__ || ((_POSIX_C_SOURCE >= 200112L) && !_GNU_SOURCE)
   const int e = ::strerror_r(code, buf, sizeof(buf));
   return !e ? buf : "unknown error";
 #elif _GNU_SOURCE

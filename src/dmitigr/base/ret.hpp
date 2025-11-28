@@ -52,8 +52,8 @@ struct Ret final {
   Ret() noexcept = default;
 
   /// Holds an error and a default-constructed value of type Result.
-  Ret(Error err) noexcept
-    : err{std::move(err)}
+  Ret(Error e) noexcept
+    : err{std::move(e)}
   {}
 
   /// @overload
@@ -64,8 +64,8 @@ struct Ret final {
   {}
 
   /// Holds not an error and a given value of type T.
-  Ret(Result res) noexcept
-    : res{std::move(res)}
+  Ret(Result r) noexcept
+    : res{std::move(r)}
   {}
 
   /**
@@ -74,9 +74,9 @@ struct Ret final {
    * @details This constructor is useful to return an error with an information
    * provided by `res`.
    */
-  Ret(Error err, Result res) noexcept
-    : err{err}
-    , res{std::move(res)}
+  Ret(Error e, Result r) noexcept
+    : err{e}
+    , res{std::move(r)}
   {}
 
   /// @returns The error.

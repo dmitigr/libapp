@@ -175,7 +175,7 @@ private:
   void graceful_shutdown()
   {
     constexpr const char* const errmsg{"cannot shutdown socket gracefully"};
-    if (const auto r = ::shutdown(socket_, net::sd_send)) {
+    if (shutdown(socket_, net::sd_send)) {
       if (errno == ENOTCONN)
         return;
       else

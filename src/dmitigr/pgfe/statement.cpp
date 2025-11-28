@@ -950,7 +950,7 @@ Statement::query_string_capacity() const
 }
 
 DMITIGR_PGFE_INLINE std::string
-Statement::to_query_string(const Connection* const conn) const
+Statement::to_query_string(const Connection* const connection) const
 {
   using enum Fragment::Type;
 
@@ -1010,14 +1010,14 @@ Statement::to_query_string(const Connection* const conn) const
       break;
     case named_parameter_literal: {
       const auto* const value = bound(fragment.str);
-      check_quoted_named_parameter(fragment, conn, value);
-      result += conn->to_quoted_literal(*value);
+      check_quoted_named_parameter(fragment, connection, value);
+      result += connection->to_quoted_literal(*value);
       break;
     }
     case named_parameter_identifier: {
       const auto* const value = bound(fragment.str);
-      check_quoted_named_parameter(fragment, conn, value);
-      result += conn->to_quoted_identifier(*value);
+      check_quoted_named_parameter(fragment, connection, value);
+      result += connection->to_quoted_identifier(*value);
       break;
     }
     case positional_parameter:
@@ -1055,10 +1055,10 @@ DMITIGR_PGFE_INLINE bool Statement::is_equivalent(const Statement& rhs) const
   const auto& frags = norm_fragments_;
   const auto& rfrags = rhs.norm_fragments_;
   return equal(frags.cbegin(), frags.cend(), rfrags.cbegin(), rfrags.cend(),
-    [](const auto& lhs, const auto& rhs) noexcept
+    [](const auto& lh, const auto& rh) noexcept
     {
-      return lhs.is_named_parameter() && rhs.is_named_parameter() ?
-        lhs.type == rhs.type : lhs.norm_equal(rhs);
+      return lh.is_named_parameter() && rh.is_named_parameter() ?
+        lh.type == rh.type : lh.norm_equal(rh);
     });
 }
 
@@ -1288,8 +1288,8 @@ Statement::named_parameters() const -> std::vector<Named_parameter>
   std::vector<Named_parameter> result;
   result.reserve(fragments_.size() -
     (!fragments_.empty() && !fragments_.front().is_named_parameter()));
-  const auto e = cend(fragments_);
-  for (auto i = cbegin(fragments_); i != e; ++i) {
+  const auto fragments_end = cend(fragments_);
+  for (auto i = cbegin(fragments_); i != fragments_end; ++i) {
     if (i->is_named_parameter()) {
       const auto e = end(result);
       const auto p = find_if(begin(result), e, [i](const auto& param) noexcept

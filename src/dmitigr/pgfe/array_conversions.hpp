@@ -416,7 +416,7 @@ std::optional<T> to_container_of_optionals(T&& element)
  * @returns The pointer that points to a next character after the last closing
  * curly bracket found in the `literal`.
  *
- * @throws Generic_exception.
+ * @throws An instance of type Generic_exception.
  */
 template<class F, typename ... Types>
 const char* parse_array_literal(const char* literal, const char delimiter,
@@ -562,7 +562,7 @@ const char* parse_array_literal(const char* literal, const char delimiter,
  * @returns The pointer that points to a next character after the last closing
  * curly bracket found in the `literal`.
  *
- * @throws Generic_exception.
+ * @throws An instance of type Generic_exception.
  */
 template<typename T,
   template<class, class> class Container,

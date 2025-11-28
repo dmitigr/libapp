@@ -90,7 +90,7 @@ DMITIGR_PGFE_INLINE Connection::~Connection() noexcept
 }
 
 // General private constructor.
-DMITIGR_PGFE_INLINE Connection::Connection(void* const loop, Options options)
+DMITIGR_PGFE_INLINE Connection::Connection(void* const /*loop*/, Options options)
   : options_{std::move(options)}
   , execute_ps_state_{std::make_shared<Prepared_statement::State>("", this)}
 #ifdef DMITIGR_LIBS_AIO_ASIO
@@ -531,7 +531,7 @@ Connection::handle_input(const bool wait_response)
     DMITIGR_ASSERT(requests_.front().id_ == Request::Id::execute);
   };
 
-  const auto is_completion_status = [this](const auto status) noexcept
+  const auto is_completion_status = [](const auto status) noexcept
   {
     return status == PGRES_FATAL_ERROR ||
 #ifdef LIBPQ_HAS_PIPELINING

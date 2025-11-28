@@ -37,7 +37,7 @@ protected:
    * The valid memory area in range of [buffer, buffer + size) and
    * `buffer && (2048 <= size && size <= 65528)`.
    *
-   * @throws Exception.
+   * @throws An instance of type Exception.
    *
    * @par Exception safety guarantee
    * Basic.
@@ -50,7 +50,7 @@ protected:
    *
    * @returns `0` on success.
    *
-   * @throws Exception.
+   * @throws An instance of type Exception.
    *
    * @par Exception safety guarantee
    * Basic.
@@ -69,7 +69,7 @@ protected:
    * the pending sequence, without moving the input sequence position past it,
    * or `traits_type::eof()` to indicate failure if the pending sequence is null.
    *
-   * @throws Exception.
+   * @throws An instance of type Exception.
    *
    * @par Exception safety guarantee
    * Basic.
@@ -89,7 +89,7 @@ protected:
    * @returns Some value other than `traits_type::eof()` to indicate success,
    * or `traits_type::eof()` to indicate failure.
    *
-   * @throws Exception.
+   * @throws An instance of type Exception.
    *
    * @par Exception safety guarantee
    * Basic.

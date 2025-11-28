@@ -158,7 +158,7 @@ using a = Named_argument;
 class Prepared_statement final : public Response, public Parameterizable {
 public:
   /// The destructor.
-  ~Prepared_statement() noexcept;
+  ~Prepared_statement() noexcept override;
 
   /// Default-constructible. (Constructs invalid instance.)
   Prepared_statement() = default;

@@ -541,29 +541,29 @@ void for_each_part(F&& callback, const std::basic_string_view<Ch, Tr> str,
   constexpr bool is_none{Ft == Fepsep_type::none};
   const auto in_sep = [b = sep.str.cbegin(), e = sep.str.cend()](const auto ch) noexcept
   {
-    return std::any_of(b, e, [c = ch](const auto ch) noexcept
+    return std::any_of(b, e, [ch](const auto sch) noexcept
     {
-      return c == ch;
+      return ch == sch;
     });
   };
 
-  const auto find_sep = [str, sep = sep.str](const auto offset)
+  const auto find_sep = [str, &sep](const auto offset)
   {
     if constexpr (is_exact)
       if constexpr (IsForward)
-        return str.find(sep, offset);
+        return str.find(sep.str, offset);
       else
-        return str.rfind(sep, offset);
+        return str.rfind(sep.str, offset);
     else if constexpr (is_any)
       if constexpr (IsForward)
-        return str.find_first_of(sep, offset);
+        return str.find_first_of(sep.str, offset);
       else
-        return str.find_last_of(sep, offset);
+        return str.find_last_of(sep.str, offset);
     else if constexpr (is_none)
       if constexpr (IsForward)
-        return str.find_first_not_of(sep, offset);
+        return str.find_first_not_of(sep.str, offset);
       else
-        return str.find_last_not_of(sep, offset);
+        return str.find_last_not_of(sep.str, offset);
     else
       static_assert(false_value<Ch>, "invalid FEP-separator type");
   };
@@ -670,8 +670,8 @@ inline std::string sparsed_string(const std::string_view input,
   const auto [elem_sz, fmt_str] = [result_format]
   {
     switch (result_format) {
-    case Byte_format::raw: return std::make_pair(1, "%c");
-    case Byte_format::hex: return std::make_pair(2, "%02x");
+    case Byte_format::raw: return std::make_pair(1u, "%c");
+    case Byte_format::hex: return std::make_pair(2u, "%02x");
     }
     throw std::invalid_argument{"unsupported result format for"
       " dmitigr::str::to_string(string_view, Byte_format, string_view)"};
@@ -682,13 +682,14 @@ inline std::string sparsed_string(const std::string_view input,
     1 + // for `\0` written by std::snprintf()
     input.size()*delimiter.size() // for delimiters
                 );
-  for (std::string_view::size_type i{}; i < input.size(); ++i) {
-    const auto res = result.data() + elem_sz*i + delimiter.size()*i;
-    DMITIGR_ASSERT(res - result.data() + elem_sz + delimiter.size()
-      <= result.size());
-    const int count = std::snprintf(res, elem_sz + 1, fmt_str,
+  using Size = std::string_view::size_type;
+  for (Size i{}; i < input.size(); ++i) {
+    auto* const res = result.data() + elem_sz*i + delimiter.size()*i;
+    DMITIGR_ASSERT(res >= result.data() &&
+      static_cast<Size>(res - result.data()) <= result.size());
+    const auto count = std::snprintf(res, elem_sz + 1, fmt_str,
       static_cast<unsigned char>(input[i]));
-    DMITIGR_ASSERT(count == elem_sz);
+    DMITIGR_ASSERT(static_cast<Size>(count) == elem_sz);
     std::strncpy(res + count, delimiter.data(), delimiter.size());
   }
   result.resize(result.size() - 1 - delimiter.size());
@@ -698,11 +699,12 @@ inline std::string sparsed_string(const std::string_view input,
 /// Eliminates duplicate characters from string `str`.
 inline void eliminate_duplicates(std::string& str)
 {
+  using Diff = std::string::difference_type;
   auto new_size = str.size();
   for (decltype(new_size) i{}; i < new_size; ++i) {
     const char ch = str[i];
-    const auto b = begin(str) + i + 1;
-    const auto e = begin(str) + new_size;
+    const auto b = begin(str) + static_cast<Diff>(i) + 1;
+    const auto e = begin(str) + static_cast<Diff>(new_size);
     if (const auto it = find(b, e, ch); it != e) {
       (void)remove_if(it, e, [ch, &new_size](const char c)
       {

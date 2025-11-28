@@ -40,7 +40,7 @@ int main()
     }
 
     {
-      Fifo_string s(5, 'd');
+      Fifo_string s(5u, 'd');
       DMITIGR_ASSERT(s.size() == 5);
       DMITIGR_ASSERT(s.view() == "ddddd");
     }

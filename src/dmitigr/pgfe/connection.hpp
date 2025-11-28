@@ -538,10 +538,10 @@ public:
   {
     using Traits = detail::Response_callback_traits<F>;
 
-    const auto with_complete_on_exception = [this](auto&& callback)
+    const auto with_complete_on_exception = [this](auto&& cback)
     {
       try {
-        callback();
+        cback();
       } catch (...) {
         if constexpr (on_exception == Row_processing::complete) {
           Completion comp;
@@ -588,7 +588,7 @@ public:
           callback(Row{}, std::move(e));
           return Completion{};
         } else if (auto r = row()) {
-          with_complete_on_exception([this, &callback, &rowpro, &r]
+          with_complete_on_exception([&callback, &rowpro, &r]
           {
             if constexpr (!Traits::is_result_void)
               rowpro = callback(std::move(r), Error{});
@@ -600,7 +600,7 @@ public:
       } else {
         wait_response_throw();
         if (auto r = row()) {
-          with_complete_on_exception([this, &callback, &rowpro, &r]
+          with_complete_on_exception([&callback, &rowpro, &r]
           {
             if constexpr (!Traits::is_result_void)
               rowpro = callback(std::move(r));
@@ -1371,7 +1371,7 @@ private:
       last_processed_request_ = std::move(requests_.front());
       requests_.pop();
     }
-  };
+  }
 
   // ---------------------------------------------------------------------------
   // Session data helpers

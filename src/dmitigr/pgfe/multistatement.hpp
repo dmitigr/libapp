@@ -99,7 +99,7 @@ public:
    * the given criterias exists in this multistatement.
    *
    * @param metadata_key A key of the metadata.
-   * @param metadat_value A value of the metadata.
+   * @param metadata_value A value of the metadata.
    * @param offset A starting position of lookup in this multistatement.
    * @param metadata_offset A starting position of lookup in the metadata.
    *

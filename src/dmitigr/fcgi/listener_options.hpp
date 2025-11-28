@@ -32,7 +32,7 @@ class Listener_options final {
 public:
 #ifdef _WIN32
   /**
-   * @returns A new instance of the options for listeners of
+   * @brief Constructs an instance of the options for listeners of
    * Windows Named Pipes (WNP).
    *
    * @param pipe_name The pipe name.
@@ -44,7 +44,7 @@ public:
 #endif
 
   /**
-   * @returns A new instance of the options for listeners of
+   * @brief Constructs an instance of the options for listeners of
    * Unix Domain Sockets (UDS).
    *
    * @param path The path to the socket.
@@ -59,7 +59,7 @@ public:
   /**
    * @overload
    *
-   * @returns A new instance of the options for listeners of network.
+   * @brief Constructs an instance of the options for listeners of network.
    *
    * @param address The IPv4 or IPv6 address to use for binding on.
    * @param port The port number to use for binding on.
