@@ -619,7 +619,7 @@ DMITIGR_PGFE_INLINE bool Statement::is_empty() const noexcept
 DMITIGR_PGFE_INLINE bool Statement::is_query_empty() const noexcept
 {
   return all_of(cbegin(fragments_), cend(fragments_),
-    [this](const Fragment& f)
+    [](const Fragment& f) noexcept
     {
       return f.is_comment() || (f.is_text() && str::is_blank(f.str));
     });
