@@ -334,6 +334,9 @@ public:
    */
   DMITIGR_PGFE_API void replace(std::string_view name, const Statement& replacement);
 
+  /// @returns The estimated capacity of a string returned by to_string().
+  DMITIGR_PGFE_API std::string::size_type string_capacity() const;
+
   /**
    * @brief Writes the result of converting this instance to a character sequence.
    *
@@ -352,8 +355,8 @@ public:
    */
   DMITIGR_PGFE_API std::string to_string() const;
 
-  /// @returns The estimated capacity of a string returned by to_string().
-  DMITIGR_PGFE_API std::string::size_type string_capacity() const;
+  /// @returns The estimated capacity of a string returned by to_query_string().
+  DMITIGR_PGFE_API std::string::size_type query_string_capacity() const;
 
   /**
    * @returns The query string that's actually passed to a PostgreSQL server.
@@ -370,9 +373,6 @@ public:
    * `i` in range `[positional_parameter_count(), parameter_count())`.
    */
   DMITIGR_PGFE_API std::string to_query_string() const;
-
-  /// @returns The estimated capacity of a string returned by to_query_string().
-  DMITIGR_PGFE_API std::string::size_type query_string_capacity() const;
 
   /// @returns The metadata associated with this instance.
   ///
