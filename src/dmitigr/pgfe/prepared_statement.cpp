@@ -227,16 +227,16 @@ Prepared_statement::result_format() const noexcept
 
 DMITIGR_PGFE_INLINE void Prepared_statement::execute_nio()
 {
-  execute_nio__(nullptr);
+  execute_nio(nullptr);
 }
 
 DMITIGR_PGFE_INLINE void Prepared_statement::execute_nio(const Statement& statement)
 {
-  execute_nio__(&statement);
+  execute_nio(std::addressof(statement));
 }
 
 DMITIGR_PGFE_INLINE void
-Prepared_statement::execute_nio__(const Statement* const statement)
+Prepared_statement::execute_nio(const Statement* const statement)
 {
   if (!is_valid())
     throw_exception("cannot execute invalid");
@@ -369,7 +369,7 @@ DMITIGR_PGFE_INLINE Prepared_statement::Prepared_statement(
   const bool is_registered)
   : is_registered_{is_registered}
 {
-  init_connection__(std::move(state));
+  init_connection(std::move(state));
   state_->preparsed_ = static_cast<bool>(preparsed);
   if (state_->preparsed_) {
     const std::size_t pc{preparsed->parameter_count()};
@@ -401,12 +401,12 @@ DMITIGR_PGFE_INLINE Prepared_statement::Prepared_statement(
 DMITIGR_PGFE_INLINE Prepared_statement::Prepared_statement(
   std::shared_ptr<Prepared_statement::State> state) noexcept
 {
-  init_connection__(std::move(state));
+  init_connection(std::move(state));
   assert(is_invariant_ok());
 }
 
 DMITIGR_PGFE_INLINE void
-Prepared_statement::init_connection__(
+Prepared_statement::init_connection(
   std::shared_ptr<Prepared_statement::State> state) noexcept
 {
   state_ = std::move(state);
@@ -454,7 +454,7 @@ Prepared_statement::bind(const std::size_t index, Data_ptr&& data)
 }
 
 DMITIGR_PGFE_INLINE Prepared_statement&
-Prepared_statement::bind__(const std::size_t, Named_argument&& na)
+Prepared_statement::bind_value(const std::size_t, Named_argument&& na)
 {
   if (na.owns_data())
     return bind(na.name(), na.release());
@@ -463,7 +463,7 @@ Prepared_statement::bind__(const std::size_t, Named_argument&& na)
 }
 
 DMITIGR_PGFE_INLINE Prepared_statement&
-Prepared_statement::bind__(const std::size_t, const Named_argument& na)
+Prepared_statement::bind_value(const std::size_t, const Named_argument& na)
 {
   return bind(na.name(), na.data());
 }

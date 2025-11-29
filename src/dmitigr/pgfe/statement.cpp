@@ -943,7 +943,7 @@ Statement::write_string(char* result) const
       break;
     }
   }
-  return result - begin;
+  return static_cast<std::string::size_type>(result - begin);
 }
 
 DMITIGR_PGFE_INLINE std::string Statement::to_string() const
@@ -1080,7 +1080,7 @@ Statement::write_query_string(char* result, const Connection* const connection) 
     }
   }
   DMITIGR_ASSERT(bound_counter <= bound_parameter_count());
-  return result - begin;
+  return static_cast<std::string::size_type>(result - begin);
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type

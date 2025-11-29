@@ -92,7 +92,7 @@ public:
   {
     if (!has_begun_) {
       if (is_subtransaction_)
-        conn_.execute(savepoint_stmt__(R"(savepoint :"s")"));
+        conn_.execute(savepoint_stmt(R"(savepoint :"s")"));
       else
         conn_.execute("begin");
       has_begun_ = true;
@@ -108,7 +108,7 @@ public:
   /// Commits the transaction (or destroys a savepoint) if `has_begun()`.
   void commit()
   {
-    commit__(commit_stmt_);
+    commit(commit_stmt_);
   }
 
   /**
@@ -119,7 +119,7 @@ public:
    */
   void commit_and_chain()
   {
-    commit__(commit_and_chain_stmt_);
+    commit(commit_and_chain_stmt_);
     if (is_subtransaction_)
       begin();
     has_begun_ = true;
@@ -146,17 +146,17 @@ private:
   inline static Statement commit_stmt_{"commit"};
   inline static Statement commit_and_chain_stmt_{"commit and chain"};
 
-  Statement savepoint_stmt__(const std::string_view input) const
+  Statement savepoint_stmt(const std::string_view input) const
   {
     DMITIGR_ASSERT(!savepoint_.empty());
     return Statement{input}.bind("s", savepoint_);
   }
 
-  void commit__(const Statement& commit_query)
+  void commit(const Statement& commit_query)
   {
     if (has_begun_) {
       if (is_subtransaction_)
-        conn_.execute(savepoint_stmt__(R"(release :"s")"));
+        conn_.execute(savepoint_stmt(R"(release :"s")"));
       else
         conn_.execute(commit_query);
       has_begun_ = false;

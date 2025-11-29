@@ -908,14 +908,14 @@ DMITIGR_PGFE_INLINE bool Connection::has_uncompleted_request() const noexcept
 DMITIGR_PGFE_INLINE void
 Connection::prepare_nio(const Statement& statement, const std::string& name)
 {
-  prepare_nio__(statement.to_query_string(*this).c_str(),
+  prepare_nio(statement.to_query_string(*this).c_str(),
     name.c_str(), &statement); // can throw
 }
 
 DMITIGR_PGFE_INLINE void
 Connection::prepare_nio_as_is(const std::string& statement, const std::string& name)
 {
-  prepare_nio__(statement.c_str(), name.c_str(), nullptr); // can throw
+  prepare_nio(statement.c_str(), name.c_str(), nullptr); // can throw
 }
 
 #ifdef DMITIGR_PGFE_AIO
@@ -952,13 +952,13 @@ DMITIGR_PGFE_INLINE Prepared_statement
 Connection::prepare(const Statement& statement, const std::string& name)
 {
   using M = void(Connection::*)(const Statement&, const std::string&);
-  return prepare__(static_cast<M>(&Connection::prepare_nio), statement, name);
+  return prepare(static_cast<M>(&Connection::prepare_nio), statement, name);
 }
 
 DMITIGR_PGFE_INLINE Prepared_statement
 Connection::prepare_as_is(const std::string& statement, const std::string& name)
 {
-  return prepare__(&Connection::prepare_nio_as_is, statement, name);
+  return prepare(&Connection::prepare_nio_as_is, statement, name);
 }
 
 DMITIGR_PGFE_INLINE void Connection::describe_nio(const std::string& name)
@@ -990,7 +990,7 @@ DMITIGR_PGFE_INLINE Prepared_statement Connection::describe(const std::string& n
     throw Generic_exception{"cannot describe prepared statement: "
       "not ready for non-blocking IO request"};
   describe_nio(name);
-  return wait_prepared_statement__();
+  return wait_prepared_statement();
 }
 
 DMITIGR_PGFE_INLINE void Connection::unprepare_nio(const std::string& name)
@@ -1322,7 +1322,7 @@ Connection::default_notice_handler(const Notice& n) noexcept
 }
 
 DMITIGR_PGFE_INLINE void
-Connection::prepare_nio__(const char* const query, const char* const name,
+Connection::prepare_nio(const char* const query, const char* const name,
   const Statement* const preparsed)
 {
   if (!is_ready_for_nio_request())
@@ -1348,7 +1348,7 @@ Connection::prepare_nio__(const char* const query, const char* const name,
   assert(is_invariant_ok());
 }
 
-DMITIGR_PGFE_INLINE Prepared_statement Connection::wait_prepared_statement__()
+DMITIGR_PGFE_INLINE Prepared_statement Connection::wait_prepared_statement()
 {
   wait_response_throw();
   if (auto comp = completion()) {

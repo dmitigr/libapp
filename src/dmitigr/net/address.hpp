@@ -76,7 +76,7 @@ public:
     Ip_address result;
     char buf[sizeof(::in6_addr)];
     for (const auto fam : {AF_INET, AF_INET6}) {
-      if (const int r = inet_pton__(fam, str.c_str(), buf)) {
+      if (const int r = inet_pton(fam, str.c_str(), buf)) {
         if (r > 0) {
           if (fam == AF_INET)
             result.init< ::in_addr>({buf, sizeof(::in_addr)});
@@ -118,8 +118,8 @@ public:
   static bool is_valid(const std::string& str) noexcept
   {
     char buf[sizeof(::in6_addr)];
-    return inet_pton__(AF_INET, str.c_str(), buf) > 0 ||
-      inet_pton__(AF_INET6, str.c_str(), buf) > 0;
+    return inet_pton(AF_INET, str.c_str(), buf) > 0 ||
+      inet_pton(AF_INET6, str.c_str(), buf) > 0;
   }
 
   /// @returns The family of the IP address, or undefined value if `!is_valid()`.
@@ -167,7 +167,7 @@ public:
     const auto fam = to_native(family());
     const std::string::size_type result_max_size = (fam == AF_INET) ? 16 : 46;
     std::string result(result_max_size, '\0');
-    inet_ntop__(fam, binary(), result.data(),
+    inet_ntop(fam, binary(), result.data(),
       static_cast<unsigned>(result.size()));
 
     // Trimming right zeros.
@@ -184,11 +184,6 @@ private:
 
   friend int cmp(const Ip_address&, const Ip_address&) noexcept;
 
-  void* binary__()
-  {
-    return const_cast<void*>(static_cast<const Ip_address*>(this)->binary());
-  }
-
   template<typename Addr>
   void init(const std::string_view bin)
   {
@@ -204,7 +199,7 @@ private:
    *
    * @returns The value greater or equal to zero.
    */
-  static int inet_pton__(const int af, const char* const src, void* const dst)
+  static int inet_pton(const int af, const char* const src, void* const dst)
   {
     DMITIGR_ASSERT((af == AF_INET || af == AF_INET6) && src && dst);
     const int result = ::inet_pton(af, src, dst);
@@ -219,7 +214,7 @@ private:
    *
    * @param[out] dst The result parameter.
    */
-  static void inet_ntop__(const int af, const void* const src, char* const dst,
+  static void inet_ntop(const int af, const void* const src, char* const dst,
     const unsigned dst_size)
   {
     DMITIGR_ASSERT((af == AF_INET || af == AF_INET6) && src && dst &&

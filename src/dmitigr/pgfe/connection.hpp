@@ -540,6 +540,7 @@ public:
 
     const auto with_complete_on_exception = [this](auto&& cback)
     {
+      (void)this;
       try {
         cback();
       } catch (...) {
@@ -590,6 +591,7 @@ public:
         } else if (auto r = row()) {
           with_complete_on_exception([&callback, &rowpro, &r]
           {
+            (void)rowpro;
             if constexpr (!Traits::is_result_void)
               rowpro = callback(std::move(r), Error{});
             else
@@ -602,6 +604,7 @@ public:
         if (auto r = row()) {
           with_complete_on_exception([&callback, &rowpro, &r]
           {
+            (void)rowpro;
             if constexpr (!Traits::is_result_void)
               rowpro = callback(std::move(r));
             else
@@ -933,9 +936,9 @@ public:
   std::enable_if_t<detail::Response_callback_traits<F>::is_valid, Completion>
   invoke(F&& callback, std::string_view function, Types&& ... arguments)
   {
-    static_assert(is_routine_arguments_ok__<Types...>(),
+    static_assert(is_routine_arguments_ok<Types...>(),
       "named arguments cannot precede positional arguments");
-    const auto stmt = routine_query__(function,
+    const auto stmt = routine_query(function,
       "SELECT * FROM", std::forward<Types>(arguments)...);
     return execute<on_exception>(std::forward<F>(callback),
       stmt, std::forward<Types>(arguments)...);
@@ -969,9 +972,9 @@ public:
   std::enable_if_t<detail::Response_callback_traits<F>::is_valid, Completion>
   invoke_unexpanded(F&& callback, std::string_view function, Types&& ... arguments)
   {
-    static_assert(is_routine_arguments_ok__<Types...>(),
+    static_assert(is_routine_arguments_ok<Types...>(),
       "named arguments cannot precede positional arguments");
-    const auto stmt = routine_query__(function,
+    const auto stmt = routine_query(function,
       "SELECT", std::forward<Types>(arguments)...);
     return execute<on_exception>(std::forward<F>(callback),
       stmt, std::forward<Types>(arguments)...);
@@ -1004,9 +1007,9 @@ public:
   std::enable_if_t<detail::Response_callback_traits<F>::is_valid, Completion>
   call(F&& callback, std::string_view procedure, Types&& ... arguments)
   {
-    static_assert(is_routine_arguments_ok__<Types...>(),
+    static_assert(is_routine_arguments_ok<Types...>(),
       "named arguments cannot precede positional arguments");
-    const auto stmt = routine_query__(procedure,
+    const auto stmt = routine_query(procedure,
       "CALL", std::forward<Types>(arguments)...);
     return execute<on_exception>(std::forward<F>(callback),
       stmt, std::forward<Types>(arguments)...);
@@ -1423,21 +1426,21 @@ private:
   static constexpr void ignore_row(Row&&) noexcept
   {}
 
-  void prepare_nio__(const char* const query, const char* const name,
+  void prepare_nio(const char* const query, const char* const name,
     const Statement* const preparsed);
 
   template<typename M, typename T>
-  Prepared_statement prepare__(M&& prepare, T&& statement, const std::string& name)
+  Prepared_statement prepare(M&& prepare, T&& statement, const std::string& name)
   {
     if (!is_ready_for_request())
       throw Generic_exception{"cannot prepare statement: not ready for request"};
     (this->*prepare)(std::forward<T>(statement), name);
-    auto result = wait_prepared_statement__();
+    auto result = wait_prepared_statement();
     DMITIGR_ASSERT(result);
     return result;
   }
 
-  Prepared_statement wait_prepared_statement__();
+  Prepared_statement wait_prepared_statement();
 
 #ifdef DMITIGR_PGFE_AIO
   void prepare_describe_aio__(Aio_handler handler,
@@ -1488,7 +1491,7 @@ private:
   // ---------------------------------------------------------------------------
 
   template<typename ... Types>
-  std::string routine_query__(std::string_view function,
+  std::string routine_query(std::string_view function,
     std::string_view invocation, Types&& ... arguments)
   {
     if (function.empty())
@@ -1501,7 +1504,7 @@ private:
       result.reserve(64);
       result.append(invocation).append(" ");
       result.append(function).append("(");
-      result.append(routine_arguments__(
+      result.append(routine_arguments(
           std::make_index_sequence<sizeof ... (Types)>{},
           std::forward<Types>(arguments)...));
       result.append(")");
@@ -1513,35 +1516,35 @@ private:
   }
 
   template<std::size_t ... I, typename ... Types>
-  std::string routine_arguments__(std::index_sequence<I...>, Types&& ... arguments)
+  std::string routine_arguments(std::index_sequence<I...>, Types&& ... arguments)
   {
     static_assert(sizeof...(arguments) > 0);
     static_assert(sizeof...(arguments) == sizeof...(I));
     std::string result;
-    (result.append(routine_argument__(arguments, I)).append(","), ...);
+    (result.append(routine_argument(arguments, I)).append(","), ...);
     result.pop_back();
     return result;
   }
 
   template<typename T>
-  std::string routine_argument__(const T&, const std::size_t i)
+  std::string routine_argument(const T&, const std::size_t i)
   {
     return std::string{"$"}.append(std::to_string(i + 1));
   }
 
-  std::string routine_argument__(const Named_argument& na, const std::size_t)
+  std::string routine_argument(const Named_argument& na, const std::size_t)
   {
     return std::string{na.name()}.append("=>:{").append(na.name()).append("}");
   }
 
   template<typename T = void>
-  static constexpr bool is_routine_arguments_ok__() noexcept
+  static constexpr bool is_routine_arguments_ok() noexcept
   {
     return true;
   }
 
   template<typename T1, typename T2, typename ... Types>
-  static constexpr bool is_routine_arguments_ok__() noexcept
+  static constexpr bool is_routine_arguments_ok() noexcept
   {
     using U1 = std::decay_t<T1>;
     using U2 = std::decay_t<T2>;
@@ -1552,7 +1555,7 @@ private:
     constexpr bool is_named_follows_positional = !is_named_1 && is_named_2;
     constexpr bool is_ok = (is_both_positionals || is_both_named ||
       is_named_follows_positional);
-    return is_ok && is_routine_arguments_ok__<T2, Types...>();
+    return is_ok && is_routine_arguments_ok<T2, Types...>();
   }
 };
 

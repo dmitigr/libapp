@@ -334,7 +334,7 @@ public:
   template<typename ... Types>
   Prepared_statement& bind_many(Types&& ... values)
   {
-    return bind_many__(std::make_index_sequence<sizeof ... (Types)>{},
+    return bind_many_values(std::make_index_sequence<sizeof ... (Types)>{},
       std::forward<Types>(values)...);
   }
 
@@ -505,36 +505,36 @@ private:
   explicit
   Prepared_statement(std::shared_ptr<Prepared_statement::State> state) noexcept;
 
-  void init_connection__(std::shared_ptr<Prepared_statement::State> state) noexcept;
+  void init_connection(std::shared_ptr<Prepared_statement::State> state) noexcept;
   bool is_invariant_ok() const noexcept override;
   [[noreturn]] void throw_exception(std::string msg) const;
 
   // ---------------------------------------------------------------------------
 
   Prepared_statement& bind(std::size_t index, Data_ptr&& data);
-  Prepared_statement& bind__(std::size_t, Named_argument&& na);
-  Prepared_statement& bind__(std::size_t, const Named_argument& na);
+  Prepared_statement& bind_value(std::size_t, Named_argument&& na);
+  Prepared_statement& bind_value(std::size_t, const Named_argument& na);
 
   template<typename T>
-  Prepared_statement& bind__(const std::size_t index, T&& value)
+  Prepared_statement& bind_value(const std::size_t index, T&& value)
   {
     return bind(index, std::forward<T>(value));
   }
 
   template<std::size_t ... I, typename ... Types>
-  Prepared_statement& bind_many__(std::index_sequence<I...>, Types&& ... args)
+  Prepared_statement& bind_many_values(std::index_sequence<I...>, Types&& ... args)
   {
     if constexpr (!sizeof...(args))
       return *this;
     else
-      return (bind__(I, std::forward<Types>(args)), ...);
+      return (bind_value(I, std::forward<Types>(args)), ...);
   }
 
   // ---------------------------------------------------------------------------
 
-  void set_description(detail::pq::Result&& r);
-  void execute_nio(const Statement& statement);
-  void execute_nio__(const Statement* const statement);
+  void set_description(detail::pq::Result&&);
+  void execute_nio(const Statement&);
+  void execute_nio(const Statement*);
 };
 
 /**

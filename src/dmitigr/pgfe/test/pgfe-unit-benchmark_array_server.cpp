@@ -21,13 +21,13 @@ try {
   namespace pgfe = dmitigr::pgfe;
 
   auto [output_file, conn] = pgfe::test::arraybench::prepare(argc, argv);
-  conn->execute([output_file = std::move(output_file)](auto&& row)mutable
+  conn->execute([ofile = std::move(output_file)](auto&& row)mutable
   {
     const auto fc = row.field_count();
     DMITIGR_ASSERT(fc == 5);
     for (std::size_t i{}; i < fc; ++i)
-      output_file << pgfe::to<std::string>(row[0]);
-    output_file << "\n";
+      ofile << pgfe::to<std::string>(row[0]);
+    ofile << "\n";
   }, "select dat[1], dat[2], dat[3], dat[4], dat[5] from benchmark_test_array");
 } catch (const std::exception& e) {
   std::cerr << e.what() << std::endl;

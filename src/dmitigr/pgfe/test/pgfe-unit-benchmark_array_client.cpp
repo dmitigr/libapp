@@ -21,14 +21,14 @@ try {
   namespace pgfe = dmitigr::pgfe;
 
   auto [output_file, conn] = pgfe::test::arraybench::prepare(argc, argv);
-  conn->execute([output_file = std::move(output_file)](auto&& row)mutable
+  conn->execute([ofile = std::move(output_file)](auto&& row)mutable
   {
     using Array = pgfe::Array_optional1<std::string>;
     for (const auto& elem : pgfe::to<Array>(row[0])) {
       if (elem)
-        output_file << *elem;
+        ofile << *elem;
     }
-    output_file << "\n";
+    ofile << "\n";
   }, "select dat from benchmark_test_array");
 } catch (const std::exception& e) {
   std::cerr << e.what() << std::endl;

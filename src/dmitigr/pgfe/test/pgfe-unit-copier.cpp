@@ -62,7 +62,7 @@ try {
   ASSERT(copier.field_count() == 2);
   ASSERT(copier.data_format(0) == pgfe::Data_format::text);
   ASSERT(copier.data_direction() == pgfe::Data_direction::from_server);
-  int i{};
+  std::size_t i{};
   while (const auto data = copier.receive()) {
     const char* const bytes = static_cast<const char*>(data.bytes()); // with '\n'
     ASSERT(expected[i++] == bytes);

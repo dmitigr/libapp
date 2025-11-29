@@ -20,7 +20,7 @@
 
 #include <new>
 
-const char* const query = "select generate_series(1,1000000)";
+const char query[] = "select generate_series(1,1000000)";
 
 struct Result final {
   int length{};
@@ -30,7 +30,7 @@ struct Result final {
   std::unique_ptr<PGresult> res_;
 };
 
-auto result(PGresult* res)
+inline auto result(PGresult* const res) noexcept
 {
   Result r;
   r.length = PQgetlength(res, 0, 0);
@@ -41,7 +41,7 @@ auto result(PGresult* res)
   return r;
 }
 
-void test_pq()
+inline void test_pq()
 {
   auto* const conn = PQconnectdb("hostaddr=127.0.0.1 user=pgfe_test"
     " password=pgfe_test dbname=pgfe_test connect_timeout=7");
@@ -82,7 +82,7 @@ void test_pq()
   PQfinish(conn);
 }
 
-void test_pgfe()
+inline void test_pgfe()
 {
   namespace pgfe = dmitigr::pgfe;
   const auto conn = pgfe::Connection::make(pgfe::Connection_options{}

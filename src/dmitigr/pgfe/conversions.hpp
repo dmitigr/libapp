@@ -116,7 +116,7 @@ struct Numeric_string_conversions_base {
 
 protected:
   template<typename R, typename ... Types>
-  static Type to_numeric__(const std::string& text,
+  static Type to_numeric(const std::string& text,
     R(*converter)(const std::string&, std::size_t*, Types ...))
   {
     Type result;
@@ -146,7 +146,7 @@ struct Numeric_string_conversions<short int> final
   template<typename ... Types>
   static Type to_type(const std::string& text, Types&& ...)
   {
-    const int result = to_numeric__(text, &std::stoi);
+    const int result = to_numeric(text, &std::stoi);
     constexpr auto max = std::numeric_limits<short int>::max();
     if (result > max)
       throw Generic_exception{"cannot convert to type: numeric value "
@@ -166,7 +166,7 @@ struct Numeric_string_conversions<int> final
   template<typename ... Types>
   static Type to_type(const std::string& text, Types&& ...)
   {
-    return to_numeric__(text, &std::stoi);
+    return to_numeric(text, &std::stoi);
   }
 };
 
@@ -180,7 +180,7 @@ struct Numeric_string_conversions<long int> final
   template<typename ... Types>
   static Type to_type(const std::string& text, Types&& ...)
   {
-    return to_numeric__(text, &std::stol);
+    return to_numeric(text, &std::stol);
   }
 };
 
@@ -194,7 +194,7 @@ struct Numeric_string_conversions<long long int> final
   template<typename ... Types>
   static Type to_type(const std::string& text, Types&& ...)
   {
-    return to_numeric__(text, &std::stoll);
+    return to_numeric(text, &std::stoll);
   }
 };
 
@@ -208,7 +208,7 @@ struct Numeric_string_conversions<float> final
   template<typename ... Types>
   static Type to_type(const std::string& text, Types&& ...)
   {
-    return to_numeric__(text, &std::stof);
+    return to_numeric(text, &std::stof);
   }
 };
 
@@ -222,7 +222,7 @@ struct Numeric_string_conversions<double> final
   template<typename ... Types>
   static Type to_type(const std::string& text, Types&& ...)
   {
-    return to_numeric__(text, &std::stod);
+    return to_numeric(text, &std::stod);
   }
 };
 
@@ -236,7 +236,7 @@ struct Numeric_string_conversions<long double> final
   template<typename ... Types>
   static Type to_type(const std::string& text, Types&& ...)
   {
-    return to_numeric__(text, &std::stold);
+    return to_numeric(text, &std::stold);
   }
 };
 
@@ -352,7 +352,7 @@ struct Bool_string_conversions final {
   template<typename ... Types>
   static Type to_type(const std::string& text, Types&& ...)
   {
-    return to_type__(text.c_str(), text.size());
+    return to_type_from_text(text.c_str(), text.size());
   }
 
   template<typename ... Types>
@@ -364,7 +364,7 @@ struct Bool_string_conversions final {
 private:
   friend struct Bool_data_conversions;
 
-  static Type to_type__(const char* const text, const std::size_t size)
+  static Type to_type_from_text(const char* const text, const std::size_t size)
   {
     if (!text)
       throw Generic_exception{"cannot convert to bool: null input given"};
@@ -403,7 +403,7 @@ struct Bool_data_conversions final {
         throw Generic_exception{"cannot convert to bool: invalid input size"};
       return bytes[0];
     } else
-      return Bool_string_conversions::to_type__(bytes, data.size());
+      return Bool_string_conversions::to_type_from_text(bytes, data.size());
   }
 
   template<typename ... Types>

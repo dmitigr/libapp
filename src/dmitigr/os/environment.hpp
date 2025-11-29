@@ -62,12 +62,12 @@ inline std::string current_username()
   struct passwd pwd;
   struct passwd *pwd_ptr{};
   const uid_t uid = geteuid();
-  const std::size_t bufsz = []()
+  const std::size_t bufsz = []()noexcept
   {
-    auto result = sysconf(_SC_GETPW_R_SIZE_MAX);
-    if (result == -1)
-      result = 16384;
-    return result;
+    auto res = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (res == -1)
+      res = 16384;
+    return static_cast<std::size_t>(res);
   }();
   const std::unique_ptr<char[]> buf{new char[bufsz]};
   const int s = getpwuid_r(uid, &pwd, buf.get(), bufsz, &pwd_ptr);

@@ -50,10 +50,11 @@ DMITIGR_PGFE_INLINE std::size_t Multistatement::size() const noexcept
 
 DMITIGR_PGFE_INLINE std::size_t Multistatement::empty_query_count() const noexcept
 {
-  return count_if(vector().cbegin(), vector().cend(), [](const auto& stmt)noexcept
-  {
-    return stmt.is_query_empty();
-  });
+  return static_cast<std::size_t>(
+    count_if(vector().cbegin(), vector().cend(), [](const auto& stmt)noexcept
+    {
+      return stmt.is_query_empty();
+    }));
 }
 
 DMITIGR_PGFE_INLINE bool Multistatement::is_empty() const noexcept

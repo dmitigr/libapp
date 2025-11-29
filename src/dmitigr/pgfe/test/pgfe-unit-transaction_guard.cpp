@@ -37,27 +37,27 @@ try {
   ASSERT(!conn->is_transaction_uncommitted());
 
   {
-    Transaction_guard tg{*conn};
+    Transaction_guard tg1{*conn};
     ASSERT(conn->is_transaction_uncommitted());
     {
-      Transaction_guard tg{*conn, "p2"};
+      Transaction_guard tg2{*conn, "p2"};
     } // rollback to savepoint p2
     ASSERT(conn->is_transaction_uncommitted());
   } // rollback
   ASSERT(!conn->is_transaction_uncommitted());
 
   {
-    Transaction_guard tg{*conn};
+    Transaction_guard tg1{*conn};
     ASSERT(conn->is_transaction_uncommitted());
-    ASSERT(!tg.is_subtransaction());
+    ASSERT(!tg1.is_subtransaction());
     {
-      Transaction_guard tg{*conn};
+      Transaction_guard tg2{*conn};
       ASSERT(conn->is_transaction_uncommitted());
-      ASSERT(tg.is_subtransaction());
+      ASSERT(tg2.is_subtransaction());
       {
-        Transaction_guard tg{*conn};
+        Transaction_guard tg3{*conn};
         ASSERT(conn->is_transaction_uncommitted());
-        ASSERT(tg.is_subtransaction());
+        ASSERT(tg3.is_subtransaction());
       } // rollback to savepoint pgfe_savepoint
       ASSERT(conn->is_transaction_uncommitted());
     }  // rollback to savepoint pgfe_savepoint
@@ -85,19 +85,19 @@ try {
 
   ASSERT(conn->is_connected() && !conn->is_transaction_uncommitted());
   try {
-    Transaction_guard t{*conn};
+    Transaction_guard tg1{*conn};
     {
-      Transaction_guard st1{*conn};
+      Transaction_guard tg2{*conn};
       {
-        Transaction_guard st2{*conn};
-        st2.commit(); // release pgfe_savepoint
+        Transaction_guard tg3{*conn};
+        tg3.commit(); // release pgfe_savepoint
         ASSERT(conn->is_transaction_uncommitted());
       }
-      st1.commit();
+      tg2.commit();
     }
-    t.commit_and_chain();
+    tg1.commit_and_chain();
     {
-      Transaction_guard t{*conn};
+      Transaction_guard tg{*conn};
       throw 1;
     }
   } catch (...) {

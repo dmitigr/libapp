@@ -754,12 +754,9 @@ to_container_of_optionals(Container<T, Allocator<T>>&& container)
  *   - input data - Data_format::text;
  *   - output data - Data_format::text.
  *
- * @par Requirements
- * @parblock
- * Requirements to the type T of elements of array:
- *   - default-constructible, copy-constructible;
- *   - convertible (there shall be a suitable specialization of Conversions).
- * @endparblock
+ * @par Requirements to the type T of elements of array
+ *   -# default-constructible, copy-constructible;
+ *   -# convertible (there shall be a suitable specialization of Conversions).
  *
  * @tparam T The type of the elements of the Container (which may be a container
  * of optionals).
@@ -785,12 +782,9 @@ struct Conversions<Container<std::optional<T>, Allocator<std::optional<T>>>> fin
  *   - input data  - Data_format::text;
  *   - output data - Data_format::text.
  *
- * @par Requirements
- * @parblock
- * Requirements to the type T of elements of array:
- *   - default-constructible, copy-constructible;
- *   - convertible (there shall be a suitable specialization of Conversions).
- * @endparblock
+ * @par Requirements to the type T of elements of array
+ *   -# default-constructible, copy-constructible;
+ *   -# convertible (there shall be a suitable specialization of Conversions).
  *
  * @tparam T The type of the elements of the Container (which may be a container).
  * @tparam Container The container template class, such as `std::vector`.
