@@ -96,7 +96,7 @@ struct Startup_message_view final {
   std::string_view params;
 
   template<class F>
-  void enum_params(F&& callback) const noexcept
+  void for_each_param(F&& callback) const noexcept
   {
     for (const char* name_offset{params.data()}; *name_offset != 0;) {
       const std::string_view name{name_offset};
@@ -163,7 +163,7 @@ inline void serialize(char* const message, const Startup_message_view& smv) noex
   std::memcpy(message + sizeof(message_size), &smv.protocol, sizeof(smv.protocol));
 
   auto* name = message + sizeof(message_size) + sizeof(smv.protocol);
-  smv.enum_params([&name](const std::string_view nm, const std::string_view val)
+  smv.for_each_param([&name](const std::string_view nm, const std::string_view val)
   {
     std::memcpy(name, nm.data(), nm.size());
     name[nm.size()] = 0;
@@ -188,7 +188,7 @@ inline std::ostream& operator<<(std::ostream& os, const Startup_message_view& sm
        << smv.protocol
        << ',';
     os << '{';
-    smv.enum_params([&os, called = false](const auto nm, const auto val)mutable
+    smv.for_each_param([&os, called = false](const auto nm, const auto val)mutable
     {
       if (called)
         os << ',';
