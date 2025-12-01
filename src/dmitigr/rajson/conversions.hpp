@@ -17,12 +17,8 @@
 #ifndef DMITIGR_RAJSON_CONVERSIONS_HPP
 #define DMITIGR_RAJSON_CONVERSIONS_HPP
 
-#include "fwd.hpp" // must be first
-#include "../3rdparty/rapidjson/document.h"
-#include "../3rdparty/rapidjson/schema.h"
-#include "../3rdparty/rapidjson/stringbuffer.h"
-#include "../3rdparty/rapidjson/writer.h"
 #include "exceptions.hpp"
+#include "rapidjson.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -186,7 +182,7 @@ private:
     if (sizeof(T) < sizeof(U))
       throw Exception{"cannot convert JSON value to numeric:"
         " result size too small"};
-  };
+  }
 };
 
 /// Full specialization for `bool`.

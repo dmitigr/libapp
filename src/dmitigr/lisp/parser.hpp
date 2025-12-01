@@ -35,7 +35,7 @@ struct Parse_result final {
 };
 
 /// @returns The error or parse result.
-Ret<Parse_result> parse(const std::string_view input)
+inline Ret<Parse_result> parse(const std::string_view input)
 {
   using Ret = Ret<Parse_result>;
 
@@ -132,11 +132,23 @@ Ret<Parse_result> parse(const std::string_view input)
     case space:
       if (!std::isspace(ch)) {
         switch (ch) {
-        case '#':  state = spec; break;
-        case '$':  state = var, prefix = ch; break;
-        case '@':  state = var, prefix = ch; break;
-        case '\'': state = str;   break;
-        case '(':  state = expr;  break;
+        case '#':
+          state = spec;
+          break;
+        case '$':
+          state = var;
+          prefix = ch;
+          break;
+        case '@':
+          state = var;
+          prefix = ch;
+          break;
+        case '\'':
+          state = str;
+          break;
+        case '(':
+          state = expr;
+          break;
         default:
           if (is_num_char(ch)) {
             state = num;
@@ -204,12 +216,18 @@ Ret<Parse_result> parse(const std::string_view input)
     ++pos;
   }
   switch (state) {
-  case space: return Ret::make_result(pos);
-  case spec: return parse_spec(data, pos);
-  case var: return parse_var(std::move(data), pos, prefix);
-  case num: return parse_num(data, pos);
-  case fun: return parse_fun(std::move(data), pos);
-  default: return Ret::make_error(Errc::parse_incomplete, pos);
+  case space:
+    return Ret::make_result(pos);
+  case spec:
+    return parse_spec(data, pos);
+  case var:
+    return parse_var(std::move(data), pos, prefix);
+  case num:
+    return parse_num(data, pos);
+  case fun:
+    return parse_fun(std::move(data), pos);
+  default:
+    return Ret::make_error(Errc::parse_incomplete, pos);
   }
 }
 

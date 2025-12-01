@@ -746,7 +746,8 @@ void trim(std::string& str, const Trim tr, const Predicate& predicate)
   const auto te = static_cast<bool>(tr & Trim::rhs) ?
     find_if_not(rbegin(str), rend(str), predicate).base() : e;
 
-  const std::string::size_type new_size = te - tb;
+  DMITIGR_ASSERT(te >= tb);
+  const auto new_size = static_cast<std::string::size_type>(te - tb);
   if (new_size != str.size()) {
     if (tb != b)
       move(tb, te, b);
@@ -792,8 +793,12 @@ std::basic_string_view<Ch, Tr> trimmed(const std::basic_string_view<Ch, Tr> str,
   }
   const auto te = static_cast<bool>(tr & Trim::rhs) ?
     std::find_if_not(rbegin(str), rend(str), predicate).base() : e;
-  const auto new_size = te - tb;
-  return str.substr(tb - b, new_size);
+  DMITIGR_ASSERT(tb >= b);
+  DMITIGR_ASSERT(te >= tb);
+  using Size = typename std::basic_string_view<Ch, Tr>::size_type;
+  const auto offset = static_cast<Size>(tb - b);
+  const auto new_size = static_cast<Size>(te - tb);
+  return str.substr(offset, new_size);
 }
 
 /// @overload

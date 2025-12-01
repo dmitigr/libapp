@@ -32,6 +32,7 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "AppleClang|Clang|GNU")
     -Wall
     -Wextra
     #-Wstrict-prototypes
+    -Wno-sign-compare
     -Wno-unused-parameter)
 endif()
 

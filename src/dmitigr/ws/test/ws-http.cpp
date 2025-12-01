@@ -30,8 +30,8 @@ class Connection final : public ws::Connection {
   }
 
   void handle_open() noexcept override {}
-  void handle_close(int, std::string_view) noexcept override {};
-  void handle_drain() noexcept override {};
+  void handle_close(int, std::string_view) noexcept override {}
+  void handle_drain() noexcept override {}
 };
 
 class Server final : public ws::Server {

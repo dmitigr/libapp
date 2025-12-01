@@ -26,13 +26,14 @@ dmitigr_libs_set_library_info(rajson 0 0 0 "RapidJSON wrapper")
 
 set(dmitigr_rajson_headers
   conversions.hpp
+  conversions_enum.hpp
   document.hpp
   emplace.hpp
   errc.hpp
   errctg.hpp
   exceptions.hpp
-  fwd.hpp
   path.hpp
+  rapidjson.hpp
   value_view.hpp
   )
 

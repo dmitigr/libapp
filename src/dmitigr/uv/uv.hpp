@@ -24,7 +24,15 @@
 #define NOMINMAX
 #endif
 #endif
+
+#ifdef __GNUG__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreserved-identifier"
+#endif
 #include <uv.h>
+#ifdef __GNUG__
+#pragma GCC diagnostic pop
+#endif
 
 #include <cstring>
 #include <functional>
@@ -231,7 +239,7 @@ public:
     : Super{loop, uv_timer_init}
   {}
 
-  /// @returns The loop the handle is running on.
+  /// The loop the handle is running on.
   using Super::loop;
 
   /// Starts the handle.

@@ -18,9 +18,9 @@
 #define DMITIGR_RAJSON_DOCUMENT_HPP
 
 #include "../base/stream.hpp"
-#include "../rajson/conversions.hpp"
-#include "../rajson/value_view.hpp"
+#include "conversions.hpp"
 #include "exceptions.hpp"
+#include "value_view.hpp"
 
 #include <exception>
 #include <filesystem>
@@ -51,8 +51,6 @@ public:
    *
    * @par Requires
    * `!file.empty() && std::filesystem::exists(file)`.
-   *
-   * @returns The new instance.
    */
   explicit Document(const std::filesystem::path& file)
   {
@@ -101,13 +99,7 @@ public:
   }
 
   /// @returns Parsed JSON as rajson::Value_view.
-  const auto json() const noexcept
-  {
-    return rajson::Value_view{doc_};
-  }
-
-  /// @overload
-  auto json() noexcept
+  auto json() const noexcept
   {
     return rajson::Value_view{doc_};
   }

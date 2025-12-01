@@ -60,9 +60,12 @@ private:
 };
 
 #ifdef UWSC_USE_UV
-void handle_signal(uv_signal_t* const sig, const int /*signum*/) noexcept
+inline void
+handle_signal(uv_signal_t* const sig, const int /*signum*/) noexcept
 #else
-void handle_signal(struct ev_loop* const loop, ev_signal* const sig, const int /*revents*/) noexcept
+inline void
+handle_signal(struct ev_loop* const loop, ev_signal* const sig,
+  const int /*revents*/) noexcept
 #endif
 {
   if (sig->signum == SIGINT) {
@@ -75,7 +78,7 @@ void handle_signal(struct ev_loop* const loop, ev_signal* const sig, const int /
   }
 }
 
-Connection make_connection(uwsc_loop* const loop)
+inline Connection make_connection(uwsc_loop* const loop)
 {
   return Connection{loop, wscl::Connection_options{}
     .set_host("localhost")

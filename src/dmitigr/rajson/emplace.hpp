@@ -17,12 +17,12 @@
 #ifndef DMITIGR_RAJSON_EMPLACE_HPP
 #define DMITIGR_RAJSON_EMPLACE_HPP
 
-#include "../3rdparty/rapidjson/document.h"
 #include "../base/assert.hpp"
 #include "../base/error.hpp"
 
 #include "errctg.hpp"
 #include "path.hpp"
+#include "rapidjson.hpp"
 
 #include <utility>
 

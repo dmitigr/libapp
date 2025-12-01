@@ -80,7 +80,7 @@ public:
    * @par Requires
    * `!value` or `*value` is a valid port.
    */
-  DMITIGR_WS_API Server_options& set_port(std::optional<int> port);
+  DMITIGR_WS_API Server_options& set_port(std::optional<int> value);
 
   /// @returns The current value of the option.
   DMITIGR_WS_API std::optional<int> port() const noexcept;

@@ -121,14 +121,14 @@ public:
       template<class, class> class Container>
     std::optional<T> optional(const Container<U, A>& valid_set) const
     {
-      return optional__<T>(valid_set);
+      return call_optional_with_predicate<T>(valid_set);
     }
 
     /// @overload
     template<typename T, typename U>
     std::optional<T> optional(const std::initializer_list<U>& valid_set) const
     {
-      return optional__<T>(valid_set);
+      return call_optional_with_predicate<T>(valid_set);
     }
 
     /**
@@ -185,7 +185,7 @@ public:
     std::string namepos_;
 
     template<typename T, typename U>
-    std::optional<T> optional__(const U& valid_set) const
+    std::optional<T> call_optional_with_predicate(const U& valid_set) const
     {
       return optional<T>([&valid_set](const T& v)
       {
@@ -246,7 +246,7 @@ public:
   /// Constructs an instance that represents a normal request.
   Request(const Null /*id*/, const std::string_view method)
   {
-    init_request__(rapidjson::Value{}, method);
+    init_request(rapidjson::Value{}, method);
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -254,7 +254,7 @@ public:
   template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
   Request(const T id, const std::string_view method)
   {
-    init_request__(rapidjson::Value{id}, method);
+    init_request(rapidjson::Value{id}, method);
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -262,14 +262,14 @@ public:
   Request(const std::string_view id, const std::string_view method)
   {
     // Attention: calling allocator() assumes constructed rep_!
-    init_request__(rapidjson::Value{id.data(), id.size(), allocator()}, method);
+    init_request(rapidjson::Value{id.data(), id.size(), allocator()}, method);
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
   /// Constructs an instance that represents a notification.
   explicit Request(const std::string_view method)
   {
-    init_notification__(method);
+    init_notification(method);
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -488,11 +488,11 @@ public:
   void set_parameter(const std::size_t position, rapidjson::Value value)
   {
     auto& alloc = allocator();
-    rapidjson::Value* p = params__();
+    rapidjson::Value* p = params_non_const();
     if (!p) {
       rep_.AddMember("params", rapidjson::Value{rapidjson::Type::kArrayType},
         alloc);
-      p = params__();
+      p = params_non_const();
       p->Reserve(8, alloc);
     } else if (!p->IsArray())
       throw Exception{"cannot mix different parameter notations in same "
@@ -536,11 +536,11 @@ public:
         "JSON-RPC request"};
 
     auto& alloc = allocator();
-    rapidjson::Value* p = params__();
+    rapidjson::Value* p = params_non_const();
     if (!p) {
       rep_.AddMember("params",
         rapidjson::Value{rapidjson::Type::kObjectType}, alloc);
-      p = params__();
+      p = params_non_const();
     } else if (!p->IsObject())
       throw Exception{"cannot mix different parameter notations in same "
         "JSON-RPC request"};
@@ -583,7 +583,7 @@ public:
    */
   void reset_parameters(const Parameters_notation value)
   {
-    if (auto* const p = params__()) {
+    if (auto* const p = params_non_const()) {
       if (value == Parameters_notation::positional) {
         if (p->IsArray())
           p->Clear();
@@ -693,7 +693,7 @@ private:
       (ii == e || ii->value.IsInt() || ii->value.IsString() || ii->value.IsNull());
   }
 
-  rapidjson::Value* params__() noexcept
+  rapidjson::Value* params_non_const() noexcept
   {
     return const_cast<rapidjson::Value*>(
       static_cast<const Request*>(this)->params());
@@ -766,7 +766,7 @@ private:
     throw Error{Server_errc::parse_error, null};
   }
 
-  void init_notification__(const std::string_view method)
+  void init_notification(const std::string_view method)
   {
     auto& alloc = allocator();
     rep_.AddMember("jsonrpc", "2.0", alloc);
@@ -774,9 +774,9 @@ private:
       rapidjson::Value{method.data(), method.size(), alloc}, alloc);
   }
 
-  void init_request__(rapidjson::Value&& id, const std::string_view method)
+  void init_request(rapidjson::Value&& id, const std::string_view method)
   {
-    init_notification__(method);
+    init_notification(method);
     rep_.AddMember("id", std::move(id), allocator());
   }
 };

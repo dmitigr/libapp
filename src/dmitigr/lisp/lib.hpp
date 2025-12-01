@@ -22,6 +22,7 @@
 #include "expr.hpp"
 
 #include <cassert>
+#include <cstddef>
 #include <filesystem>
 #include <mutex>
 
@@ -109,12 +110,12 @@ inline Ret_expr fun_set(const Tup_expr& fun, Env& env)
 {
   assert(fun.fun_name() == "set");
   const auto args = fun.tail();
-  const auto asz = fun.tail_size();
+  const auto asz = static_cast<std::ptrdiff_t>(fun.tail_size());
   if (asz % 2)
     return Err(Errc::fun_usage, fun.fun_name());
 
   auto result = Nil_expr::instance();
-  for (std::size_t i{}; i < asz; i += 2) {
+  for (std::ptrdiff_t i{}; i < asz; i += 2) {
     const auto& var = args[i];
     if (is_var(var)) {
       auto r = args[i + 1]->eval(env);
@@ -320,7 +321,7 @@ inline Ret_expr fun_catch(const Tup_expr& fun, Env& env)
 {
   assert(fun.fun_name() == "catch");
   const auto args = fun.tail();
-  const auto asz = fun.tail_size();
+  const auto asz = static_cast<std::ptrdiff_t>(fun.tail_size());
   if (asz < 3 || !(asz % 2))
     return Err{Errc::fun_usage, fun.fun_name()};
 
@@ -328,7 +329,7 @@ inline Ret_expr fun_catch(const Tup_expr& fun, Env& env)
   auto rbody = fun.back()->eval(env);
   if (!rbody) {
     // Search for a handler associated with an error.
-    for (std::size_t i{}; i < asz - 1; i += 2) {
+    for (std::ptrdiff_t i{}; i < asz - 1; i += 2) {
       if (auto r = args[i]->eval(env)) {
         if (is_err(r.res)) {
           if (rbody.err == r.res->err())
@@ -553,14 +554,14 @@ inline Ret_expr fun_cmp(const Tup_expr& fun, Env& env, const Op& op)
 
   const auto cmp = [&env, &op](auto first, const auto last) -> Ret<bool>
   {
-    const auto [err, lhs] = (*first)->eval(env);
-    if (err)
-      return err;
+    const auto [lerr, lhs] = (*first)->eval(env);
+    if (lerr)
+      return lerr;
 
     for (++first; first != last; ++first) {
-      const auto [err, rhs] = (*first)->eval(env);
-      if (err)
-        return err;
+      const auto [rerr, rhs] = (*first)->eval(env);
+      if (rerr)
+        return rerr;
       else if (auto r = lhs->cmp(rhs)) {
         if (!op(r.res))
           return false;
@@ -1112,7 +1113,7 @@ inline Ret_expr fun_fs_file_data(const Tup_expr& fun, Env& env)
 // =============================================================================
 
 /// Initializes the Lisp Standard Library.
-void init()
+inline void init()
 {
   funers() = {
     // binders

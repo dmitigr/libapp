@@ -103,8 +103,6 @@ public:
    * Note, the value of parameter "param2" will be parsed as: "2" in
    * case 1, "" (empty string) in case 2 and `std::nullopt` in case 3.
    *
-   * @returns A new instance of this class.
-   *
    * @param input - unparsed (possibly percent-encoded) query string
    */
   explicit Query_string(const std::string_view input = {})

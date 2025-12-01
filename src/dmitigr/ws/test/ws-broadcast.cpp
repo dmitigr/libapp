@@ -25,7 +25,7 @@
 namespace uv = dmitigr::uv;
 namespace ws = dmitigr::ws;
 
-std::atomic_bool is_running;
+inline std::atomic_bool is_running{false};
 
 class Connection;
 

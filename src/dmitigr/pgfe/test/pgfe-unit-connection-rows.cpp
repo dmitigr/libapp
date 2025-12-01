@@ -22,7 +22,7 @@ struct Person final {
   unsigned int age;
 };
 
-void print(const Person& p)
+inline void print(const Person& p)
 {
   std::cout << "{\n";
   std::cout << "  id: " << p.id << "\n";

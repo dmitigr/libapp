@@ -79,7 +79,7 @@ int main()
       DMITIGR_ASSERT(req.parameter(0).value()->GetInt() == 10);
       DMITIGR_ASSERT(req.parameter(1));
       DMITIGR_ASSERT(req.parameter(1).value()->IsFloat());
-      DMITIGR_ASSERT(req.parameter(1).value()->GetFloat() == 5.5);
+      DMITIGR_ASSERT(req.parameter(1).value()->GetFloat() == 5.5f);
       DMITIGR_ASSERT(req.to_string() == R"({"jsonrpc":"2.0","method":"subtract","id":1,"params":[10,5.5]})");
     }
 

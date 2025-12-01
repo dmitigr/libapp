@@ -177,7 +177,7 @@ DMITIGR_WS_INLINE Server* Connection::server() noexcept
   return const_cast<Server*>(static_cast<const Connection*>(this)->server());
 }
 
-bool Connection::is_connected__() const noexcept
+bool Connection::is_connected_nts() const noexcept
 {
   return rep_ && !rep_->is_closed();
 }
@@ -185,7 +185,7 @@ bool Connection::is_connected__() const noexcept
 DMITIGR_WS_INLINE bool Connection::is_connected() const noexcept
 {
   const std::lock_guard lg{mut_};
-  return is_connected__();
+  return is_connected_nts();
 }
 
 DMITIGR_WS_INLINE const net::Ip_address& Connection::remote_ip_address() const noexcept
@@ -202,13 +202,13 @@ DMITIGR_WS_INLINE const net::Ip_address& Connection::local_ip_address() const no
 
 DMITIGR_WS_INLINE std::size_t Connection::buffered_amount() const noexcept
 {
-  return is_connected__() ? rep_->buffered_amount() : 0;
+  return is_connected_nts() ? rep_->buffered_amount() : 0;
 }
 
 DMITIGR_WS_INLINE bool Connection::send(const std::string_view payload,
   const Data_format format)
 {
-  if (!is_connected__())
+  if (!is_connected_nts())
     throw Exception{"cannot send data via invalid WebSocket connection"};
 
   return rep_->send(payload, format);
@@ -227,16 +227,16 @@ DMITIGR_WS_INLINE bool Connection::send_binary(const std::string_view payload)
 DMITIGR_WS_INLINE void Connection::close(const int code,
   const std::string_view reason) noexcept
 {
-  if (is_connected__())
+  if (is_connected_nts())
     rep_->close(code, reason);
-  DMITIGR_ASSERT(!is_connected__());
+  DMITIGR_ASSERT(!is_connected_nts());
 }
 
 DMITIGR_WS_INLINE void Connection::abort() noexcept
 {
-  if (is_connected__())
+  if (is_connected_nts())
     rep_->abort();
-  DMITIGR_ASSERT(!is_connected__());
+  DMITIGR_ASSERT(!is_connected_nts());
 }
 
 } // namespace dmitigr::ws

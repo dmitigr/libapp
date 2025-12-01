@@ -17,10 +17,21 @@
 #ifndef DMITIGR_WSCL_CONNECTION_HPP
 #define DMITIGR_WSCL_CONNECTION_HPP
 
+#ifdef __GNUG__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdocumentation"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wreserved-identifier"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+#include "../3rdparty/uwsc/uwsc.h"
+#ifdef __GNUG__
+#pragma GCC diagnostic pop
+#endif
+
 #include "basics.hpp"
 #include "connection_options.hpp"
 #include "dll.hpp"
-#include "../3rdparty/uwsc/uwsc.h"
 
 #include <memory>
 
@@ -151,15 +162,15 @@ private:
   struct Rep;
   std::unique_ptr<Rep> rep_;
 
-  static void handle_open__(uwsc_client* cl) noexcept;
+  static void prehandle_open(uwsc_client*) noexcept;
 
-  static void handle_message__(uwsc_client* cl, void* data, std::size_t size,
+  static void prehandle_message(uwsc_client*, void* data, std::size_t size,
     bool binary) noexcept;
 
-  static void handle_error__(uwsc_client* cl, int code,
+  static void prehandle_error(uwsc_client*, int code,
     const char* message) noexcept;
 
-  static void handle_close__(uwsc_client* cl, int code,
+  static void prehandle_close(uwsc_client*, int code,
     const char* reason) noexcept;
 
   static Connection* self(uwsc_client* cl) noexcept;

@@ -79,7 +79,7 @@ public:
   Error()
     : Error{Server_errc::server_error, std::string{}}
   {
-    init__(rapidjson::Value{}, std::string{});
+    init(rapidjson::Value{}, std::string{});
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -88,7 +88,7 @@ public:
     const std::string& message = {})
     : Error{code, message}
   {
-    init__(rapidjson::Value{}, message);
+    init(rapidjson::Value{}, message);
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -98,7 +98,7 @@ public:
     const std::string& message = {})
     : Error{code, message}
   {
-    init__(rapidjson::Value{id}, message);
+    init(rapidjson::Value{id}, message);
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -108,7 +108,7 @@ public:
     : Error{code, message}
   {
     // Attention: calling allocator() assumes constructed rep_!
-    init__(rapidjson::Value{id.data(), id.size(), allocator()}, message);
+    init(rapidjson::Value{id.data(), id.size(), allocator()}, message);
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -241,7 +241,7 @@ private:
     const std::string& message = {})
     : Error{code, message}
   {
-    init__(std::move(id), message);
+    init(std::move(id), message);
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -250,7 +250,7 @@ private:
     const std::string& message = {})
     : Error{code, message}
   {
-    init__(rapidjson::Value{id, allocator()}, message);
+    init(rapidjson::Value{id, allocator()}, message);
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -273,7 +273,7 @@ private:
     // Uninitialized, so invariant is invalid here!
   }
 
-  void init__(rapidjson::Value&& id, const std::string& message)
+  void init(rapidjson::Value&& id, const std::string& message)
   {
     auto& alloc = allocator();
     rep_->AddMember("jsonrpc", "2.0", alloc);
@@ -297,14 +297,14 @@ public:
   /// The default constructor.
   Result()
   {
-    init__(rapidjson::Value{});
+    init(rapidjson::Value{});
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
   /// The constructor.
   explicit Result(const int id)
   {
-    init__(rapidjson::Value{id});
+    init(rapidjson::Value{id});
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -312,7 +312,7 @@ public:
   explicit Result(const std::string_view id)
   {
     // Attention: calling allocator() assumes constructed rep_!
-    init__(rapidjson::Value{id.data(), id.size(), allocator()});
+    init(rapidjson::Value{id.data(), id.size(), allocator()});
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -381,7 +381,7 @@ public:
   /// Sets the mandatory information about the success.
   void set_data(rapidjson::Value value)
   {
-    data__() = std::move(value);
+    data_non_const() = std::move(value);
   }
 
   /// @overload
@@ -410,7 +410,7 @@ private:
       (mc == 3);
   }
 
-  rapidjson::Value& data__()
+  rapidjson::Value& data_non_const()
   {
     return const_cast<rapidjson::Value&>(
       static_cast<const Result*>(this)->data());
@@ -419,7 +419,7 @@ private:
   // Used by Request.
   explicit Result(const rapidjson::Value& id)
   {
-    init__(rapidjson::Value{id, allocator()});
+    init(rapidjson::Value{id, allocator()});
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
@@ -430,7 +430,7 @@ private:
     DMITIGR_ASSERT(is_invariant_ok());
   }
 
-  void init__(rapidjson::Value&& id)
+  void init(rapidjson::Value&& id)
   {
     auto& alloc = allocator();
     rep_.AddMember("jsonrpc", "2.0", alloc);

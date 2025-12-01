@@ -372,7 +372,7 @@ inline lisp::Ret_expr fun_web_tpl(const lisp::Tup_expr& fun, lisp::Env& env)
 
 // =============================================================================
 
-void init_lisp()
+inline void init_lisp()
 {
   lisp::lib::init();
   auto& funers = lisp::funers();

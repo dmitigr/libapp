@@ -58,7 +58,7 @@ int main() try {
   // Invoking the function.
   conn->invoke([](auto&& r)
   {
-    std::printf("cos(%f) = %f\n", .5f, to<float>(r.data()));
+    std::printf("cos(%f) = %f\n", .5, to<double>(r.data()));
   }, "cos", .5f);
 
   // Provoking the syntax error.

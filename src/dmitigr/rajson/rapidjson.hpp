@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DMITIGR_RAJSON_FWD_HPP
-#define DMITIGR_RAJSON_FWD_HPP
+#ifndef DMITIGR_RAJSON_RAPIDJSON_HPP
+#define DMITIGR_RAJSON_RAPIDJSON_HPP
 
 #include <cstddef>
 #ifndef RAPIDJSON_HAS_STDSTRING
@@ -24,10 +24,26 @@
 #ifndef RAPIDJSON_NO_SIZETYPEDEFINE
 #define RAPIDJSON_NO_SIZETYPEDEFINE
 #endif
+
 namespace rapidjson {
 using SizeType = std::size_t;
 } // namespace rapidjson
 
+#ifdef __GNUG__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdocumentation"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
 #include "../3rdparty/rapidjson/fwd.h"
+#include "../3rdparty/rapidjson/document.h"
+#include "../3rdparty/rapidjson/error/en.h"
+#include "../3rdparty/rapidjson/error/error.h"
+#include "../3rdparty/rapidjson/schema.h"
+#include "../3rdparty/rapidjson/stringbuffer.h"
+#include "../3rdparty/rapidjson/writer.h"
+#ifdef __GNUG__
+#pragma GCC diagnostic pop
+#endif
 
-#endif  // DMITIGR_RAJSON_FWD_HPP
+#endif  // DMITIGR_RAJSON_RAPIDJSON_HPP

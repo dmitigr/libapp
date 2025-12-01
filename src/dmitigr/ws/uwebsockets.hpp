@@ -18,16 +18,22 @@
 #define DMITIGR_WS_UWEBSOCKETS_HPP
 
 #ifdef __GNUG__
-// Disable some warnings of uWebSockets.
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#pragma GCC diagnostic ignored "-Wformat"
+#pragma GCC diagnostic ignored "-Wnewline-eof"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wreserved-identifier"
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wshadow-field-in-constructor"
+#pragma GCC diagnostic ignored "-Wshadow-uncaptured-local"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
-
 #include "../3rdparty/uwebsockets/App.h"
 #include "../3rdparty/uwebsockets/HttpParser.h"
 #include "../3rdparty/uwebsockets/HttpResponse.h"
-
 #ifdef __GNUG__
 #pragma GCC diagnostic pop
 #endif

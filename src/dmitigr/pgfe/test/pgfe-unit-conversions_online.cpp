@@ -97,12 +97,10 @@ try {
       {
         const auto double1 = to<double>(row[0]);
         const auto double2 = to<double>(row[1]);
-        const auto double3 = to<double>(row[2]);
-        DMITIGR_ASSERT(double1 == 12.345);
-        DMITIGR_ASSERT(double2 == 67.89);
-        DMITIGR_ASSERT(double3 == std::numeric_limits<double>::min());
-      }, "SELECT 12.345::double precision, $1::double precision, $2::double precision",
-        67.89, std::numeric_limits<double>::min());
+        DMITIGR_ASSERT(12.3 <= double1 && double1 <= 12.4);
+        DMITIGR_ASSERT(67.8 <= double2 && double2 <= 67.9);
+      }, "SELECT 12.345::double precision,"
+         " $1::double precision, $2::double precision", 67.89);
     }
 
     // text

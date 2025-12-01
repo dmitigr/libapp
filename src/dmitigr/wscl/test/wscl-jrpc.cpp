@@ -33,7 +33,7 @@ namespace rajson = dmitigr::rajson;
 namespace uv = dmitigr::uv;
 namespace wscl = dmitigr::wscl;
 
-std::atomic_bool is_running;
+inline std::atomic_bool is_running{false};
 
 class Connection final : public wscl::Connection {
 public:
@@ -181,7 +181,7 @@ private:
   }
 };
 
-Connection make_connection(uwsc_loop* const loop)
+inline Connection make_connection(uwsc_loop* const loop)
 {
   return Connection{chrono::milliseconds{100}, chrono::milliseconds{500},
     loop,
@@ -191,7 +191,7 @@ Connection make_connection(uwsc_loop* const loop)
     .set_ping_interval(chrono::seconds{10})};
 }
 
-void run()
+inline void run()
 {
   uv::Loop loop;
 

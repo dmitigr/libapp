@@ -671,6 +671,12 @@ inline Shared_expr bool_expr(const T& b)
 // Num
 // -----------------------------------------------------------------------------
 
+#ifdef __GNUG__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-conversion"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+
 /// A number expression base.
 class Num_expr_base : public Expr {};
 
@@ -741,61 +747,61 @@ public:
 
   Ret<int> cmp(const Shared_expr& rhs) const noexcept override
   {
-    static const auto cmp__ = [](const auto lhs, const auto rhs) noexcept
+    static const auto compare = [](const auto lh, const auto rh)noexcept
     {
-      return lhs < rhs ? -1 : lhs == rhs ? 0 : 1;
+      return lh < rh ? -1 : lh == rh ? 0 : 1;
     };
 
     if (is_integer(rhs))
-      return cmp__(value_, rhs->num_integer());
+      return compare(value_, rhs->num_integer());
     else if (is_float(rhs))
-      return cmp__(value_, rhs->num_float());
+      return compare(value_, rhs->num_float());
     else
       return Err{Errc::expr_not_number};
   }
 
   Err num_set(const Shared_expr& rhs) noexcept override
   {
-    return set_num_value(value_, rhs, [](auto& lhs, const auto& rhs)
+    return set_num_value(value_, rhs, [](auto& lh, const auto& rh)noexcept
     {
-      lhs = rhs;
+      lh = rh;
       return Err{};
     });
   }
 
   Err num_add(const Shared_expr& rhs) noexcept override
   {
-    return set_num_value(value_, rhs, [](auto& lhs, const auto& rhs)
+    return set_num_value(value_, rhs, [](auto& lh, const auto& rh)noexcept
     {
-      lhs += rhs;
+      lh += rh;
       return Err{};
     });
   }
 
   Err num_sub(const Shared_expr& rhs) noexcept override
   {
-    return set_num_value(value_, rhs, [](auto& lhs, const auto& rhs)
+    return set_num_value(value_, rhs, [](auto& lh, const auto& rh)noexcept
     {
-      lhs -= rhs;
+      lh -= rh;
       return Err{};
     });
   }
 
   Err num_mul(const Shared_expr& rhs) noexcept override
   {
-    return set_num_value(value_, rhs, [](auto& lhs, const auto& rhs)
+    return set_num_value(value_, rhs, [](auto& lh, const auto& rh)noexcept
     {
-      lhs *= rhs;
+      lh *= rh;
       return Err{};
     });
   }
 
   Err num_div(const Shared_expr& rhs) noexcept override
   {
-    return set_num_value(value_, rhs, [](auto& lhs, const auto& rhs)
+    return set_num_value(value_, rhs, [](auto& lh, const auto& rh)noexcept
     {
-      if (rhs) {
-        lhs /= rhs;
+      if (rh) {
+        lh /= rh;
         return Err{};
       } else
         return Err{Errc::num_division_by_zero};
@@ -832,6 +838,10 @@ Err set_num_value(T& tgt, const Shared_expr& src, const BinaryOp& op) noexcept
   else
     return Err{Errc::expr_not_number};
 }
+
+#ifdef __GNUG__
+#pragma GCC diagnostic pop
+#endif
 
 // -----------------------------------------------------------------------------
 // Str
@@ -984,14 +994,14 @@ public:
 
   Ret<int> cmp(const Shared_expr& rhs) const noexcept override
   {
-    static const auto cmp = [](const Tuple& lhs, const Tuple& rhs) -> Ret<int>
+    static const auto cmp = [](const Tuple& lh, const Tuple& rh)noexcept -> Ret<int>
     {
-      const auto min_sz = std::min(lhs.size(), rhs.size());
+      const auto min_sz = std::min(lh.size(), rh.size());
       for (std::size_t i{}; i < min_sz; ++i) {
-        if (auto r = lhs[i]->cmp(rhs[i]); !r || r.res)
+        if (auto r = lh[i]->cmp(rh[i]); !r || r.res)
           return r;
       }
-      return lhs.size() < rhs.size() ? -1 : lhs.size() == rhs.size() ? 0 : 1;
+      return lh.size() < rh.size() ? -1 : lh.size() == rh.size() ? 0 : 1;
     };
 
     if (is_tup(rhs))

@@ -17,7 +17,7 @@
 #ifndef DMITIGR_RAJSON_RAJSON_HPP
 #define DMITIGR_RAJSON_RAJSON_HPP
 
-#include "fwd.hpp"
+#include "rapidjson.hpp" // must be first
 #include "conversions.hpp"
 #include "document.hpp"
 #include "emplace.hpp"

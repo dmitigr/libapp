@@ -52,14 +52,14 @@ int main()
       buf.destructive_resize(buf.capacity());
       ASSERT(buf.size() == buf.capacity());
       for (std::size_t i{}; i < buf.size(); ++i)
-        buf.data()[i] = i;
+        buf.data()[i] = static_cast<int>(i);
 
       const auto prev_size = buf.size();
       buf.resize(100);
       ASSERT(buf.size() == 100);
       ASSERT(buf.capacity() == 100);
       for (std::size_t i{prev_size}; i < buf.size(); ++i)
-        buf.data()[i] = i;
+        buf.data()[i] = static_cast<int>(i);
       ASSERT(buf.size() == buf.capacity());
 
       for (std::size_t i{}; i < prev_size; ++i)

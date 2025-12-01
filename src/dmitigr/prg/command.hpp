@@ -174,7 +174,7 @@ public:
       DMITIGR_ASSERT(is_valid());
     }
 
-    /// @throws `Exception`.
+    /// @throws An instance of type `std::runtime_error`.
     [[noreturn]] void throw_requirement(const std::string_view requirement) const
     {
       DMITIGR_ASSERT(!requirement.empty());

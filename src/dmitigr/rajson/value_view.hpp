@@ -272,7 +272,7 @@ private:
   // ---------------------------------------------------------------------------
 
   template<class Value>
-  static auto optional_iterator__(Value& value, const std::string_view name)
+  static auto optional_iterator(Value& value, const std::string_view name)
   {
     if (const auto e = value.MemberEnd(); name.empty())
       return e;
@@ -294,14 +294,14 @@ private:
      * no access to Value_view<Value>::value_ when accessing "foo->bar" as
      * Value_view{Document}.mandatory("foo", "bar").
      */
-    using Value = decltype(optional_iterator__(view.value(), name)->value);
+    using Value = decltype(optional_iterator(view.value(), name)->value);
     using Result = std::conditional_t<
       std::is_const_v<typename std::remove_reference_t<decltype(view.value())>>,
       std::optional<Value_view<std::add_const_t<Value>>>,
       std::optional<Value_view<Value>>
       >;
     if (view.value().IsObject()) {
-      if (const auto i = optional_iterator__(view.value(), name);
+      if (const auto i = optional_iterator(view.value(), name);
         i != view.value().MemberEnd() && !i->value.IsNull())
         return Result{i->value};
     }

@@ -220,7 +220,7 @@ private:
   mutable std::mutex mut_;
   std::unique_ptr<detail::iConnection> rep_;
 
-  bool is_connected__() const noexcept;
+  bool is_connected_nts() const noexcept;
 };
 
 } // namespace dmitigr::ws

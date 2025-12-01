@@ -30,18 +30,21 @@ namespace dmitigr::pgfe {
 
 namespace {
 
-inline bool is_ident_char(const unsigned char c) noexcept
+inline bool is_ident_char(const auto ch) noexcept
 {
+  const auto c = static_cast<unsigned char>(ch);
   return std::isalnum(c) || c == '_' || c == '$';
 }
 
-inline bool is_named_param_char(const unsigned char c) noexcept
+inline bool is_named_param_char(const auto ch) noexcept
 {
+  const auto c = static_cast<unsigned char>(ch);
   return std::isalnum(c) || c == '_' || c == '-';
 }
 
-inline bool is_quote_char(const unsigned char c) noexcept
+inline bool is_quote_char(const auto ch) noexcept
 {
+  const auto c = static_cast<unsigned char>(ch);
   return c == '\'' || c == '\"';
 }
 
@@ -164,14 +167,14 @@ const std::string& Statement::Fragment::norm_str() const
       norm.reserve(2 * str_size);
       enum { word, spec, space } prev_char_type{space}, prev_non_space{spec};
       for (std::string::size_type i{}; i < str_size; ++i) {
-        const unsigned char ch = str[i];
+        const auto ch = static_cast<unsigned char>(str[i]);
         if (is_ident_char(ch)) {
           if (prev_char_type == space && prev_non_space == word)
             norm += ' ';
-          norm += std::tolower(ch);
+          norm += static_cast<char>(std::tolower(ch));
           prev_char_type = prev_non_space = word;
         } else if (!std::isspace(ch)) {
-          norm += ch;
+          norm += static_cast<char>(ch);
           prev_char_type = prev_non_space = spec;
         } else
           prev_char_type = space;
@@ -257,8 +260,9 @@ private:
     std::string dollar_quote_leading_tag_name;
     std::string dollar_quote_trailing_tag_name;
 
-    const auto is_valid_tag_char = [](const unsigned char c) noexcept
+    static const auto is_valid_tag_char = [](const auto ch) noexcept
     {
+      const auto c = static_cast<unsigned char>(ch);
       return std::isalnum(c) || c == '_' || c == '-';
     };
 

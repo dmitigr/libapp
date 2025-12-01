@@ -76,7 +76,6 @@ std::istream& read_lines_if(F&& callback, std::istream& input,
  * `bool callback(const char*, const std::size_t)` that returns `true`
  * to continue the reading.
  * @param input The input stream to read the data from.
- * @param delimiter The delimiter character.
  *
  * @par Requires
  * `ChunkSize && !(ChunkSize % 8)`.

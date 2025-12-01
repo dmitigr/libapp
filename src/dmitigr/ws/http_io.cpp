@@ -42,7 +42,7 @@ public:
     DMITIGR_ASSERT(rep_ && server_);
   }
 
-  bool is_valid__() const noexcept
+  bool is_valid_nts() const noexcept
   {
     return static_cast<bool>(rep_);
   }
@@ -50,14 +50,14 @@ public:
   bool is_valid() const noexcept override
   {
     const std::lock_guard lg{mut_};
-    return is_valid__();
+    return is_valid_nts();
   }
 
   bool loop_submit(std::function<void()> callback) noexcept override
   {
     const std::lock_guard lg{mut_};
-    if (is_valid__()) {
-      us_loop_t* const uss_loop = us_socket_context_loop(IsSsl, ctx__());
+    if (is_valid_nts()) {
+      us_loop_t* const uss_loop = us_socket_context_loop(IsSsl, ctx_nts());
       auto* const loop = reinterpret_cast<uWS::Loop*>(uss_loop);
       loop->defer(std::move(callback));
       return true;
@@ -68,7 +68,7 @@ public:
   const Server* server() const noexcept override
   {
     const std::lock_guard lg{mut_};
-    return is_valid__() ? server_ : nullptr;
+    return is_valid_nts() ? server_ : nullptr;
   }
 
   Server* server() noexcept override
@@ -77,7 +77,7 @@ public:
       static_cast<const iHttp_io_templ*>(this)->server());
   }
 
-  Connection* connection__() const noexcept
+  Connection* connection_nts() const noexcept
   {
     return ws_data_.conn.get();
   }
@@ -85,7 +85,7 @@ public:
   const Connection* connection() const noexcept override
   {
     const std::lock_guard lg{mut_};
-    return connection__();
+    return connection_nts();
   }
 
   Connection* connection() noexcept override
@@ -97,21 +97,21 @@ public:
   void end_handshake() override
   {
     const std::lock_guard lg{mut_};
-    if (!is_valid__() || !connection__())
+    if (!is_valid_nts() || !connection_nts())
       throw Exception{"cannot end WebSocket handshake: invalid HTTP I/O"};
 
     rep_->upgrade(std::move(ws_data_), sec_ws_key_, sec_ws_protocol_,
-      sec_ws_extensions_, ctx__());
+      sec_ws_extensions_, ctx_nts());
     rep_ = nullptr;
     sec_ws_key_ = sec_ws_protocol_ = sec_ws_extensions_ = {};
-    DMITIGR_ASSERT(!is_valid__());
-    DMITIGR_ASSERT(!connection__());
+    DMITIGR_ASSERT(!is_valid_nts());
+    DMITIGR_ASSERT(!connection_nts());
   }
 
   void send_status(const http::Server_errc code) override
   {
     const std::lock_guard lg{mut_};
-    if (!is_valid__())
+    if (!is_valid_nts())
       throw Exception{"cannot send HTTP status line: invalid HTTP I/O"};
 
     rep_->writeStatus(std::to_string(static_cast<int>(code)).append(" ")
@@ -121,7 +121,7 @@ public:
   void send_header(const std::string_view name, const std::string_view value) override
   {
     const std::lock_guard lg{mut_};
-    if (!is_valid__())
+    if (!is_valid_nts())
       throw Exception{"cannot send HTTP header: invalid HTTP I/O"};
 
     rep_->writeHeader(name, value);
@@ -132,51 +132,51 @@ public:
   {
     static_assert(sizeof(decltype(data.size())) <= sizeof(decltype(total_size)));
     const std::lock_guard lg{mut_};
-    if (!is_valid__())
+    if (!is_valid_nts())
       throw Exception{"cannot send HTTP content: invalid HTTP I/O"};
 
     if (!is_send_handler_set_) {
-      end__(data);
+      end_nts(data);
       return {true, true};
     } else
       return rep_->tryEnd(data, total_size);
   }
 
-  void end__(const std::string_view data)
+  void end_nts(const std::string_view data)
   {
-    if (!is_valid__())
+    if (!is_valid_nts())
       throw Exception{"cannot send HTTP content: invalid HTTP I/O"};
 
     rep_->end(data);
     DMITIGR_ASSERT(rep_->hasResponded());
     rep_ = nullptr;
-    DMITIGR_ASSERT(!is_valid__());
+    DMITIGR_ASSERT(!is_valid_nts());
   }
 
   void end(const std::string_view data = {}) override
   {
     const std::lock_guard lg{mut_};
-    end__(data);
+    end_nts(data);
   }
 
   void set_send_handler(Send_handler handler) override
   {
-    const std::lock_guard lg{mut_};
-    if (!is_valid__())
+    const std::lock_guard lguard{mut_};
+    if (!is_valid_nts())
       throw Exception{"cannot set HTTP send handler: invalid HTTP I/O"};
     else if (is_send_handler_set_)
       throw Exception{"cannot set HTTP send handler: already set"};
     else if (!handler)
       throw Exception{"cannot set invalid HTTP send handler"};
 
-    rep_->onWritable([this, handler = std::move(handler)](const std::uintmax_t pos)
+    rep_->onWritable([this, hndlr = std::move(handler)](const std::uintmax_t pos)
     {
       const std::lock_guard lg{mut_};
       DMITIGR_ASSERT(rep_);
-      const auto ok = handler(pos);
+      const auto ok = hndlr(pos);
       if (ok) {
         rep_ = nullptr;
-        DMITIGR_ASSERT(!is_valid__());
+        DMITIGR_ASSERT(!is_valid_nts());
       }
       return ok;
     });
@@ -192,29 +192,29 @@ public:
   void abort() noexcept override
   {
     const std::lock_guard lg{mut_};
-    if (!is_valid__())
+    if (!is_valid_nts())
       return;
     rep_->close();
     rep_ = nullptr;
-    DMITIGR_ASSERT(!is_valid__());
+    DMITIGR_ASSERT(!is_valid_nts());
   }
 
   void set_abort_handler(Abort_handler handler) override
   {
-    const std::lock_guard lg{mut_};
-    if (!is_valid__())
+    const std::lock_guard lguard{mut_};
+    if (!is_valid_nts())
       throw Exception{"cannot set HTTP abort handler: invalid HTTP I/O"};
     else if (is_abort_handler_set_)
       throw Exception{"cannot set HTTP abort handler: already set"};
     else if (!handler)
       throw Exception{"cannot set invalid HTTP abort handler"};
 
-    rep_->onAborted([this, handler = std::move(handler)]
+    rep_->onAborted([this, hndlr = std::move(handler)]
     {
       const std::lock_guard lg{mut_};
-      handler();
+      hndlr();
       rep_ = nullptr;
-      DMITIGR_ASSERT(!is_valid__());
+      DMITIGR_ASSERT(!is_valid_nts());
     });
     is_abort_handler_set_ = true;
   }
@@ -228,7 +228,7 @@ public:
   void set_receive_handler(Receive_handler handler) override
   {
     const std::lock_guard lg{mut_};
-    if (!is_valid__())
+    if (!is_valid_nts())
       throw Exception{"cannot set HTTP receive handler: invalid HTTP I/O"};
     else if (is_receive_handler_set_)
       throw Exception{"cannot set HTTP receive handler: already set"};
@@ -259,11 +259,11 @@ private:
   std::string sec_ws_protocol_;
   std::string sec_ws_extensions_;
 
-  us_socket_context_t* ctx__()
+  us_socket_context_t* ctx_nts()
   {
     auto* const uss = reinterpret_cast<us_socket_t*>(rep_);
     return us_socket_context(IsSsl, uss);
-  };
+  }
 };
 
 } // namespace dmitigr::ws::detail

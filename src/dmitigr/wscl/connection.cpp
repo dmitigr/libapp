@@ -73,10 +73,10 @@ struct Connection::Rep final {
       throw Exception{"cannot initialize WebSocket client connection"};
 
     client_.ext = &self;
-    client_.onopen = &Connection::handle_open__;
-    client_.onmessage = &Connection::handle_message__;
-    client_.onerror = &Connection::handle_error__;
-    client_.onclose = &Connection::handle_close__;
+    client_.onopen = &Connection::prehandle_open;
+    client_.onmessage = &Connection::prehandle_message;
+    client_.onerror = &Connection::prehandle_error;
+    client_.onclose = &Connection::prehandle_close;
   }
 
   void set_ping_interval(const std::chrono::seconds interval)
@@ -182,21 +182,21 @@ DMITIGR_WSCL_INLINE void Connection::close(const int code,
   rep_->close(code, reason);
 }
 
-DMITIGR_WSCL_INLINE void Connection::handle_open__(uwsc_client* const cl) noexcept
+DMITIGR_WSCL_INLINE void Connection::prehandle_open(uwsc_client* const cl) noexcept
 {
   auto* const s = self(cl);
   s->rep_->is_open_ = true;
   s->handle_open();
 }
 
-DMITIGR_WSCL_INLINE void Connection::handle_message__(uwsc_client* const cl,
+DMITIGR_WSCL_INLINE void Connection::prehandle_message(uwsc_client* const cl,
   void* const data, const std::size_t size, const bool binary) noexcept
 {
   self(cl)->handle_message({static_cast<char*>(data), size},
     binary ? Data_format::binary : Data_format::utf8);
 }
 
-DMITIGR_WSCL_INLINE void Connection::handle_error__(uwsc_client* const cl,
+DMITIGR_WSCL_INLINE void Connection::prehandle_error(uwsc_client* const cl,
   const int code, const char* const message) noexcept
 {
   auto* const s = self(cl);
@@ -204,7 +204,7 @@ DMITIGR_WSCL_INLINE void Connection::handle_error__(uwsc_client* const cl,
   s->handle_error(code, {message, std::strlen(message)});
 }
 
-DMITIGR_WSCL_INLINE void Connection::handle_close__(uwsc_client* const cl,
+DMITIGR_WSCL_INLINE void Connection::prehandle_close(uwsc_client* const cl,
   const int code, const char* const reason) noexcept
 {
   auto* const s = self(cl);

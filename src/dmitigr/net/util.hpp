@@ -38,7 +38,7 @@ inline bool is_hostname_valid(const std::string& hostname) noexcept
   constexpr std::string::size_type label_max_length{63};
   const auto limit = hostname.size();
   for (std::string::size_type i{}, label_length{}; i < limit; ++i) {
-    const auto c = hostname[i];
+    const auto c = static_cast<unsigned char>(hostname[i]);
     if (c == '.') {
       if (label_length == 0)
         return false; // empty label

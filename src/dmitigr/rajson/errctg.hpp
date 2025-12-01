@@ -17,9 +17,8 @@
 #ifndef DMITIGR_RAJSON_ERRCTG_HPP
 #define DMITIGR_RAJSON_ERRCTG_HPP
 
-#include "../3rdparty/rapidjson/error/en.h"
-#include "../3rdparty/rapidjson/error/error.h"
 #include "../base/error.hpp"
+#include "rapidjson.hpp"
 
 #include "errc.hpp"
 

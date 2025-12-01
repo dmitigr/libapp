@@ -113,8 +113,8 @@ public:
         .value_or(chrono::seconds::zero());
       using Native_timeout = decltype(idle_timeout.count());
       static_assert(sizeof(Timeout) <= sizeof(Native_timeout));
-      result.idleTimeout = std::min<Native_timeout>(max_idle_timeout,
-        idle_timeout.count());
+      result.idleTimeout = static_cast<Timeout>(
+        std::min<Native_timeout>(max_idle_timeout, idle_timeout.count()));
 
       using Payload = decltype(result.maxPayloadLength);
       constexpr auto max_payload_length = std::numeric_limits<Payload>::max();
@@ -123,7 +123,8 @@ public:
       using Native_payload = decltype(max_incoming_payload_size);
       static_assert(sizeof(Payload) <= sizeof(Native_payload));
       result.maxPayloadLength = max_incoming_payload_size ?
-        std::min<Native_payload>(max_payload_length, max_incoming_payload_size) :
+        static_cast<Payload>(
+          std::min<Native_payload>(max_payload_length, max_incoming_payload_size)) :
         max_payload_length;
 
       using Backpressure = decltype(result.maxBackpressure);
@@ -133,7 +134,8 @@ public:
       using Native_backpressure = decltype(backpressure_buffer_size);
       static_assert(sizeof(Backpressure) <= sizeof(Native_backpressure));
       result.maxBackpressure = backpressure_buffer_size ?
-        std::min<Native_backpressure>(max_backpressure, backpressure_buffer_size) :
+        static_cast<Backpressure>(
+          std::min<Native_backpressure>(max_backpressure, backpressure_buffer_size)) :
         max_backpressure;
 
       result.upgrade = [this](uWS::HttpResponse<IsSsl>* const res,
@@ -168,7 +170,7 @@ public:
             io->sec_ws_protocol_ = sec_ws_protocol;
             io->sec_ws_extensions_ = sec_ws_extensions;
           }
-          DMITIGR_ASSERT(io->ctx__() == ctx);
+          DMITIGR_ASSERT(io->ctx_nts() == ctx);
         } else if (io->is_valid() && !io->is_abort_handler_set()) {
           // Implicit rejection.
           io->send_status(http::Server_errc::internal_server_error);
