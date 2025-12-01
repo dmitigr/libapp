@@ -152,13 +152,16 @@ to_startup_message_view(const char* const message) noexcept
  *
  * @par Requires
  * `message` must point to a memory space of size at least serialized_size(smv).
+ *
+ * @returns The number of bytes written.
  */
-inline void serialize(char* const message, const Startup_message_view& smv) noexcept
+inline std::size_t serialize(char* const message, const Startup_message_view& smv) noexcept
 {
   if (!message || !is_valid(smv))
-    return;
+    return 0;
 
-  const std::uint32_t message_size{host_to_net(serialized_size(smv))};
+  const auto msize = serialized_size(smv);
+  const std::uint32_t message_size{host_to_net(msize)};
   std::memcpy(message, &message_size, sizeof(message_size));
   std::memcpy(message + sizeof(message_size), &smv.protocol, sizeof(smv.protocol));
 
@@ -175,6 +178,8 @@ inline void serialize(char* const message, const Startup_message_view& smv) noex
     name = value + val.size() + 1;
   });
   *name = 0;
+  assert(name - message + 1 == msize);
+  return msize;
 }
 
 /// Prints `smv` into `os`.
@@ -283,14 +288,17 @@ inline Parse_view to_parse_view(const char* const message) noexcept
  *
  * @par Requires
  * `message` must point to a memory space of size at least serialized_size(pv).
+ *
+ * @returns The number of bytes written.
  */
-inline void serialize(char* const message, const Parse_view& pv) noexcept
+inline std::size_t serialize(char* const message, const Parse_view& pv) noexcept
 {
   if (!message || !is_valid(pv))
-    return;
+    return 0;
 
   message[0] = static_cast<char>(Type::parse);
-  const std::uint32_t message_size{host_to_net(serialized_size(pv) - 1)};
+  const auto msize = serialized_size(pv);
+  const std::uint32_t message_size{host_to_net(msize - 1)};
   std::memcpy(message + 1, &message_size, sizeof(message_size));
 
   auto* const ps_name = message + data_offset;
@@ -306,6 +314,9 @@ inline void serialize(char* const message, const Parse_view& pv) noexcept
 
   auto* const pto = ptc + 2;
   std::memcpy(pto, pv.param_type_oids.data(), pv.param_type_oids.size());
+
+  assert(pto + pv.param_type_oids.size() - message == msize);
+  return msize;
 }
 
 /// Prints `pv` into `os`.
@@ -366,7 +377,7 @@ inline bool is_valid(const Query_view& qv) noexcept
 /// @returns The size of serialized Query message.
 inline std::uint32_t serialized_size(const Query_view& qv) noexcept
 {
-  return is_valid(qv) ? data_offset + qv.query.size() + 1 : 0;
+  return is_valid(qv) ? data_offset + qv.query.size() : 0;
 }
 
 /// @returns An instance of Query_view from `message`.
@@ -385,19 +396,24 @@ inline Query_view to_query_view(const char* const message) noexcept
  *
  * @par Requires
  * `message` must point to a memory space of size at least serialized_size(qv).
+ *
+ * @returns The number of bytes written.
  */
-inline void serialize(char* const message, const Query_view& qv) noexcept
+inline std::size_t serialize(char* const message, const Query_view& qv) noexcept
 {
   if (!message || !is_valid(qv))
-    return;
+    return 0;
 
   message[0] = static_cast<char>(Type::query);
-  const std::uint32_t message_size{host_to_net(serialized_size(qv) - 1)};
+  const auto msize = serialized_size(qv);
+  const std::uint32_t message_size{host_to_net(msize - 1)};
   std::memcpy(message + 1, &message_size, sizeof(message_size));
 
   auto* const query = message + data_offset;
   std::memcpy(query, qv.query.data(), qv.query.size());
-  query[qv.query.size()] = 0;
+
+  assert(query + qv.query.size() - message == msize);
+  return msize;
 }
 
 /// Prints `qv` into `os`.
@@ -478,18 +494,24 @@ inline Ready_for_query_view to_ready_for_query_view(const char* const message) n
  *
  * @par Requires
  * `message` must point to a memory space of size at least serialized_size(rqv).
+ *
+ * @returns The number of bytes written.
  */
-inline void serialize(char* const message, const Ready_for_query_view& rqv) noexcept
+inline std::size_t serialize(char* const message, const Ready_for_query_view& rqv) noexcept
 {
   if (!message || !is_valid(rqv))
-    return;
+    return 0;
 
   message[0] = static_cast<char>(Type::ready_for_query);
-  const std::uint32_t message_size{host_to_net(serialized_size(rqv) - 1)};
+  const auto msize = serialized_size(rqv);
+  const std::uint32_t message_size{host_to_net(msize - 1)};
   std::memcpy(message + 1, &message_size, sizeof(message_size));
 
   auto* const data = message + data_offset;
   std::memcpy(data, &rqv.tx_status, sizeof(rqv.tx_status));
+
+  assert(data + sizeof(rqv.tx_status) - message == msize);
+  return msize;
 }
 
 /// Prints `rqv` into `os`.
