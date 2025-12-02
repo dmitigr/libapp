@@ -119,13 +119,16 @@ public:
   static std::size_t parse(F&& callback, std::string_view input)
   {
     std::size_t count{};
-    while (input.data() && !input.empty()) {
+    while (true) {
       auto [stmt, pos] = parse_sql_input(input);
+      ++count;
       if (!callback(std::move(stmt)))
         break;
-      DMITIGR_ASSERT(pos <= input.size());
-      input = input.substr(pos);
-      ++count;
+
+      if (pos <= input.size())
+        input = input.substr(pos);
+      else
+        break;
     }
     return count;
   }
@@ -388,6 +391,9 @@ public:
    *
    * @see query_string_capacity(), to_query_string().
    */
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char*, const Connection*) const;
+
+  /// @overload
   DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
     const Connection& conn) const;
 
@@ -402,6 +408,9 @@ public:
    *
    * @see write_query_string().
    */
+  DMITIGR_PGFE_API std::string to_query_string(const Connection*) const;
+
+  /// @overload
   DMITIGR_PGFE_API std::string to_query_string(const Connection& conn) const;
 
   /// @overload
@@ -762,9 +771,6 @@ private:
   Fragment::Type named_parameter_type(const std::size_t index) const noexcept;
   std::size_t named_parameter_index(const std::string_view name) const noexcept;
   std::vector<Named_parameter> named_parameters() const;
-
-  std::string::size_type write_query_string(char*, const Connection*) const;
-  std::string to_query_string(const Connection*) const;
 
   // ---------------------------------------------------------------------------
   // Metadata

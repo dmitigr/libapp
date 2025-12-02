@@ -1006,7 +1006,6 @@ Statement::query_string_capacity() const
   return result;
 }
 
-// private
 DMITIGR_PGFE_INLINE std::string::size_type
 Statement::write_query_string(char* result, const Connection* const connection) const
 {
@@ -1099,7 +1098,6 @@ Statement::write_query_string(char* const result) const
   return write_query_string(result, nullptr);
 }
 
-// private
 DMITIGR_PGFE_INLINE std::string
 Statement::to_query_string(const Connection* const conn) const
 {
@@ -1454,6 +1452,11 @@ Statement::named_parameters() const -> std::vector<Named_parameter>
 DMITIGR_PGFE_INLINE std::pair<Statement, std::string_view::size_type>
 Statement::parse_sql_input(const std::string_view text)
 {
+  if (!text.data())
+    throw Generic_exception{"cannot parse invalid SQL input"};
+  else if (text.empty())
+    return {Statement{}, 1u};
+
   enum {
     invalid,
 
@@ -1777,8 +1780,6 @@ Statement::parse_sql_input(const std::string_view text)
     state = invalid;
   switch (state) {
   case top:
-    if (current_char == ';')
-      ++i;
     if (!fragment.empty())
       result.push_text(fragment_depth, fragment);
     break;
@@ -1801,6 +1802,7 @@ Statement::parse_sql_input(const std::string_view text)
   }
   }
 
+  ++i;
   return {std::move(result), i - b};
 }
 
