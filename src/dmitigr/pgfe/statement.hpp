@@ -240,6 +240,18 @@ public:
   DMITIGR_PGFE_API bool has_duplicate_named_parameter() const noexcept;
 
   /**
+   * @returns `true` if there is a named parameter in this statement which
+   * is literal.
+   */
+  DMITIGR_PGFE_API bool has_named_parameter_literal() const noexcept;
+
+  /**
+   * @returns `true` if there is a named parameter in this statement which
+   * is identifier.
+   */
+  DMITIGR_PGFE_API bool has_named_parameter_identifier() const noexcept;
+
+  /**
    * @brief Appends the specified statement.
    *
    * @par Effects

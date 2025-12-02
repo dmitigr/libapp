@@ -719,6 +719,26 @@ Statement::has_duplicate_named_parameter() const noexcept
     });
 }
 
+DMITIGR_PGFE_INLINE bool
+Statement::has_named_parameter_literal() const noexcept
+{
+  return any_of(cbegin(named_parameters_), cend(named_parameters_),
+    [](const auto& param) noexcept
+    {
+      return param.type == Fragment::Type::named_parameter_literal;
+    });
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::has_named_parameter_identifier() const noexcept
+{
+  return any_of(cbegin(named_parameters_), cend(named_parameters_),
+    [](const auto& param) noexcept
+    {
+      return param.type == Fragment::Type::named_parameter_identifier;
+    });
+}
+
 DMITIGR_PGFE_INLINE void Statement::append(const Statement& appendix)
 {
   fragments_.insert(cend(fragments_), cbegin(appendix.fragments_),
