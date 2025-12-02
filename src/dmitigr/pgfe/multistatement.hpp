@@ -69,9 +69,6 @@ public:
   /// @overload
   explicit DMITIGR_PGFE_API Multistatement(std::vector<Statement> statements);
 
-  /// Swaps the instances.
-  DMITIGR_PGFE_API void swap(Multistatement& rhs) noexcept;
-
   /// @returns The count of statements this instance contains.
   DMITIGR_PGFE_API std::size_t size() const noexcept;
 
@@ -80,6 +77,24 @@ public:
 
   /// @returns `true` if this instance is empty.
   DMITIGR_PGFE_API bool is_empty() const noexcept;
+
+  /**
+   * @returns The estimated capacity of a string returned by to_string().
+   *
+   * @see write_string(), to_string().
+   */
+  DMITIGR_PGFE_API std::string::size_type string_capacity() const noexcept;
+
+  /**
+   * @returns The estimated capacity of a string returned by to_query_string().
+   *
+   * @par Requires `!is_parameter_identifier(i) || bound(parameter_name(i))`
+   * for any `i` in range `[positional_parameter_count(), parameter_count())`
+   * for each statement this instance contains.
+   *
+   * @see write_query_string(), to_query_string().
+   */
+  DMITIGR_PGFE_API std::string::size_type query_string_capacity() const;
 
   /**
    * @returns The statement at `index`.
@@ -142,11 +157,58 @@ public:
    */
   DMITIGR_PGFE_API void remove(std::size_t index);
 
+  /**
+   * @brief Writes the result of converting this instance to a character sequence.
+   *
+   * @param result The pointer to a resulting memory space which must fit at
+   * least `string_capacity()` bytes.
+   *
+   * @returns The number of characters written.
+   *
+   * @warning Neither '\0' nor ';' trailing characters are written to the `result`!
+   *
+   * @see string_capacity(), to_string().
+   */
+  DMITIGR_PGFE_API std::string::size_type write_string(char* result) const;
+
   /// @returns The string of multiple statements.
   DMITIGR_PGFE_API std::string to_string() const;
 
-  /// @returns The query string of multiple statements.
-  DMITIGR_PGFE_API std::string to_query_string(const Connection& conn) const;
+  /**
+   * @brief Writes query string that's actually passed to a PostgreSQL server
+   * to a character sequence.
+   *
+   * @param result The pointer to a resulting memory space which must fit at
+   * least `query_string_capacity()` bytes.
+   *
+   * @par Requires
+   * `!has_missing_parameter() && conn.is_connected()` and requirements of
+   * query_string_capacity().
+   *
+   * @returns The number of characters written.
+   *
+   * @warning Neither '\0' nor ';' trailing characters are written to the `result`!
+   *
+   * @see query_string_capacity(), to_query_string().
+   */
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
+    const Connection* conn) const;
+
+  /// @overload
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
+    const Connection& conn) const;
+
+  /// @overload
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result) const;
+
+  /// @returns The query string of statements.
+  DMITIGR_PGFE_API std::string to_query_string(const Connection*) const;
+
+  /// @overload
+  DMITIGR_PGFE_API std::string to_query_string(const Connection&) const;
+
+  /// @overload
+  DMITIGR_PGFE_API std::string to_query_string() const;
 
   /// @returns The underlying vector of statements.
   DMITIGR_PGFE_API const std::vector<Statement>& vector() const & noexcept;
@@ -165,16 +227,6 @@ public:
 private:
   std::vector<Statement> statements_;
 };
-
-/**
- * @ingroup utilities
- *
- * @brief Multistatement is swappable.
- */
-inline void swap(Multistatement& lhs, Multistatement& rhs) noexcept
-{
-  lhs.swap(rhs);
-}
 
 } // namespace dmitigr::pgfe
 

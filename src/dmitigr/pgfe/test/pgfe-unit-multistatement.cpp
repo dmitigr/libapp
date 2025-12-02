@@ -26,6 +26,39 @@ try {
   // General test
   // -------------------------------------------------------------------------
 
+  {
+    pgfe::Multistatement mstmt;
+    DMITIGR_ASSERT(mstmt.is_empty());
+    DMITIGR_ASSERT(mstmt.size() == 0);
+  }
+
+  {
+    pgfe::Multistatement mstmt{""};
+    DMITIGR_ASSERT(!mstmt.is_empty());
+    DMITIGR_ASSERT(mstmt.size() == 1);
+  }
+
+  {
+    pgfe::Multistatement mstmt{";"};
+    DMITIGR_ASSERT(!mstmt.is_empty());
+    DMITIGR_ASSERT(mstmt.size() == 2);
+  }
+
+  {
+    pgfe::Multistatement mstmt{";;"};
+    DMITIGR_ASSERT(!mstmt.is_empty());
+    DMITIGR_ASSERT(mstmt.size() == 3);
+  }
+
+  {
+    const std::string str{"select 1; select  2;   select    3     ;"};
+    pgfe::Multistatement mstmt{str};
+    DMITIGR_ASSERT(!mstmt.is_empty());
+    DMITIGR_ASSERT(mstmt.size() == 4);
+    DMITIGR_ASSERT(mstmt.to_string() == str);
+    DMITIGR_ASSERT(mstmt.to_query_string() == str);
+  }
+
   pgfe::Multistatement bunch;
   DMITIGR_ASSERT(bunch.is_empty());
   DMITIGR_ASSERT(bunch.size() == 0);

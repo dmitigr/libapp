@@ -37,12 +37,6 @@ Multistatement::Multistatement(std::vector<Statement> statements)
   : statements_{std::move(statements)}
 {}
 
-DMITIGR_PGFE_INLINE void Multistatement::swap(Multistatement& rhs) noexcept
-{
-  using std::swap;
-  swap(statements_, rhs.statements_);
-}
-
 DMITIGR_PGFE_INLINE std::size_t Multistatement::size() const noexcept
 {
   return statements_.size();
@@ -60,6 +54,30 @@ DMITIGR_PGFE_INLINE std::size_t Multistatement::empty_query_count() const noexce
 DMITIGR_PGFE_INLINE bool Multistatement::is_empty() const noexcept
 {
   return statements_.empty();
+}
+
+DMITIGR_PGFE_INLINE std::string::size_type
+Multistatement::string_capacity() const noexcept
+{
+  std::string::size_type result{};
+  if (const auto sz = size()) {
+    result += sz - 1; // Space for ';'.
+    for (const auto& statement : statements_)
+      result += statement.string_capacity();
+  }
+  return result;
+}
+
+DMITIGR_PGFE_INLINE std::string::size_type
+Multistatement::query_string_capacity() const
+{
+  std::string::size_type result{};
+  if (const auto sz = size()) {
+    result += sz - 1; // Space for ';'.
+    for (const auto& statement : statements_)
+      result += statement.query_string_capacity();
+  }
+  return result;
 }
 
 DMITIGR_PGFE_INLINE const Statement&
@@ -143,26 +161,77 @@ DMITIGR_PGFE_INLINE void Multistatement::remove(const std::size_t index)
   statements_.erase(b + static_cast<Diff>(index));
 }
 
+DMITIGR_PGFE_INLINE std::string::size_type
+Multistatement::write_string(char* result) const
+{
+  const char* const begin{result};
+  if (!statements_.empty()) {
+    for (const auto& statement : statements_) {
+      result += statement.write_string(result);
+      *result = ';';
+      ++result;
+    }
+    --result;
+  }
+  return static_cast<std::string::size_type>(result - begin);
+}
+
 DMITIGR_PGFE_INLINE std::string Multistatement::to_string() const
 {
-  std::string result;
-  if (!statements_.empty()) {
-    for (const auto& statement : statements_)
-      result.append(statement.to_string()).append(";");
-    result.pop_back();
-  }
+  std::string result(string_capacity(), '\0');
+  const auto size = write_string(result.data());
+  DMITIGR_ASSERT(size <= result.capacity());
+  result.resize(size);
   return result;
 }
 
-DMITIGR_PGFE_INLINE std::string Multistatement::to_query_string(const Connection& conn) const
+DMITIGR_PGFE_INLINE std::string::size_type
+Multistatement::write_query_string(char* result,
+  const Connection* const connection) const
 {
-  std::string result;
+  const char* const begin{result};
   if (!statements_.empty()) {
-    for (const auto& statement : statements_)
-      result.append(statement.to_query_string(conn)).append(";");
-    result.pop_back();
+    for (const auto& statement : statements_) {
+      result += statement.write_query_string(result, connection);
+      *result = ';';
+      ++result;
+    }
+    --result;
   }
+  return static_cast<std::string::size_type>(result - begin);
+}
+
+DMITIGR_PGFE_INLINE std::string::size_type
+Multistatement::write_query_string(char* result, const Connection& conn) const
+{
+  return write_query_string(result, std::addressof(conn));
+}
+
+DMITIGR_PGFE_INLINE std::string::size_type
+Multistatement::write_query_string(char* result) const
+{
+  return write_query_string(result, nullptr);
+}
+
+DMITIGR_PGFE_INLINE std::string
+Multistatement::to_query_string(const Connection* const conn) const
+{
+  std::string result(query_string_capacity(), '\0');
+  const auto size = write_query_string(result.data(), conn);
+  DMITIGR_ASSERT(size <= result.capacity());
+  result.resize(size);
   return result;
+}
+
+DMITIGR_PGFE_INLINE std::string
+Multistatement::to_query_string(const Connection& conn) const
+{
+  return to_query_string(std::addressof(conn));
+}
+
+DMITIGR_PGFE_INLINE std::string Multistatement::to_query_string() const
+{
+  return to_query_string(nullptr);
 }
 
 DMITIGR_PGFE_INLINE const std::vector<Statement>&
