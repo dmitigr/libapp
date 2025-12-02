@@ -720,7 +720,7 @@ Statement::has_duplicate_named_parameter() const noexcept
 }
 
 DMITIGR_PGFE_INLINE bool
-Statement::has_named_parameter_literal() const noexcept
+Statement::has_parameter_literal() const noexcept
 {
   return any_of(cbegin(named_parameters_), cend(named_parameters_),
     [](const auto& param) noexcept
@@ -730,7 +730,7 @@ Statement::has_named_parameter_literal() const noexcept
 }
 
 DMITIGR_PGFE_INLINE bool
-Statement::has_named_parameter_identifier() const noexcept
+Statement::has_parameter_identifier() const noexcept
 {
   return any_of(cbegin(named_parameters_), cend(named_parameters_),
     [](const auto& param) noexcept
