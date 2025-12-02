@@ -234,6 +234,12 @@ public:
   DMITIGR_PGFE_API bool has_missing_parameter() const noexcept;
 
   /**
+   * @returns `true` if there is a positional parameter in this statement that
+   * appears more than once.
+   */
+  DMITIGR_PGFE_API bool has_duplicate_positional_parameter() const noexcept;
+
+  /**
    * @returns `true` if there is a named parameter in this statement that
    * appears more than once.
    */
@@ -748,7 +754,7 @@ private:
   Fragment_list fragments_;
   mutable Fragment_list norm_fragments_; // cache
   std::unordered_map<std::string, std::string> bindings_;
-  std::vector<bool> positional_parameters_; // cache
+  std::vector<int> positional_parameters_; // cache
   std::vector<Named_parameter> named_parameters_; // cache
   mutable std::optional<Metadata> metadata_; // cache
 

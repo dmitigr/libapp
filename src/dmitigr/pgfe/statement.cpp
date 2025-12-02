@@ -672,7 +672,7 @@ Statement::is_parameter_missing(const std::size_t index) const
 {
   if (!(index < positional_parameter_count()))
     throw Generic_exception{"cannot determine if Statement parameter is missing"};
-  return !positional_parameters_[index];
+  return positional_parameters_[index] <= 0;
 }
 
 DMITIGR_PGFE_INLINE bool
@@ -706,7 +706,17 @@ Statement::is_parameter_identifier(const std::string_view name) const
 DMITIGR_PGFE_INLINE bool Statement::has_missing_parameter() const noexcept
 {
   return any_of(cbegin(positional_parameters_), cend(positional_parameters_),
-    [](const auto is_present) {return !is_present;});
+    [](const auto count) noexcept { return count <= 0; });
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::has_duplicate_positional_parameter() const noexcept
+{
+  return any_of(cbegin(positional_parameters_), cend(positional_parameters_),
+    [](const auto count) noexcept
+    {
+      return count > 1;
+    });
 }
 
 DMITIGR_PGFE_INLINE bool
@@ -1275,10 +1285,10 @@ Statement::push_positional_parameter(const int depth, const std::string& str)
   if (position < 1 || static_cast<Size>(position) > max_parameter_count())
     throw Generic_exception{"invalid parameter position \"" + str + "\""};
   else if (static_cast<Size>(position) > positional_parameters_.size())
-    positional_parameters_.resize(static_cast<Size>(position), false);
+    positional_parameters_.resize(static_cast<Size>(position), 0);
 
-  // Set parameter presence flag.
-  positional_parameters_[static_cast<Size>(position) - 1] = true;
+  // Increase parameter count.
+  positional_parameters_[static_cast<Size>(position) - 1] += 1;
 
   assert(is_invariant_ok());
 }
@@ -1343,10 +1353,8 @@ DMITIGR_PGFE_INLINE void Statement::update_cache(const Statement& rhs)
       "exceeds the maximum (" + std::to_string(max_parameter_count()) + ")"};
 
   // Merge positional parameters (cannot throw).
-  for (std::size_t i{}; i < rhs_pos_params_size; ++i) {
-    if (!positional_parameters_[i] && rhs.positional_parameters_[i])
-      positional_parameters_[i] = true;
-  }
+  for (std::size_t i{}; i < rhs_pos_params_size; ++i)
+    positional_parameters_[i] += rhs.positional_parameters_[i];
 
   assert(is_invariant_ok());
 }
