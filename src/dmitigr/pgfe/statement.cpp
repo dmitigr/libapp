@@ -730,7 +730,7 @@ Statement::has_duplicate_named_parameter() const noexcept
 }
 
 DMITIGR_PGFE_INLINE bool
-Statement::has_parameter_literal() const noexcept
+Statement::has_literal_parameter() const noexcept
 {
   return any_of(cbegin(named_parameters_), cend(named_parameters_),
     [](const auto& param) noexcept
@@ -740,12 +740,24 @@ Statement::has_parameter_literal() const noexcept
 }
 
 DMITIGR_PGFE_INLINE bool
-Statement::has_parameter_identifier() const noexcept
+Statement::has_identifier_parameter() const noexcept
 {
   return any_of(cbegin(named_parameters_), cend(named_parameters_),
     [](const auto& param) noexcept
     {
       return param.type == Fragment::Type::named_parameter_identifier;
+    });
+}
+
+DMITIGR_PGFE_INLINE bool
+Statement::has_quoting_parameter() const noexcept
+{
+  return any_of(cbegin(named_parameters_), cend(named_parameters_),
+    [](const auto& param) noexcept
+    {
+      using enum Fragment::Type;
+      return param.type == named_parameter_literal ||
+        param.type == named_parameter_identifier;
     });
 }
 

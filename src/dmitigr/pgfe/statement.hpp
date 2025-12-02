@@ -249,13 +249,16 @@ public:
    * @returns `true` if there is a named parameter in this statement which
    * is literal.
    */
-  DMITIGR_PGFE_API bool has_parameter_literal() const noexcept;
+  DMITIGR_PGFE_API bool has_literal_parameter() const noexcept;
 
   /**
    * @returns `true` if there is a named parameter in this statement which
    * is identifier.
    */
-  DMITIGR_PGFE_API bool has_parameter_identifier() const noexcept;
+  DMITIGR_PGFE_API bool has_identifier_parameter() const noexcept;
+
+  /// @returns `has_literal_parameter() || has_identifier_parameter()`.
+  DMITIGR_PGFE_API bool has_quoting_parameter() const noexcept;
 
   /**
    * @brief Appends the specified statement.
