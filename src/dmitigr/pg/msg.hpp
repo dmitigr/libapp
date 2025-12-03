@@ -286,12 +286,17 @@ inline Parse_view to_parse_view(const char* const message) noexcept
 /**
  * @brief Serializes `pv` into `message`.
  *
+ * @param copy_query If `true`, the query is copied from `pv.query`. Otherwise,
+ * pv.query.size() characters are skipped and not written to `message`. Anyway,
+ * terminating null character is written to the place right after the query.
+ *
  * @par Requires
  * `message` must point to a memory space of size at least serialized_size(pv).
  *
  * @returns The number of bytes written.
  */
-inline std::size_t serialize(char* const message, const Parse_view& pv) noexcept
+inline std::size_t serialize(char* const message, const Parse_view& pv,
+  const bool copy_query = true) noexcept
 {
   if (!message || !is_valid(pv))
     return 0;
@@ -306,7 +311,8 @@ inline std::size_t serialize(char* const message, const Parse_view& pv) noexcept
   ps_name[pv.ps_name.size()] = 0;
 
   auto* const query = ps_name + pv.ps_name.size() + 1;
-  std::memcpy(query, pv.query.data(), pv.query.size());
+  if (copy_query)
+    std::memcpy(query, pv.query.data(), pv.query.size());
   query[pv.query.size()] = 0;
 
   auto* const ptc = query + pv.query.size() + 1;
@@ -394,12 +400,15 @@ inline Query_view to_query_view(const char* const message) noexcept
 /**
  * @brief Serializes `qv` into `message`.
  *
+ * @param copy_query The same meaning as for serialize(char*, const Parse_view&, bool).
+ *
  * @par Requires
  * `message` must point to a memory space of size at least serialized_size(qv).
  *
  * @returns The number of bytes written.
  */
-inline std::size_t serialize(char* const message, const Query_view& qv) noexcept
+inline std::size_t serialize(char* const message, const Query_view& qv,
+  const bool copy_query = true) noexcept
 {
   if (!message || !is_valid(qv))
     return 0;
@@ -410,7 +419,8 @@ inline std::size_t serialize(char* const message, const Query_view& qv) noexcept
   std::memcpy(message + 1, &message_size, sizeof(message_size));
 
   auto* const query = message + data_offset;
-  std::memcpy(query, qv.query.data(), qv.query.size());
+  if (copy_query)
+    std::memcpy(query, qv.query.data(), qv.query.size());
   query[qv.query.size()] = 0;
 
   assert(query + qv.query.size() - message == msize);
