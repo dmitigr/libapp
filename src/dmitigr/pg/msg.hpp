@@ -423,7 +423,7 @@ inline std::size_t serialize(char* const message, const Query_view& qv,
     std::memcpy(query, qv.query.data(), qv.query.size());
   query[qv.query.size()] = 0;
 
-  assert(query + qv.query.size() - message == msize);
+  assert(query + qv.query.size() + 1 - message == msize);
   return msize;
 }
 
