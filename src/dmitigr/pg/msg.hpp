@@ -377,7 +377,7 @@ inline bool is_valid(const Query_view& qv) noexcept
 /// @returns The size of serialized Query message.
 inline std::uint32_t serialized_size(const Query_view& qv) noexcept
 {
-  return is_valid(qv) ? data_offset + qv.query.size() : 0;
+  return is_valid(qv) ? data_offset + qv.query.size() + 1 : 0;
 }
 
 /// @returns An instance of Query_view from `message`.
@@ -411,6 +411,7 @@ inline std::size_t serialize(char* const message, const Query_view& qv) noexcept
 
   auto* const query = message + data_offset;
   std::memcpy(query, qv.query.data(), qv.query.size());
+  query[qv.query.size()] = 0;
 
   assert(query + qv.query.size() - message == msize);
   return msize;
