@@ -944,7 +944,7 @@ DMITIGR_PGFE_INLINE std::string::size_type Statement::string_capacity() const no
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type
-Statement::write_string(char* result) const
+Statement::write_string(char* result, const Write_mode wmode) const
 {
   const char* const begin{result};
   for (const auto& fragment : fragments_) {
@@ -956,14 +956,18 @@ Statement::write_string(char* result) const
       append_str(&result, fragment.str);
       break;
     case one_line_comment:
-      append_lit(&result, "--");
-      append_str(&result, fragment.str);
-      append_chr(&result, '\n');
+      if (bool(wmode & Write_mode::with_comments)) {
+        append_lit(&result, "--");
+        append_str(&result, fragment.str);
+        append_chr(&result, '\n');
+      }
       break;
     case multi_line_comment:
-      append_lit(&result, "/*");
-      append_str(&result, fragment.str);
-      append_lit(&result, "*/");
+      if (bool(wmode & Write_mode::with_comments)) {
+        append_lit(&result, "/*");
+        append_str(&result, fragment.str);
+        append_lit(&result, "*/");
+      }
       break;
     case named_parameter_unquoted:
       append_chr(&result, ':');
@@ -992,10 +996,11 @@ Statement::write_string(char* result) const
   return static_cast<std::string::size_type>(result - begin);
 }
 
-DMITIGR_PGFE_INLINE std::string Statement::to_string() const
+DMITIGR_PGFE_INLINE std::string
+Statement::to_string(const Write_mode wmode) const
 {
   std::string result(string_capacity(), '\0');
-  const auto size = write_string(result.data());
+  const auto size = write_string(result.data(), wmode);
   DMITIGR_ASSERT(size <= result.capacity());
   result.resize(size);
   return result;

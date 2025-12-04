@@ -19,6 +19,7 @@
 
 #include "../base/assert.hpp"
 #include "../base/assoc_vector.hpp"
+#include "../base/enum.hpp"
 #include "../base/string_vector.hpp"
 #include "basics.hpp"
 #include "dll.hpp"
@@ -28,6 +29,7 @@
 
 #include <compare>
 #include <cstddef>
+#include <cstdint>
 #include <list>
 #include <optional>
 #include <string>
@@ -78,6 +80,16 @@ public:
 
   /// An alias of destructured string.
   using Destructured_string = String_vector<std::string_view>;
+
+  /// An write mode for write_string().
+  enum class Write_mode : std::uint32_t {
+    without_comments = 0x0,
+    with_comments = 0x1
+  };
+
+  /// The default write mode for write_string().
+  static constexpr Write_mode default_write_string_mode{
+    Write_mode::with_comments};
 
   /// @name Constructors
   /// @{
@@ -375,7 +387,8 @@ public:
    *
    * @see string_capacity(), to_string().
    */
-  DMITIGR_PGFE_API std::string::size_type write_string(char* result) const;
+  DMITIGR_PGFE_API std::string::size_type write_string(char* result,
+    Write_mode wmode = default_write_string_mode) const;
 
   /**
    * @returns The result of converting this instance to an instance of
@@ -383,7 +396,8 @@ public:
    *
    * @see write_string().
    */
-  DMITIGR_PGFE_API std::string to_string() const;
+  DMITIGR_PGFE_API std::string
+  to_string(Write_mode wmode = default_write_string_mode) const;
 
   /**
    * @returns The estimated capacity of a string returned by to_query_string().
@@ -802,6 +816,15 @@ private:
   struct Comments;
 };
 
+} // namespace dmitigr::pgfe
+
+namespace dmitigr {
+template<>
+struct Is_bitmask_enum<pgfe::Statement::Write_mode> : std::true_type {};
+} // namespace dmitigr
+
+namespace dmitigr::pgfe {
+DMITIGR_DEFINE_ENUM_BITMASK_OPERATORS(Statement::Write_mode);
 } // namespace dmitigr::pgfe
 
 #ifndef DMITIGR_PGFE_NOT_HEADER_ONLY
