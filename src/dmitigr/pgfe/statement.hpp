@@ -484,15 +484,15 @@ public:
   /// @endcode
   /// The SQL code above contains just one actual query:
   /// @code{sql}SELECT * FROM table WHERE :{where}@endcode
-  /// This query has seven related comments and two unrelated comments (at the
+  /// This query has four related comments and two unrelated comments (at the
   /// beginning) because there are two newline characters following them. Next,
   /// there are two data associations specified as a dollar-quoted string
   /// constants tagged as `id` and `where`. The valid characters of the tags
   /// are: alphanumerics, the underscore character and the dash.
   /// Please, note, that the content in between the named tags might consist to
   /// multiple lines. There are rules of the content formatting in such cases:
-  ///   -# The leading and trailing newline characters are always ignored and
-  ///   other newline characters are always preserved;
+  ///   -# The first and last newline character are always ignored and other
+  ///   newline characters are always preserved;
   ///   -# If the content begins with non newline character, then the content is
   ///   associated exactly as provided, i.e. all indentations are preserved;
   ///   -# If the content begins with a newline character then the following
