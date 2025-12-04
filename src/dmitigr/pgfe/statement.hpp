@@ -430,11 +430,11 @@ public:
   write_query_string(char*, const Connection*) const;
 
   /// @overload
-  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
-    const Connection& conn) const;
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char*,
+    const Connection&) const;
 
   /// @overload
-  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result) const;
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char*) const;
 
   /**
    * @returns The query string that's actually passed to a PostgreSQL server.
@@ -447,7 +447,7 @@ public:
   DMITIGR_PGFE_API std::string to_query_string(const Connection*) const;
 
   /// @overload
-  DMITIGR_PGFE_API std::string to_query_string(const Connection& conn) const;
+  DMITIGR_PGFE_API std::string to_query_string(const Connection&) const;
 
   /// @overload
   DMITIGR_PGFE_API std::string to_query_string() const;
