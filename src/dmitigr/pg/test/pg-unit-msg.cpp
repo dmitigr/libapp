@@ -17,6 +17,8 @@
 #include "../../base/assert.hpp"
 #include "../../pg/msg.hpp"
 
+#include <vector>
+
 int main()
 {
   try {
