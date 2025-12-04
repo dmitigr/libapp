@@ -29,7 +29,7 @@ namespace rapidjson {
 using SizeType = std::size_t;
 } // namespace rapidjson
 
-#ifdef __GNUG__
+#ifdef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdocumentation"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -42,7 +42,7 @@ using SizeType = std::size_t;
 #include "../3rdparty/rapidjson/schema.h"
 #include "../3rdparty/rapidjson/stringbuffer.h"
 #include "../3rdparty/rapidjson/writer.h"
-#ifdef __GNUG__
+#ifdef __clang__
 #pragma GCC diagnostic pop
 #endif
 

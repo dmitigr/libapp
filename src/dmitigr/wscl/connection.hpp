@@ -17,7 +17,7 @@
 #ifndef DMITIGR_WSCL_CONNECTION_HPP
 #define DMITIGR_WSCL_CONNECTION_HPP
 
-#ifdef __GNUG__
+#ifdef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdocumentation"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -25,7 +25,7 @@
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
 #include "../3rdparty/uwsc/uwsc.h"
-#ifdef __GNUG__
+#ifdef __clang__
 #pragma GCC diagnostic pop
 #endif
 

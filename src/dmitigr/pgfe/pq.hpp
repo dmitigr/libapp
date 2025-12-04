@@ -20,12 +20,12 @@
 #include "../base/assert.hpp"
 #include "basics.hpp"
 
-#ifdef __GNUG__
+#ifdef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreserved-identifier"
 #endif
 #include <libpq-fe.h>
-#ifdef __GNUG__
+#ifdef __clang__
 #pragma GCC diagnostic pop
 #endif
 

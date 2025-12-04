@@ -25,12 +25,12 @@
 #endif
 #endif
 
-#ifdef __GNUG__
+#ifdef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreserved-identifier"
 #endif
 #include <uv.h>
-#ifdef __GNUG__
+#ifdef __clang__
 #pragma GCC diagnostic pop
 #endif
 
