@@ -412,7 +412,8 @@ public:
    *
    * @see query_string_capacity(), to_query_string().
    */
-  DMITIGR_PGFE_API std::string::size_type write_query_string(char*, const Connection*) const;
+  DMITIGR_PGFE_API std::string::size_type
+  write_query_string(char*, const Connection*) const;
 
   /// @overload
   DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
