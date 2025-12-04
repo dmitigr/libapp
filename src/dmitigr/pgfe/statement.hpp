@@ -390,6 +390,13 @@ public:
   DMITIGR_PGFE_API std::string::size_type write_string(char* result,
     Write_mode wmode = default_write_string_mode) const;
 
+  /// An alias for write_string().
+  auto serialize(char* const result,
+    const Write_mode wmode = default_write_string_mode) const
+  {
+    return write_string(result, wmode);
+  }
+
   /**
    * @returns The result of converting this instance to an instance of
    * type `std::string`.
