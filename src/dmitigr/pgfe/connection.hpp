@@ -217,7 +217,7 @@ public:
   /**
    * @brief Attempts to connect to a PostgreSQL server.
    *
-   * @param timeout The value of `-1` means `options()->connect_timeout()`,
+   * @param timeout The value of `-1` means `options().connect_timeout()`,
    * the value of `std::nullopt` means *eternity*.
    *
    * @par Requires
