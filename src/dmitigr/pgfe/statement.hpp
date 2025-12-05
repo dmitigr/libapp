@@ -472,6 +472,8 @@ public:
   /// -- This is the unrelated comment (because 2 new line feeds follows after it).
   /// -- $id$unrelated$id$
   ///
+  /// /* This is also the unrelated comment. */
+  ///
   /// -- This is the related one line comment 1
   /// -- $id$select-all$id$
   /// /* $where$
@@ -484,72 +486,78 @@ public:
   /// @endcode
   /// The SQL code above contains just one actual query:
   /// @code{sql}SELECT * FROM table WHERE :{where}@endcode
-  /// This query has four related comments and two unrelated comments (at the
+  /// This query has four related comments and three unrelated comments (at the
   /// beginning) because there are two newline characters following them. Next,
-  /// there are two data associations specified as a dollar-quoted string
-  /// constants tagged as `id` and `where`. The valid characters of the tags
-  /// are: alphanumerics, the underscore character and the dash.
-  /// Please, note, that the content in between the named tags might consist to
-  /// multiple lines. There are rules of the content formatting in such cases:
-  ///   -# The first and last newline character are always ignored and other
-  ///   newline characters are always preserved;
-  ///   -# If the content begins with non newline character, then the content is
-  ///   associated exactly as provided, i.e. all indentations are preserved;
-  ///   -# If the content begins with a newline character then the following
-  ///   lines will be left-aligned relative the *most left non space character*.
-  ///   In case of the sequence of one-line comments, the most left non space
-  ///   character are always follows the one-line comment marker ("--"). In case
-  ///   of the multi-line comment, the most left non space character can be a
-  ///   character that follows the asterisk with a space ("* "), or just the
-  ///   most left character.
+  /// there are two metadata entries specified as dollar-quoted string constants
+  /// with keys `id` and `where`. The valid characters of keys (named tags) are:
+  /// alphanumerics, the underscore character and the dash. The metadata value
+  /// in between the named tags might consist to multiple lines. The rules for
+  /// extracting the metadata values are as follows:
+  ///   -# if the value begins and/or ends with newline character(s), these
+  ///   characters are not extracted;
+  ///   -# if the value begins with not newline character(s), then this beginning
+  ///   line is extracted including the newline character(s);
+  ///   -# the following lines are extracted including the newline character(s)
+  ///   starting from the position of the '$' character of the leading named tag.
   ///
   /// Examples:
   ///
-  /// Example 1. The misaligned content of the association specified in the
-  /// multi-line comment
+  /// Example 1. The metadata with beginning line.
   ///
   /// @code{sql}
   /// /*
-  ///  * $text1$
-  ///    * one
-  ///      * two
-  ///    * three
+  ///  * $text1$one
+  ///  * two
+  ///  *   three
   ///  * $text1$
   ///  */
   /// SELECT 1, 2, 3
   /// @endcode
   ///
-  /// The content of the `text1` association is "one\n  * two\nthree".
+  /// The metadata value of `text1` is "one\ntwo\n  three".
   ///
-  /// Example 2. The aligned content of the association specified in the
-  /// multi-line comment
+  /// Example 2. The metadata aligned with indentation.
   ///
   /// @code{sql}
   /// /*
   ///  * $text2$
+  ///      one
+  ///      two
+  ///      three
+  ///  * $text2$
+  ///  */
+  /// SELECT 1, 2, 3
+  /// @endcode
+  ///
+  /// The metadata value of `text2` is "  one\n  two\n  three".
+  ///
+  /// Example 3. The metadata aligned without indentation.
+  ///
+  /// @code{sql}
+  /// /*
+  ///  * $text3$
   ///  * one
   ///  * two
   ///  * three
-  ///  * $text2$
+  ///  * $text3$
   ///  */
   /// SELECT 1, 2, 3
   /// @endcode
   ///
-  /// The content of the `text2` association is "one\ntwo\nthree".
+  /// The metadata value of `text3` is "one\ntwo\nthree".
   ///
-  /// Example 3. The content of the association specified in the sequence of
-  /// one-line comments
+  /// Example 4. The misaligned metadata.
   ///
   /// @code{sql}
-  /// -- $text3$
+  /// -- $text4$
   /// --one
   /// -- two
-  /// -- three
-  /// -- $text3$
+  /// --   three
+  /// -- $text4$
   /// SELECT 1, 2, 3
   /// @endcode
   ///
-  /// The content of the `text3` association is "one\n two\n three".
+  /// The metadata value of `text4` is "ne\ntwo\n  three".
   DMITIGR_PGFE_API const Metadata& metadata() const;
 
   /**

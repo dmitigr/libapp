@@ -220,26 +220,15 @@ public:
     const auto [begin, end] = first_related_comments(fragments);
     if (begin != cend(fragments)) {
       const auto comments = joined_comments(begin, end);
-      for (const auto& [comment, type] : comments) {
-        auto associations = extract(comment, type);
-        result.reserve(result.capacity() + associations.size());
-        for (auto& a : associations)
-          result.push_back(std::move(a));
-      }
+      auto associations = extract(comments);
+      result.reserve(associations.size());
+      for (auto& a : associations)
+        result.push_back(std::move(a));
     }
     return result;
   }
 
 private:
-  /// Represents a comment type.
-  enum class Comment_type {
-    /// Denotes one line comment.
-    one_line,
-
-    /// Denotes multi line comment.
-    multi_line
-  };
-
   /**
    * @brief Extracts the associated data from dollar quoted literals found in
    * comments.
@@ -247,30 +236,32 @@ private:
    * @returns Extracted data as key-value pairs.
    *
    * @param input An input string with comments.
-   * @param comment_type A type of comments in the `input`.
    */
   static std::vector<std::pair<Key, Value>>
-  extract(const std::string_view input, const Comment_type comment_type)
+  extract(const std::string_view input)
   {
-    enum { top, dollar, dollar_quote_leading_tag,
-      dollar_quote, dollar_quote_dollar } state = top;
-
-    std::vector<std::pair<Key, Value>> result;
-    std::string content;
-    std::string dollar_quote_leading_tag_name;
-    std::string dollar_quote_trailing_tag_name;
-
     static const auto is_valid_tag_char = [](const auto ch) noexcept
     {
       const auto c = static_cast<unsigned char>(ch);
       return std::isalnum(c) || c == '_' || c == '-';
     };
 
+    enum { top, dollar, dollar_quote_leading_tag,
+      dollar_quote, dollar_quote_dollar } state = top;
+    std::vector<std::pair<Key, Value>> result;
+    std::string content;
+    std::string dollar_quote_leading_tag_name;
+    std::string dollar_quote_trailing_tag_name;
+    std::string::size_type border{};
     for (const auto current_char : input) {
       switch (state) {
       case top:
         if (current_char == '$')
           state = dollar;
+        else if (current_char == '\n')
+          border = 0;
+        else
+          ++border;
         continue;
       case dollar:
         if (is_valid_tag_char(current_char)) {
@@ -284,7 +275,7 @@ private:
         else if (is_valid_tag_char(current_char))
           dollar_quote_leading_tag_name += current_char;
         else
-          throw Generic_exception{"invalid dollar quote tag"};
+          return decltype(result){};
         continue;
       case dollar_quote:
         if (current_char == '$')
@@ -300,10 +291,10 @@ private:
              * Now attempt to clean up the content before adding it to the result.
              */
             state = top;
-            result.emplace_back(std::move(dollar_quote_leading_tag_name),
-              cleaned_content(std::move(content), comment_type));
-            content = {};
-            dollar_quote_leading_tag_name = {};
+            result.emplace_back(dollar_quote_leading_tag_name,
+              cleaned_content(content, border));
+            content.clear();
+            dollar_quote_leading_tag_name.clear();
           } else
             state = dollar_quote;
 
@@ -313,147 +304,69 @@ private:
         continue;
       }
     }
-
     if (state != top)
-      throw Generic_exception{"invalid comment block:\n" +
-        std::string{input}};
+      return decltype(result){};
 
     return result;
   }
 
   /**
-   * @brief Scans the metadata content to determine the indent size.
-   *
-   * @returns The number of characters to remove after each '\n'.
-   */
-  static std::size_t indent_size(const std::string_view content,
-    const Comment_type comment_type)
-  {
-    const auto set_if_less = [](auto& variable, const auto count)
-    {
-      if (!variable)
-        variable.emplace(count);
-      else if (count < variable)
-        variable = count;
-    };
-
-    enum { counting, after_asterisk, after_non_asterisk, skiping } state = counting;
-    std::optional<std::size_t> min_indent_to_border{};
-    std::optional<std::size_t> min_indent_to_content{};
-    std::size_t count{};
-    for (const auto current_char : content) {
-      switch (state) {
-      case counting:
-        if (current_char == '\n')
-          count = 0;
-        else if (current_char == '*')
-          state = after_asterisk;
-        else if (str::is_space(current_char))
-          ++count;
-        else
-          state = after_non_asterisk;
-        continue;
-      case after_asterisk:
-        if (current_char == ' ') {
-          if (min_indent_to_border) {
-            if (count < *min_indent_to_border) {
-              set_if_less(min_indent_to_content, *min_indent_to_border);
-              min_indent_to_border = count;
-            } else if (count == *min_indent_to_border + 1)
-              set_if_less(min_indent_to_content, count);
-          } else
-            min_indent_to_border.emplace(count);
-        } else
-          set_if_less(min_indent_to_content, count);
-        state = skiping;
-        continue;
-      case after_non_asterisk:
-        set_if_less(min_indent_to_content, count);
-        state = skiping;
-        continue;
-      case skiping:
-        if (current_char == '\n') {
-          count = 0;
-          state = counting;
-        }
-        continue;
-      }
-    }
-
-    // Calculate the result depending on the comment type.
-    switch (comment_type) {
-    case Comment_type::multi_line:
-      if (min_indent_to_border) {
-        if (min_indent_to_content) {
-          if (min_indent_to_content <= min_indent_to_border)
-            return 0;
-          else if (min_indent_to_content == *min_indent_to_border + 1)
-            return *min_indent_to_content;
-        }
-        return *min_indent_to_border + 1 + 1;
-      } else
-        return 0;
-    case Comment_type::one_line:
-      return min_indent_to_content ? (*min_indent_to_content == 0 ? 0 : 1) : 1;
-    }
-
-    DMITIGR_ASSERT(false);
-  }
-
-  /**
    * @brief Cleans up the metadata content.
    *
-   * Cleaning up includes:
-   *   -# removing the indentation characters;
-   *   -# trimming most leading and/or most trailing newline characters (for
-   *   multiline comments only).
+   * #details Cleaning up includes:
+   *   -# removing the out of border characters;
+   *   -# trimming the most leading and the most trailing newline characters.
    */
-  static std::string cleaned_content(std::string&& content,
-    const Comment_type comment_type)
+  static std::string cleaned_content(std::string_view content,
+    const std::string::size_type border)
   {
-    std::string result;
+    // Skip the most leading newline character.
+    const auto start = [content]
+    {
+      std::string_view::size_type pos{};
+      const auto content_size = content.size();
+      if (pos < content_size && content[pos] == '\r')
+        ++pos;
+      if (pos < content_size && content[pos] == '\n')
+        ++pos;
+      if (pos && content[pos - 1] != '\n')
+        pos = 0;
+      return pos;
+    }();
+    content = content.substr(start);
 
-    // Remove the indentation characters (if any).
-    if (const std::size_t isize = indent_size(content, comment_type); isize > 0) {
-      std::size_t count{};
-      enum { eating, skiping } state = eating;
+    std::string result;
+    if (border) {
+      std::string_view::size_type count{start ? border : 0u};
+      enum { skiping, storing } state = count ? skiping : storing;
       for (const auto current_char : content) {
         switch (state) {
-        case eating:
-          if (current_char == '\n') {
-            count = isize;
-            state = skiping;
-          }
-          result += current_char;
-          continue;
         case skiping:
           if (count > 1)
             --count;
           else
-            state = eating;
+            state = storing;
+          continue;
+        case storing:
+          if (current_char == '\n') {
+            count = border;
+            state = skiping;
+          }
+          result += current_char;
           continue;
         }
       }
-      std::string{}.swap(content);
     } else
-      result.swap(content);
+      result = std::string{content};
 
-    // Trim the most leading and the most trailing newline-characters.
-    if (const auto size = result.size(); size > 0) {
-      std::string::size_type start{};
-      if (result[start] == '\r')
-        ++start;
-      if (start < size && result[start] == '\n')
-        ++start;
-
-      std::string::size_type end{size};
-      if (start < end && result[end - 1] == '\n')
-        --end;
-      if (start < end && result[end - 1] == '\r')
-        --end;
-
-      if (start > 0 || end < size)
-        result = result.substr(start, end - start);
+    // Trim the most trailing newline character.
+    if (std::string::size_type size{result.size()}) {
+      if (start < size && result[size - 1] == '\n') {
+        --size;
+        if (start < size && result[size - 1] == '\r')
+          --size;
+      }
+      result.resize(size);
     }
 
     return result;
@@ -483,7 +396,7 @@ private:
           ++count;
           if (count > 1)
             return false;
-        } else if (!str::is_space(c))
+        } else if (!str::is_space(static_cast<unsigned char>(c)))
           break;
       }
       return true;
@@ -524,61 +437,31 @@ private:
   }
 
   /**
-   * @brief Joins first comments of the same type into the result string.
-   *
-   * @returns The pair of:
-   *   - the pair of the result string (comment) and its type;
-   *   - the iterator that points to the fragment that follows the last comment
-   *     appended to the result.
-   */
-  std::pair<std::pair<std::string, Comments::Comment_type>,
-    Fragment_list::const_iterator>
-  static joined_comments_of_same_type(Fragment_list::const_iterator i,
-    const Fragment_list::const_iterator e)
-  {
-    using Ft = Fragment::Type;
-    DMITIGR_ASSERT(i->is_comment());
-    std::string result;
-    const auto fragment_type = i->type;
-    for (; i->type == fragment_type && i != e; ++i) {
-      result.append(i->str);
-      if (fragment_type == Ft::one_line_comment)
-        result += '\n';
-    }
-    const auto comment_type = [](const Ft ft) noexcept
-    {
-      switch (ft) {
-      case Ft::one_line_comment:
-        return Comments::Comment_type::one_line;
-      case Ft::multi_line_comment:
-        return Comments::Comment_type::multi_line;
-      default:
-        DMITIGR_ASSERT(false);
-      }
-    };
-    return std::make_pair(
-      std::make_pair(std::move(result), comment_type(fragment_type)), i);
-  }
-
-  /**
    * @brief Joins all comments into the vector of strings.
    *
-   * @returns The vector of pairs of:
-   *   - the joined comments as first element;
-   *   - the type of the joined comments as second element.
+   * @returns The joined comments.
    */
-  std::vector<std::pair<std::string, Comments::Comment_type>>
-  static joined_comments(Fragment_list::const_iterator i,
+  static std::string joined_comments(Fragment_list::const_iterator i,
     const Fragment_list::const_iterator e)
   {
-    std::vector<std::pair<std::string, Comments::Comment_type>> result;
+    std::string result;
     while (i != e) {
-      if (i->is_comment()) {
-        auto comments = joined_comments_of_same_type(i, e);
-        result.emplace_back(std::move(comments.first));
-        i = comments.second;
-      } else
-        ++i;
+      using enum Fragment::Type;
+      switch (i->type) {
+      case one_line_comment:
+        do {
+          result.append(i->str).append(1, '\n');
+          ++i;
+        } while (i != e && i->type == one_line_comment);
+        result.pop_back();
+        continue;
+      case multi_line_comment:
+        result.append(i->str);
+        break;
+      default:
+        break;
+      }
+      ++i;
     }
     return result;
   }
