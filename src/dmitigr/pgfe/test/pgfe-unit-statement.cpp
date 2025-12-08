@@ -214,12 +214,31 @@ update task_step_log
 
     // Dollar quoting.
     {
-      const pgfe::Statement s1{"select $$hello $$$"};
-      const pgfe::Statement s2{"select $$hello $a$$"};
-      const pgfe::Statement s3{"select $$hello $a$ $$"};
-      const pgfe::Statement s4{"select $abc$hello $ab$$abc$"};
+      const pgfe::Statement s1{"select $$hello$$"};
+      bool catched{};
+      try {
+        const pgfe::Statement s2{"select $$hello $$$"};
+      } catch (const std::exception& e) {
+        std::cerr << "catched: " << e.what() << std::endl;
+        catched = true;
+      }
+      ASSERT(catched);
+      const pgfe::Statement s3{"select $$hello $a$$"};
+      const pgfe::Statement s4{"select $$hello $a$ $$"};
+      const pgfe::Statement s5{"select $abc$hello $ab$$abc$"};
     }
 
+    // Dollar quoting.
+    {
+      bool catched{};
+      try {
+        const pgfe::Statement s2{"select $$hello $$$"};
+      } catch (const std::exception& e) {
+        std::cerr << "catched: " << e.what() << std::endl;
+        catched = true;
+      }
+      ASSERT(catched);
+    }
 
     // -------------------------------------------------------------------------
     // Comparison

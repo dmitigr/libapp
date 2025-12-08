@@ -1468,6 +1468,8 @@ Statement::parse_sql_input(const std::string_view text)
       case '$':
         if (!is_ident_char(previous_char))
           state = dollar;
+        else if (previous_char == '$')
+          state = invalid;
         else
           fragment += current_char;
         continue;
