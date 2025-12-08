@@ -187,12 +187,12 @@ DMITIGR_PGFE_INLINE std::string Multistatement::to_string() const
 
 DMITIGR_PGFE_INLINE std::string::size_type
 Multistatement::write_query_string(char* result,
-  const Connection* const connection) const
+  const Connection* const conn, const Statement_write_mode wmode) const
 {
   const char* const begin{result};
   if (!statements_.empty()) {
     for (const auto& statement : statements_) {
-      result += statement.write_query_string(result, connection);
+      result += statement.write_query_string(result, conn, wmode);
       *result = ';';
       ++result;
     }
@@ -204,20 +204,21 @@ Multistatement::write_query_string(char* result,
 DMITIGR_PGFE_INLINE std::string::size_type
 Multistatement::write_query_string(char* result, const Connection& conn) const
 {
-  return write_query_string(result, std::addressof(conn));
+  return write_query_string(result, std::addressof(conn), conn.query_string_write_mode());
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type
-Multistatement::write_query_string(char* result) const
+Multistatement::write_query_string(char* result, const Statement_write_mode wmode) const
 {
-  return write_query_string(result, nullptr);
+  return write_query_string(result, nullptr, wmode);
 }
 
 DMITIGR_PGFE_INLINE std::string
-Multistatement::to_query_string(const Connection* const conn) const
+Multistatement::to_query_string(const Connection* const conn,
+  const Statement_write_mode wmode) const
 {
   std::string result(query_string_capacity(), '\0');
-  const auto size = write_query_string(result.data(), conn);
+  const auto size = write_query_string(result.data(), conn, wmode);
   DMITIGR_ASSERT(size <= result.capacity());
   result.resize(size);
   return result;
@@ -226,12 +227,13 @@ Multistatement::to_query_string(const Connection* const conn) const
 DMITIGR_PGFE_INLINE std::string
 Multistatement::to_query_string(const Connection& conn) const
 {
-  return to_query_string(std::addressof(conn));
+  return to_query_string(std::addressof(conn), conn.query_string_write_mode());
 }
 
-DMITIGR_PGFE_INLINE std::string Multistatement::to_query_string() const
+DMITIGR_PGFE_INLINE std::string
+Multistatement::to_query_string(const Statement_write_mode wmode) const
 {
-  return to_query_string(nullptr);
+  return to_query_string(nullptr, wmode);
 }
 
 DMITIGR_PGFE_INLINE const std::vector<Statement>&

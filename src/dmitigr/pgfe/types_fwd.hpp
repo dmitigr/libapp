@@ -17,6 +17,8 @@
 #ifndef DMITIGR_PGFE_TYPES_FWD_HPP
 #define DMITIGR_PGFE_TYPES_FWD_HPP
 
+#include <cstdint>
+
 /// The API.
 namespace dmitigr::pgfe {
 
@@ -48,6 +50,7 @@ enum class Session_mode;
 enum class Ssl_certificate_authority_policy;
 enum class Ssl_mode;
 enum class Ssl_protocol_version;
+enum class Statement_write_mode : std::uint32_t;
 enum class Transaction_status;
 
 enum class Errc;

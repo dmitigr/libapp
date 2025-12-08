@@ -75,21 +75,22 @@ namespace dmitigr::pgfe {
  */
 class Statement final : public Parameterizable {
 public:
-  /// An alias of metadata.
+  /// A metadata.
   using Metadata = Assoc_vector<std::string, std::string>;
 
-  /// An alias of destructured string.
+  /// A destructured string.
   using Destructured_string = String_vector<std::string_view>;
 
-  /// An write mode for write_string().
-  enum class Write_mode : std::uint32_t {
-    without_comments = 0x0,
-    with_comments = 0x1
-  };
+  /// A statement write mode.
+  using Write_mode = Statement_write_mode;
 
-  /// The default write mode for write_string().
-  static constexpr Write_mode default_write_string_mode{
-    Write_mode::with_comments};
+  /// An alias for default_statement_string_write_mode.
+  static constexpr Write_mode default_string_write_mode{
+    default_statement_string_write_mode};
+
+  /// An alias for default_statement_query_string_write_mode.
+  static constexpr Write_mode default_query_string_write_mode{
+    default_statement_query_string_write_mode};
 
   /// @name Constructors
   /// @{
@@ -388,11 +389,11 @@ public:
    * @see string_capacity(), to_string().
    */
   DMITIGR_PGFE_API std::string::size_type write_string(char* result,
-    Write_mode wmode = default_write_string_mode) const;
+    Write_mode wmode = default_string_write_mode) const;
 
   /// An alias for write_string().
   auto serialize(char* const result,
-    const Write_mode wmode = default_write_string_mode) const
+    const Write_mode wmode = default_string_write_mode) const
   {
     return write_string(result, wmode);
   }
@@ -404,7 +405,7 @@ public:
    * @see write_string().
    */
   DMITIGR_PGFE_API std::string
-  to_string(Write_mode wmode = default_write_string_mode) const;
+  to_string(Write_mode wmode = default_string_write_mode) const;
 
   /**
    * @returns The estimated capacity of a string returned by to_query_string().
@@ -424,8 +425,10 @@ public:
    * least `query_string_capacity()` bytes.
    *
    * @par Requires
-   * `!has_missing_parameter() && conn.is_connected()` and requirements of
-   * query_string_capacity().
+   *   -# `!has_missing_parameter()`;
+   *   -# `!conn && !is_parameter_identifier(i)` or
+   * `conn && conn->is_connected() && bound(parameter_name(i))` for any `i` in
+   * range `[positional_parameter_count(), parameter_count())`.
    *
    * @returns The number of characters written.
    *
@@ -433,15 +436,25 @@ public:
    *
    * @see query_string_capacity(), to_query_string().
    */
-  DMITIGR_PGFE_API std::string::size_type
-  write_query_string(char*, const Connection*) const;
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
+    const Connection* conn, Write_mode) const;
 
-  /// @overload
-  DMITIGR_PGFE_API std::string::size_type write_query_string(char*,
-    const Connection&) const;
+  /**
+   * @overload
+   *
+   * @details Effectively calls
+   * write_query_string(result, &conn, conn.query_string_write_mode()).
+   */
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
+    const Connection& conn) const;
 
-  /// @overload
-  DMITIGR_PGFE_API std::string::size_type write_query_string(char*) const;
+  /**
+   * @overload
+   *
+   * @details Effectively calls write_query_string(result, nullptr, wmode).
+   */
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
+    Write_mode wmode = default_query_string_write_mode) const;
 
   /**
    * @returns The query string that's actually passed to a PostgreSQL server.
@@ -451,13 +464,14 @@ public:
    *
    * @see write_query_string().
    */
-  DMITIGR_PGFE_API std::string to_query_string(const Connection*) const;
+  DMITIGR_PGFE_API std::string to_query_string(const Connection*, Write_mode) const;
 
   /// @overload
   DMITIGR_PGFE_API std::string to_query_string(const Connection&) const;
 
   /// @overload
-  DMITIGR_PGFE_API std::string to_query_string() const;
+  DMITIGR_PGFE_API std::string
+  to_query_string(Write_mode wmode = default_query_string_write_mode) const;
 
   /// @returns The metadata associated with this instance.
   ///
@@ -831,15 +845,6 @@ private:
   struct Comments;
 };
 
-} // namespace dmitigr::pgfe
-
-namespace dmitigr {
-template<>
-struct Is_bitmask_enum<pgfe::Statement::Write_mode> : std::true_type {};
-} // namespace dmitigr
-
-namespace dmitigr::pgfe {
-DMITIGR_DEFINE_ENUM_BITMASK_OPERATORS(Statement::Write_mode);
 } // namespace dmitigr::pgfe
 
 #ifndef DMITIGR_PGFE_NOT_HEADER_ONLY

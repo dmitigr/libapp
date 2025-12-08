@@ -181,9 +181,11 @@ public:
    * @param result The pointer to a resulting memory space which must fit at
    * least `query_string_capacity()` bytes.
    *
-   * @par Requires
-   * `!has_missing_parameter() && conn.is_connected()` and requirements of
-   * query_string_capacity().
+   * @par Requires for each statement `s`
+   *   -# `!s.has_missing_parameter()`;
+   *   -# `!conn && !s.is_parameter_identifier(i)` or
+   *   `conn && conn->is_connected() && s.bound(s.parameter_name(i))` for any
+   *   `i` in range `[s.positional_parameter_count(), s.parameter_count())`.
    *
    * @returns The number of characters written.
    *
@@ -192,23 +194,35 @@ public:
    * @see query_string_capacity(), to_query_string().
    */
   DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
-    const Connection* conn) const;
+    const Connection* conn, Statement_write_mode) const;
 
-  /// @overload
+  /**
+   * @overload
+   *
+   * @details Effectively calls
+   * write_query_string(result, &conn, conn.query_string_write_mode()).
+   */
   DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
     const Connection& conn) const;
 
-  /// @overload
-  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result) const;
+  /**
+   * @overload
+   *
+   * @details Effectively calls write_query_string(result, nullptr, wmode).
+   */
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
+    Statement_write_mode wmode = Statement::default_query_string_write_mode) const;
 
   /// @returns The query string of statements.
-  DMITIGR_PGFE_API std::string to_query_string(const Connection*) const;
+  DMITIGR_PGFE_API std::string to_query_string(const Connection*,
+    Statement_write_mode) const;
 
   /// @overload
   DMITIGR_PGFE_API std::string to_query_string(const Connection&) const;
 
   /// @overload
-  DMITIGR_PGFE_API std::string to_query_string() const;
+  DMITIGR_PGFE_API std::string to_query_string(Statement_write_mode wmode =
+    Statement::default_query_string_write_mode) const;
 
   /// @returns The underlying vector of statements.
   DMITIGR_PGFE_API const std::vector<Statement>& vector() const & noexcept;

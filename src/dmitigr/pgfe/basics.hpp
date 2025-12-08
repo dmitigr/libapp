@@ -600,14 +600,38 @@ enum class Row_processing {
   complete = 200
 };
 
+// =============================================================================
+
+/**
+ * @ingroup main
+ *
+ * @brief A write mode for Statement.
+ */
+enum class Statement_write_mode : std::uint32_t {
+  without_comments = 0x0,
+  with_comments = 0x1
+};
+
+/// The default write mode for Statement::write_string().
+constexpr Statement_write_mode default_statement_string_write_mode{
+  Statement_write_mode::with_comments};
+
+/// The default write mode for Statement::write_query_string().
+constexpr Statement_write_mode default_statement_query_string_write_mode{
+  Statement_write_mode::without_comments};
+
 } // namespace dmitigr::pgfe
 
 namespace dmitigr {
 
 template<>
 struct Is_bitmask_enum<pgfe::Socket_readiness> final : std::true_type {};
+
 template<>
 struct Is_bitmask_enum<pgfe::External_library> final : std::true_type {};
+
+template<>
+struct Is_bitmask_enum<pgfe::Statement_write_mode> final : std::true_type {};
 
 namespace pgfe {
 
@@ -618,6 +642,7 @@ namespace pgfe {
 
 DMITIGR_DEFINE_ENUM_BITMASK_OPERATORS(Socket_readiness)
 DMITIGR_DEFINE_ENUM_BITMASK_OPERATORS(External_library)
+DMITIGR_DEFINE_ENUM_BITMASK_OPERATORS(Statement_write_mode)
 
 /// @}
 } // namespace pgfe

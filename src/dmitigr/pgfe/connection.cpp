@@ -1088,6 +1088,18 @@ DMITIGR_PGFE_INLINE Data_format Connection::result_format() const noexcept
   return default_result_format_;
 }
 
+DMITIGR_PGFE_INLINE void
+Connection::set_query_string_write_mode(const Statement_write_mode wmode)
+{
+  query_string_write_mode_ = wmode;
+}
+
+DMITIGR_PGFE_INLINE Statement_write_mode
+Connection::query_string_write_mode() const noexcept
+{
+  return query_string_write_mode_;
+}
+
 DMITIGR_PGFE_INLINE Oid Connection::create_large_object(const Oid oid)
 {
   if (!is_ready_for_request())
