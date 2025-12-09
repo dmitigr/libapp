@@ -67,8 +67,19 @@ public:
     swap(elements_, rhs.elements_);
   }
 
-  /// Compares `*this` with `rhs`.
-  auto operator<=>(const Assoc_vector& rhs) const noexcept = default;
+  /// @returns The result of comparison `lhs` with `rhs`.
+  auto operator<=>(const Assoc_vector& rhs) const noexcept
+  {
+    return elements_ < rhs.elements_ ? std::strong_ordering::less :
+      elements_ > rhs.elements_ ? std::strong_ordering::greater :
+      std::strong_ordering::equal;
+  }
+
+  /// @returns `(lhs <=> rhs) == 0`.
+  bool operator==(const Assoc_vector& rhs) const noexcept
+  {
+    return operator<=>(rhs) == std::strong_ordering::equal;
+  }
 
   /// @returns The number of elements.
   Size size() const noexcept
