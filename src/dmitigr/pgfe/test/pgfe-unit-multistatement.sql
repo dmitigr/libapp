@@ -43,5 +43,5 @@ SELECT n FROM (SELECT generate_series(1,9) n) foo WHERE :{cond};
 
 -- This is a placeholder for any data.
 --
--- $id$any-data$id$
+-- $id$$i$any-data$$$id$
 :{data}

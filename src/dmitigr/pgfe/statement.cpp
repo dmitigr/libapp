@@ -254,6 +254,7 @@ private:
     std::string dollar_quote_trailing_tag_name;
     std::string::size_type border{};
     for (const auto current_char : input) {
+    start:
       switch (state) {
       case top:
         if (current_char == '$')
@@ -267,21 +268,24 @@ private:
         if (is_valid_tag_char(current_char)) {
           state = dollar_quote_leading_tag;
           dollar_quote_leading_tag_name += current_char;
-        }
+        } else
+          state = top;
         continue;
       case dollar_quote_leading_tag:
         if (current_char == '$')
           state = dollar_quote;
         else if (is_valid_tag_char(current_char))
           dollar_quote_leading_tag_name += current_char;
-        else
-          return decltype(result){};
+        else {
+          dollar_quote_leading_tag_name.clear();
+          state = top;
+          goto start;
+        }
         continue;
       case dollar_quote:
         if (current_char == '$')
           state = dollar_quote_dollar;
-        else
-          content += current_char;
+        content += current_char;
         continue;
       case dollar_quote_dollar:
         if (current_char == '$') {
@@ -290,23 +294,25 @@ private:
              * Okay, the tag's name and content are successfully extracted.
              * Now attempt to clean up the content before adding it to the result.
              */
+            DMITIGR_ASSERT(content.back() == '$');
+            content.pop_back();
             state = top;
             result.emplace_back(dollar_quote_leading_tag_name,
               cleaned_content(content, border));
             content.clear();
             dollar_quote_leading_tag_name.clear();
-          } else
+            dollar_quote_trailing_tag_name.clear();
+          } else {
             state = dollar_quote;
-
-          dollar_quote_trailing_tag_name.clear();
+            content += dollar_quote_trailing_tag_name;
+            dollar_quote_trailing_tag_name.clear();
+            goto start;
+          }
         } else
           dollar_quote_trailing_tag_name += current_char;
         continue;
       }
     }
-    if (state != top)
-      return decltype(result){};
-
     return result;
   }
 

@@ -95,7 +95,7 @@ try {
   DMITIGR_ASSERT(bunch.statement_index("id", "plus_one") == 0);
   DMITIGR_ASSERT(bunch.statement_index("id", "digit") == 1);
   DMITIGR_ASSERT(bunch.statement_index("id", "empty-statement") == 2);
-  DMITIGR_ASSERT(bunch.statement_index("id", "any-data") == 3);
+  DMITIGR_ASSERT(bunch.statement_index("id", "$i$any-data$$") == 3);
   DMITIGR_ASSERT(bunch[0].metadata().index("id") == 0);
   DMITIGR_ASSERT(bunch[1].metadata().index("id") == 0);
   DMITIGR_ASSERT(bunch[1].metadata().index("cond") == 1);
@@ -133,7 +133,7 @@ try {
     DMITIGR_ASSERT(empty_statement.is_query_empty());
   }
 
-  // any-data
+  // $i$any-data$$
   {
     any_data.replace("data", "select :{num}");
     conn->execute([](auto&& row)
