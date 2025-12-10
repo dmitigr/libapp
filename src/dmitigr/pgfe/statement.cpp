@@ -1733,7 +1733,7 @@ Statement::parse_sql_input(const std::string_view text)
     break;
   case quote_quote:
     fragment += previous_char;
-    result.push_text(fragment_depth, fragment);
+    result.push_quoted_text(fragment_depth, fragment);
     break;
   case one_line_comment:
     result.push_one_line_comment(fragment_depth, fragment);
