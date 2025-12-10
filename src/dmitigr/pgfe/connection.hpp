@@ -1347,7 +1347,7 @@ private:
   Notification_handler notification_handler_;
   Data_format default_result_format_{Data_format::text};
   Statement_write_mode query_string_write_mode_{
-    default_statement_query_string_write_mode};
+    Statement_write_mode::default_query_string};
 
   // Persistent data / private-modifiable data
   std::shared_ptr<Prepared_statement::State> execute_ps_state_;

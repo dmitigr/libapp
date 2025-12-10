@@ -19,6 +19,7 @@
 
 #include "../base/enum.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <string_view>
 
@@ -608,17 +609,16 @@ enum class Row_processing {
  * @brief A write mode for Statement.
  */
 enum class Statement_write_mode : std::uint32_t {
-  without_comments = 0x0,
-  with_comments = 0x1
+  stripped = 0x0,
+  with_comments = 0x1,
+  with_leading_blanks = 0x2,
+
+  /// The default write mode for Statement::write_string().
+  default_string = with_comments | with_leading_blanks,
+
+  /// The default write mode for Statement::write_query_string().
+  default_query_string = stripped
 };
-
-/// The default write mode for Statement::write_string().
-constexpr Statement_write_mode default_statement_string_write_mode{
-  Statement_write_mode::with_comments};
-
-/// The default write mode for Statement::write_query_string().
-constexpr Statement_write_mode default_statement_query_string_write_mode{
-  Statement_write_mode::without_comments};
 
 } // namespace dmitigr::pgfe
 

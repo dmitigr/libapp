@@ -86,11 +86,11 @@ public:
 
   /// An alias for default_statement_string_write_mode.
   static constexpr Write_mode default_string_write_mode{
-    default_statement_string_write_mode};
+    Write_mode::default_string};
 
   /// An alias for default_statement_query_string_write_mode.
   static constexpr Write_mode default_query_string_write_mode{
-    default_statement_query_string_write_mode};
+    Write_mode::default_query_string};
 
   /// @name Constructors
   /// @{
