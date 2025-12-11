@@ -81,16 +81,8 @@ public:
   /// A destructured string.
   using Destructured_string = String_vector<std::string_view>;
 
-  /// A statement write mode.
-  using Write_mode = Statement_write_mode;
-
-  /// An alias for default_statement_string_write_mode.
-  static constexpr Write_mode default_string_write_mode{
-    Write_mode::default_string};
-
-  /// An alias for default_statement_query_string_write_mode.
-  static constexpr Write_mode default_query_string_write_mode{
-    Write_mode::default_query_string};
+  /// A statement part.
+  using Part = Statement_part;
 
   /// @name Constructors
   /// @{
@@ -376,6 +368,9 @@ public:
    */
   DMITIGR_PGFE_API std::string::size_type string_capacity() const noexcept;
 
+  /// Erases parts of statement.
+  DMITIGR_PGFE_API void erase(Part = Part::edge_spaces | Part::comments);
+
   /**
    * @brief Writes the result of converting this instance to a character sequence.
    *
@@ -388,14 +383,12 @@ public:
    *
    * @see string_capacity(), to_string().
    */
-  DMITIGR_PGFE_API std::string::size_type write_string(char* result,
-    Write_mode wmode = default_string_write_mode) const;
+  DMITIGR_PGFE_API std::string::size_type write_string(char* result) const;
 
   /// An alias for write_string().
-  auto serialize(char* const result,
-    const Write_mode wmode = default_string_write_mode) const
+  auto serialize(char* const result) const
   {
-    return write_string(result, wmode);
+    return write_string(result);
   }
 
   /**
@@ -404,8 +397,7 @@ public:
    *
    * @see write_string().
    */
-  DMITIGR_PGFE_API std::string
-  to_string(Write_mode wmode = default_string_write_mode) const;
+  DMITIGR_PGFE_API std::string to_string() const;
 
   /**
    * @returns The estimated capacity of a string returned by to_query_string().
@@ -437,13 +429,12 @@ public:
    * @see query_string_capacity(), to_query_string().
    */
   DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
-    const Connection* conn, Write_mode) const;
+    const Connection* conn) const;
 
   /**
    * @overload
    *
-   * @details Effectively calls
-   * write_query_string(result, &conn, conn.query_string_write_mode()).
+   * @details Effectively calls write_query_string(result, &conn).
    */
   DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
     const Connection& conn) const;
@@ -451,10 +442,9 @@ public:
   /**
    * @overload
    *
-   * @details Effectively calls write_query_string(result, nullptr, wmode).
+   * @details Effectively calls write_query_string(result, nullptr).
    */
-  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
-    Write_mode wmode = default_query_string_write_mode) const;
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result) const;
 
   /**
    * @returns The query string that's actually passed to a PostgreSQL server.
@@ -464,14 +454,13 @@ public:
    *
    * @see write_query_string().
    */
-  DMITIGR_PGFE_API std::string to_query_string(const Connection*, Write_mode) const;
+  DMITIGR_PGFE_API std::string to_query_string(const Connection*) const;
 
   /// @overload
   DMITIGR_PGFE_API std::string to_query_string(const Connection&) const;
 
   /// @overload
-  DMITIGR_PGFE_API std::string
-  to_query_string(Write_mode wmode = default_query_string_write_mode) const;
+  DMITIGR_PGFE_API std::string to_query_string() const;
 
   /// @returns The metadata associated with this instance.
   ///
@@ -782,6 +771,7 @@ private:
 
     const std::string& norm_str() const;
     bool norm_equal(const Fragment& rhs) const;
+    void renormalize();
 
     Type type;
     int depth{};

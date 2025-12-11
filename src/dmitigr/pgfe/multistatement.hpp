@@ -194,13 +194,13 @@ public:
    * @see query_string_capacity(), to_query_string().
    */
   DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
-    const Connection* conn, Statement_write_mode) const;
+    const Connection* conn) const;
 
   /**
    * @overload
    *
    * @details Effectively calls
-   * write_query_string(result, &conn, conn.query_string_write_mode()).
+   * write_query_string(result, &conn).
    */
   DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
     const Connection& conn) const;
@@ -208,21 +208,18 @@ public:
   /**
    * @overload
    *
-   * @details Effectively calls write_query_string(result, nullptr, wmode).
+   * @details Effectively calls write_query_string(result, nullptr).
    */
-  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result,
-    Statement_write_mode wmode = Statement::default_query_string_write_mode) const;
+  DMITIGR_PGFE_API std::string::size_type write_query_string(char* result) const;
 
   /// @returns The query string of statements.
-  DMITIGR_PGFE_API std::string to_query_string(const Connection*,
-    Statement_write_mode) const;
+  DMITIGR_PGFE_API std::string to_query_string(const Connection*) const;
 
   /// @overload
   DMITIGR_PGFE_API std::string to_query_string(const Connection&) const;
 
   /// @overload
-  DMITIGR_PGFE_API std::string to_query_string(Statement_write_mode wmode =
-    Statement::default_query_string_write_mode) const;
+  DMITIGR_PGFE_API std::string to_query_string() const;
 
   /// @returns The underlying vector of statements.
   DMITIGR_PGFE_API const std::vector<Statement>& vector() const & noexcept;

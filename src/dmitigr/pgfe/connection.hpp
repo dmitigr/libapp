@@ -1099,17 +1099,6 @@ public:
   /// @returns The default data format of a statement execution result.
   DMITIGR_PGFE_API Data_format result_format() const noexcept;
 
-  /**
-   * @brief Sets the default query string write mode.
-   *
-   * @par Exception safety guarantee
-   * Strong.
-   */
-  DMITIGR_PGFE_API void set_query_string_write_mode(const Statement_write_mode);
-
-  /// @returns The default query string write mode.
-  DMITIGR_PGFE_API Statement_write_mode query_string_write_mode() const noexcept;
-
   ///@}
 
   // ---------------------------------------------------------------------------
@@ -1346,8 +1335,6 @@ private:
   Notice_handler notice_handler_{&default_notice_handler};
   Notification_handler notification_handler_;
   Data_format default_result_format_{Data_format::text};
-  Statement_write_mode query_string_write_mode_{
-    Statement_write_mode::default_query_string};
 
   // Persistent data / private-modifiable data
   std::shared_ptr<Prepared_statement::State> execute_ps_state_;

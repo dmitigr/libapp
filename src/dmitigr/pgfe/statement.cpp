@@ -193,6 +193,12 @@ bool Statement::Fragment::norm_equal(const Fragment& rhs) const
   return type == rhs.type && depth == rhs.depth && norm_str() == rhs.norm_str();
 }
 
+DMITIGR_PGFE_INLINE void Statement::Fragment::renormalize()
+{
+  norm.clear();
+  norm_str();
+}
+
 // =============================================================================
 // Statement::Comments
 // =============================================================================
@@ -214,31 +220,129 @@ public:
 
   /// @returns The vector of associated metadata.
   static std::vector<std::pair<Key, Value>>
-  extract(const Fragment_list& fragments)
+  metadata(const Fragment_list& fragments)
   {
-    std::vector<std::pair<Key, Value>> result;
-    const auto [begin, end] = first_related_comments(fragments);
+    const auto [begin, end] = related(fragments);
     if (begin != cend(fragments)) {
-      const auto comments = joined_comments(begin, end);
-      auto associations = extract(comments);
-      result.reserve(associations.size());
-      for (auto& a : associations)
-        result.push_back(std::move(a));
+      const auto comments = joined(begin, end);
+      return metadata(comments);
+    }
+    return {};
+  }
+
+  /**
+   * @brief Finds relevant comments in the specified fragments.
+   *
+   * @returns The pair of iterators that specifies a range of relevant comments,
+   * or pair of cend(fragments) if no relevant comments found.
+   */
+  std::pair<Fragment_list::const_iterator, Fragment_list::const_iterator>
+  static related(const Fragment_list& fragments)
+  {
+    const auto b = cbegin(fragments);
+    const auto e = cend(fragments);
+    auto result = std::make_pair(e, e);
+
+    enum class Scan_front {
+      many_new_lines,
+      all_spaces_no_new_line,
+      all_spaces_one_new_line,
+      front_spaces_no_new_line,
+      front_spaces_one_new_line
+    };
+
+    static const auto scan_front = [](const std::string_view str) noexcept
+    {
+      using enum Scan_front;
+      int count{};
+      for (const auto c : str) {
+        if (c == '\n') {
+          ++count;
+          if (count > 1)
+            return many_new_lines;
+        } else if (!str::is_space(static_cast<unsigned char>(c)))
+          return !count ? front_spaces_no_new_line : front_spaces_one_new_line;
+      }
+      return !count ? all_spaces_no_new_line : all_spaces_one_new_line;
+    };
+
+    static const auto has_newline = [](const std::string_view str) noexcept
+    {
+      return std::any_of(cbegin(str), cend(str), [](const auto c) noexcept
+      {
+        return c == '\n';
+      });
+    };
+
+    // Try to find the first fragment which is the "nearby string".
+    const auto first_nearby = find_if(b, e, [](const Fragment& f) noexcept
+    {
+      return !f.is_comment() && (!f.is_text() || [&f]
+      {
+        using enum Scan_front;
+        const auto r = scan_front(f.str);
+        return r == front_spaces_no_new_line || r == front_spaces_one_new_line;
+      }());
+    });
+    if (first_nearby != b) {
+      auto i = first_nearby;
+      result.second = first_nearby;
+      do {
+        --i;
+        if (i->is_text()) {
+          if (const auto p = prev(i); p != b && p->is_multi_line_comment()) {
+            DMITIGR_ASSERT(!i->str.empty());
+            using enum Scan_front;
+            const auto sfr = scan_front(i->str);
+            if (sfr == all_spaces_no_new_line || sfr == all_spaces_one_new_line)
+              i = p;
+            else
+              break;
+          } else
+            break;
+        } else if (!i->is_comment())
+          break;
+        result.first = i;
+      } while (i != b);
+    }
+    DMITIGR_ASSERT(result.first == e || result.first->is_comment());
+    return result;
+  }
+
+  /// @returns The string with joined comments.
+  static std::string joined(Fragment_list::const_iterator i,
+    const Fragment_list::const_iterator e)
+  {
+    std::string result;
+    while (i != e) {
+      using enum Fragment::Type;
+      switch (i->type) {
+      case one_line_comment:
+        do {
+          result.append(i->str).append(1, '\n');
+          ++i;
+        } while (i != e && i->type == one_line_comment);
+        result.pop_back();
+        continue;
+      case multi_line_comment:
+        result.append(i->str);
+        break;
+      default:
+        break;
+      }
+      ++i;
     }
     return result;
   }
 
 private:
   /**
-   * @brief Extracts the associated data from dollar quoted literals found in
-   * comments.
+   * @brief Extracts the metadata from dollar quoted literals of `input`.
    *
-   * @returns Extracted data as key-value pairs.
-   *
-   * @param input An input string with comments.
+   * @returns The vector of metadata.
    */
   static std::vector<std::pair<Key, Value>>
-  extract(const std::string_view input)
+  metadata(const std::string_view input)
   {
     static const auto is_valid_tag_char = [](const auto ch) noexcept
     {
@@ -249,7 +353,7 @@ private:
     enum { top, dollar, dollar_quote_leading_tag,
       dollar_quote, dollar_quote_dollar } state = top;
     std::vector<std::pair<Key, Value>> result;
-    std::string content;
+    std::string value;
     std::string dollar_quote_leading_tag_name;
     std::string dollar_quote_trailing_tag_name;
     std::string::size_type border{};
@@ -285,26 +389,26 @@ private:
       case dollar_quote:
         if (current_char == '$')
           state = dollar_quote_dollar;
-        content += current_char;
+        value += current_char;
         continue;
       case dollar_quote_dollar:
         if (current_char == '$') {
           if (dollar_quote_leading_tag_name == dollar_quote_trailing_tag_name) {
             /*
-             * Okay, the tag's name and content are successfully extracted.
-             * Now attempt to clean up the content before adding it to the result.
+             * Okay, the key and value are successfully extracted.
+             * Now attempt to clean up the value before adding it to the result.
              */
-            DMITIGR_ASSERT(content.back() == '$');
-            content.pop_back();
+            DMITIGR_ASSERT(value.back() == '$');
+            value.pop_back();
             state = top;
             result.emplace_back(dollar_quote_leading_tag_name,
-              cleaned_content(content, border));
-            content.clear();
+              cleaned_value(value, border));
+            value.clear();
             dollar_quote_leading_tag_name.clear();
             dollar_quote_trailing_tag_name.clear();
           } else {
             state = dollar_quote;
-            content += dollar_quote_trailing_tag_name;
+            value += dollar_quote_trailing_tag_name;
             dollar_quote_trailing_tag_name.clear();
             goto start;
           }
@@ -317,35 +421,35 @@ private:
   }
 
   /**
-   * @brief Cleans up the metadata content.
+   * @brief Cleans up the metadata value.
    *
    * #details Cleaning up includes:
    *   -# removing the out of border characters;
    *   -# trimming the most leading and the most trailing newline characters.
    */
-  static std::string cleaned_content(std::string_view content,
+  static std::string cleaned_value(std::string_view value,
     const std::string::size_type border)
   {
     // Skip the most leading newline character.
-    const auto start = [content]
+    const auto start = [value]
     {
       std::string_view::size_type pos{};
-      const auto content_size = content.size();
-      if (pos < content_size && content[pos] == '\r')
+      const auto value_size = value.size();
+      if (pos < value_size && value[pos] == '\r')
         ++pos;
-      if (pos < content_size && content[pos] == '\n')
+      if (pos < value_size && value[pos] == '\n')
         ++pos;
-      if (pos && content[pos - 1] != '\n')
+      if (pos && value[pos - 1] != '\n')
         pos = 0;
       return pos;
     }();
-    content = content.substr(start);
+    value = value.substr(start);
 
     std::string result;
     if (border) {
       std::string_view::size_type count{start ? border : 0u};
       enum { skiping, storing } state = count ? skiping : storing;
-      for (const auto current_char : content) {
+      for (const auto current_char : value) {
         switch (state) {
         case skiping:
           if (count > 1)
@@ -363,7 +467,7 @@ private:
         }
       }
     } else
-      result = std::string{content};
+      result = std::string{value};
 
     // Trim the most trailing newline character.
     if (std::string::size_type size{result.size()}) {
@@ -375,100 +479,6 @@ private:
       result.resize(size);
     }
 
-    return result;
-  }
-
-  // -------------------------------------------------------------------------
-  // Related comments extraction
-  // -------------------------------------------------------------------------
-
-  /**
-   * @brief Finds very first relevant comments of the specified fragments.
-   *
-   * @returns The pair of iterators that specifies the range of relevant comments.
-   */
-  std::pair<Fragment_list::const_iterator, Fragment_list::const_iterator>
-  static first_related_comments(const Fragment_list& fragments)
-  {
-    const auto b = cbegin(fragments);
-    const auto e = cend(fragments);
-    auto result = std::make_pair(e, e);
-
-    static const auto is_nearby_string = [](const std::string_view str) noexcept
-    {
-      int count{};
-      for (const auto c : str) {
-        if (c == '\n') {
-          ++count;
-          if (count > 1)
-            return false;
-        } else if (!str::is_space(static_cast<unsigned char>(c)))
-          break;
-      }
-      return true;
-    };
-
-    static const auto has_newline = [](const std::string_view str) noexcept
-    {
-      return std::any_of(cbegin(str), cend(str), [](const auto c) noexcept
-      {
-        return c == '\n';
-      });
-    };
-
-    // Try to find the first fragment which is the "nearby string".
-    const auto first_nearby = find_if(b, e, [](const Fragment& f) noexcept
-    {
-      return !f.is_comment() && is_nearby_string(f.str) && !str::is_blank(f.str);
-    });
-    if (first_nearby != b) {
-      auto i = first_nearby;
-      result.second = first_nearby;
-      do {
-        --i;
-        if (i->is_one_line_comment()) {
-          const auto next = std::next(i);
-          if (next != first_nearby && has_newline(next->str))
-            break;
-        } else if (!i->is_multi_line_comment()) {
-          DMITIGR_ASSERT(str::is_blank(i->str));
-          if (!is_nearby_string(i->str))
-            break;
-        }
-        result.first = i;
-      } while (i != b);
-    }
-
-    return result;
-  }
-
-  /**
-   * @brief Joins all comments into the vector of strings.
-   *
-   * @returns The joined comments.
-   */
-  static std::string joined_comments(Fragment_list::const_iterator i,
-    const Fragment_list::const_iterator e)
-  {
-    std::string result;
-    while (i != e) {
-      using enum Fragment::Type;
-      switch (i->type) {
-      case one_line_comment:
-        do {
-          result.append(i->str).append(1, '\n');
-          ++i;
-        } while (i != e && i->type == one_line_comment);
-        result.pop_back();
-        continue;
-      case multi_line_comment:
-        result.append(i->str);
-        break;
-      default:
-        break;
-      }
-      ++i;
-    }
     return result;
   }
 };
@@ -552,7 +562,7 @@ DMITIGR_PGFE_INLINE bool Statement::is_query_empty() const noexcept
   return all_of(cbegin(fragments_), cend(fragments_),
     [](const Fragment& f) noexcept
     {
-      return f.is_comment() || (f.is_text() && str::is_blank(f.str));
+      return f.is_comment() || (f.is_text() && str::is_all_spaces(f.str));
     });
 }
 
@@ -728,10 +738,8 @@ Statement::replace(const std::string_view name, const Statement& replacement)
   {
     const auto renormalize = [normalized](const auto& iter)
     {
-      if (normalized) {
-        iter->norm.clear();
-        iter->norm_str();
-      }
+      if (normalized)
+        iter->renormalize();
     };
 
     for (auto fi = begin(fragments); fi != end(fragments);) {
@@ -829,11 +837,67 @@ DMITIGR_PGFE_INLINE std::string::size_type Statement::string_capacity() const no
       break;
     }
   }
+  if (!fragments_.empty() && fragments_.back().is_one_line_comment())
+    --result;
   return result;
 }
 
+DMITIGR_PGFE_INLINE void Statement::erase(const Part part)
+{
+  const auto e = fragments_.cend();
+  const auto [related_b, related_e] = bool(part & Part::comments) ?
+    Comments::related(fragments_) : std::pair{e, e};
+
+  if (bool(part & Part::unrelated_comments)) {
+    if (related_b != e)
+      fragments_.erase(fragments_.begin(), related_b);
+  }
+
+  if (bool(part & Part::inner_comments)) {
+    for (auto i = related_e; i != e;) {
+      if (i->is_comment())
+        i = fragments_.erase(i);
+      else
+        ++i;
+    }
+  }
+
+  // Related comments should be erased only after other comments!
+  if (bool(part & Part::related_comments))
+    fragments_.erase(related_b, related_e);
+
+  if (bool(part & Part::leading_spaces)) {
+    for (auto i = fragments_.begin(); i != e;) {
+      if (i->is_text()) {
+        if (!str::is_all_spaces(i->str)) {
+          str::trim_spaces(i->str, str::Trim::lhs);
+          i->renormalize();
+          break;
+        } else
+          i = fragments_.erase(i);
+      } else
+        ++i;
+    }
+  }
+
+  if (bool(part & Part::trailing_spaces)) {
+    const auto re = fragments_.crend();
+    for (auto i = fragments_.rbegin(); i != re;) {
+      if (i->is_text()) {
+        if (!str::is_all_spaces(i->str)) {
+          str::trim_spaces(i->str, str::Trim::rhs);
+          i->renormalize();
+          break;
+        } else
+          i = next(make_reverse_iterator(fragments_.erase(prev(i.base()))));
+      } else
+        --i;
+    }
+  }
+}
+
 DMITIGR_PGFE_INLINE std::string::size_type
-Statement::write_string(char* result, const Write_mode wmode) const
+Statement::write_string(char* result) const
 {
   const char* const begin{result};
   for (const auto& fragment : fragments_) {
@@ -845,18 +909,14 @@ Statement::write_string(char* result, const Write_mode wmode) const
       append_str(&result, fragment.str);
       break;
     case one_line_comment:
-      if (bool(wmode & Write_mode::with_comments)) {
-        append_lit(&result, "--");
-        append_str(&result, fragment.str);
-        append_chr(&result, '\n');
-      }
+      append_lit(&result, "--");
+      append_str(&result, fragment.str);
+      append_chr(&result, '\n');
       break;
     case multi_line_comment:
-      if (bool(wmode & Write_mode::with_comments)) {
-        append_lit(&result, "/*");
-        append_str(&result, fragment.str);
-        append_lit(&result, "*/");
-      }
+      append_lit(&result, "/*");
+      append_str(&result, fragment.str);
+      append_lit(&result, "*/");
       break;
     case named_parameter_unquoted:
       append_chr(&result, ':');
@@ -882,14 +942,15 @@ Statement::write_string(char* result, const Write_mode wmode) const
       break;
     }
   }
+  if (!fragments_.empty() && fragments_.back().is_one_line_comment())
+    --result;
   return static_cast<std::string::size_type>(result - begin);
 }
 
-DMITIGR_PGFE_INLINE std::string
-Statement::to_string(const Write_mode wmode) const
+DMITIGR_PGFE_INLINE std::string Statement::to_string() const
 {
   std::string result(string_capacity(), '\0');
-  const auto size = write_string(result.data(), wmode);
+  const auto size = write_string(result.data());
   DMITIGR_ASSERT(size <= result.capacity());
   result.resize(size);
   return result;
@@ -908,8 +969,14 @@ Statement::query_string_capacity() const
       result += fragment.str.size();
       break;
     case one_line_comment:
-      [[fallthrough]];
+      result += str::len("--");
+      result += fragment.str.size();
+      result += str::len("\n");
+      break;
     case multi_line_comment:
+      result += str::len("/*");
+      result += fragment.str.size();
+      result += str::len("*/");
       break;
     case named_parameter_unquoted:
       if (const auto* const value = bound(fragment.str)) {
@@ -939,12 +1006,13 @@ Statement::query_string_capacity() const
       break;
     }
   }
+  if (!fragments_.empty() && fragments_.back().is_one_line_comment())
+    --result;
   return result;
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type
-Statement::write_query_string(char* result, const Connection* const connection,
-  const Write_mode wmode) const
+Statement::write_query_string(char* result, const Connection* const connection) const
 {
   using enum Fragment::Type;
 
@@ -986,18 +1054,14 @@ Statement::write_query_string(char* result, const Connection* const connection,
       append_str(&result, fragment.str);
       break;
     case one_line_comment:
-      if (bool(wmode & Write_mode::with_comments)) {
-        append_lit(&result, "--");
-        append_str(&result, fragment.str);
-        append_chr(&result, '\n');
-      }
+      append_lit(&result, "--");
+      append_str(&result, fragment.str);
+      append_chr(&result, '\n');
       break;
     case multi_line_comment:
-      if (bool(wmode & Write_mode::with_comments)) {
-        append_lit(&result, "/*");
-        append_str(&result, fragment.str);
-        append_lit(&result, "*/");
-      }
+      append_lit(&result, "/*");
+      append_str(&result, fragment.str);
+      append_lit(&result, "*/");
       break;
     case named_parameter_unquoted:
       if (const auto* const value = bound(fragment.str); !value) {
@@ -1036,20 +1100,20 @@ Statement::write_query_string(char* result, const Connection* const connection,
 DMITIGR_PGFE_INLINE std::string::size_type
 Statement::write_query_string(char* const result, const Connection& conn) const
 {
-  return write_query_string(result, std::addressof(conn), conn.query_string_write_mode());
+  return write_query_string(result, std::addressof(conn));
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type
-Statement::write_query_string(char* const result, const Write_mode wmode) const
+Statement::write_query_string(char* const result) const
 {
-  return write_query_string(result, nullptr, wmode);
+  return write_query_string(result, nullptr);
 }
 
 DMITIGR_PGFE_INLINE std::string
-Statement::to_query_string(const Connection* const conn, const Write_mode wmode) const
+Statement::to_query_string(const Connection* const conn) const
 {
   std::string result(query_string_capacity(), '\0');
-  const auto size = write_query_string(result.data(), conn, wmode);
+  const auto size = write_query_string(result.data(), conn);
   DMITIGR_ASSERT(size <= result.capacity());
   result.resize(size);
   return result;
@@ -1058,19 +1122,18 @@ Statement::to_query_string(const Connection* const conn, const Write_mode wmode)
 DMITIGR_PGFE_INLINE std::string
 Statement::to_query_string(const Connection& conn) const
 {
-  return to_query_string(std::addressof(conn), conn.query_string_write_mode());
+  return to_query_string(std::addressof(conn));
 }
 
-DMITIGR_PGFE_INLINE std::string
-Statement::to_query_string(const Write_mode wmode) const
+DMITIGR_PGFE_INLINE std::string Statement::to_query_string() const
 {
-  return to_query_string(nullptr, wmode);
+  return to_query_string(nullptr);
 }
 
 DMITIGR_PGFE_INLINE auto Statement::metadata() const -> const Metadata&
 {
   if (!metadata_)
-    metadata_.emplace(Comments::extract(fragments_));
+    metadata_.emplace(Comments::metadata(fragments_));
   return *metadata_;
 }
 
@@ -1107,7 +1170,7 @@ DMITIGR_PGFE_INLINE void Statement::normalize() const
   Fragment_list norm_fragments;
   for (const auto& fragment : fragments_) {
     if (fragment.is_text()) {
-      if (!str::is_blank(fragment.str)) {
+      if (!str::is_all_spaces(fragment.str)) {
         if (!norm_fragments.empty() &&
           norm_fragments.back().is_text() &&
           fragment.depth == norm_fragments.back().depth)

@@ -606,18 +606,32 @@ enum class Row_processing {
 /**
  * @ingroup main
  *
- * @brief A write mode for Statement.
+ * @brief A Statement part.
  */
-enum class Statement_write_mode : std::uint32_t {
-  stripped = 0x0,
-  with_comments = 0x1,
-  with_leading_blanks = 0x2,
+enum class Statement_part : std::uint64_t {
+  /// Nothing.
+  nothing = 0x0,
 
-  /// The default write mode for Statement::write_string().
-  default_string = with_comments | with_leading_blanks,
+  /// Leading spaces.
+  leading_spaces = 0x1,
 
-  /// The default write mode for Statement::write_query_string().
-  default_query_string = stripped
+  /// Trailing spaces.
+  trailing_spaces = 0x2,
+
+  /// Unrelated comments.
+  unrelated_comments = 0x4,
+
+  /// Related comments.
+  related_comments = 0x8,
+
+  /// Inner comments.
+  inner_comments = 0x10,
+
+  /// Edge spaces.
+  edge_spaces = leading_spaces | trailing_spaces,
+
+  /// Comments.
+  comments = unrelated_comments | related_comments | inner_comments
 };
 
 } // namespace dmitigr::pgfe
@@ -631,7 +645,7 @@ template<>
 struct Is_bitmask_enum<pgfe::External_library> final : std::true_type {};
 
 template<>
-struct Is_bitmask_enum<pgfe::Statement_write_mode> final : std::true_type {};
+struct Is_bitmask_enum<pgfe::Statement_part> final : std::true_type {};
 
 namespace pgfe {
 
@@ -642,7 +656,7 @@ namespace pgfe {
 
 DMITIGR_DEFINE_ENUM_BITMASK_OPERATORS(Socket_readiness)
 DMITIGR_DEFINE_ENUM_BITMASK_OPERATORS(External_library)
-DMITIGR_DEFINE_ENUM_BITMASK_OPERATORS(Statement_write_mode)
+DMITIGR_DEFINE_ENUM_BITMASK_OPERATORS(Statement_part)
 
 /// @}
 } // namespace pgfe
