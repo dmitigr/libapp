@@ -792,7 +792,10 @@ Statement::replace(const std::string_view name, const Statement& replacement)
   assert(is_invariant_ok());
 }
 
-DMITIGR_PGFE_INLINE std::string::size_type Statement::string_capacity() const noexcept
+// private
+template<bool IsQueryString>
+std::string::size_type
+Statement::string_capacity() const noexcept(!IsQueryString)
 {
   std::string::size_type result{};
   for (const auto& fragment : fragments_) {
@@ -814,22 +817,48 @@ DMITIGR_PGFE_INLINE std::string::size_type Statement::string_capacity() const no
       result += str::len("*/");
       break;
     case named_parameter_unquoted:
-      result += str::len(":");
-      result += str::len("{");
-      result += fragment.str.size();
-      result += str::len("}");
+      if constexpr (IsQueryString) {
+        if (const auto* const value = bound(fragment.str)) {
+          result += value->size();
+          break;
+        }
+        result += str::len("$") + str::len("65535");
+      } else {
+        result += str::len(":");
+        result += str::len("{");
+        result += fragment.str.size();
+        result += str::len("}");
+      }
       break;
     case named_parameter_literal:
-      result += str::len(":");
-      result += str::len("'");
-      result += fragment.str.size();
-      result += str::len("'") ;
+      if constexpr (IsQueryString) {
+        result += 2 * str::len("'");
+        if (const auto* const value = bound(fragment.str))
+          result += 2 * value->size();
+        else
+          result += str::len("NULL");
+      } else {
+        result += str::len(":");
+        result += str::len("'");
+        result += fragment.str.size();
+        result += str::len("'") ;
+      }
       break;
     case named_parameter_identifier:
-      result += str::len(":");
-      result += str::len("\"");
-      result += fragment.str.size();
-      result += str::len("\"");
+      if constexpr (IsQueryString) {
+        result += 2 * str::len("\"");
+        if (const auto* const value = bound(fragment.str))
+          result += 2 * value->size();
+        else
+          throw Generic_exception{"cannot calculate query string capacity: "
+            "named parameter "+fragment.str+" declared as identifier has no "
+            "value bound"};
+      } else {
+        result += str::len(":");
+        result += str::len("\"");
+        result += fragment.str.size();
+        result += str::len("\"");
+      }
       break;
     case positional_parameter:
       result += str::len("$");
@@ -840,6 +869,129 @@ DMITIGR_PGFE_INLINE std::string::size_type Statement::string_capacity() const no
   if (!fragments_.empty() && fragments_.back().is_one_line_comment())
     --result;
   return result;
+}
+
+// private
+template<bool IsQueryString>
+std::string::size_type
+Statement::write_string(char* result, const Connection* const connection) const
+{
+  using enum Fragment::Type;
+
+  if constexpr (IsQueryString) {
+    if (has_missing_parameter())
+      throw Generic_exception{"cannot write query string: "
+        "Statement has missing parameter"};
+  } else
+    DMITIGR_ASSERT(!connection);
+
+  static const auto check_quoted_named_parameter = [](const auto& fragment,
+    const auto* const conn, const auto* const value)
+  {
+    DMITIGR_ASSERT(fragment.is_quoted_named_parameter());
+    const bool is_conn_ok{conn && conn->is_connected()};
+    if (is_conn_ok && value)
+      return;
+
+    const char* const type_str =
+      fragment.type == named_parameter_literal ? "literal" :
+      fragment.type == named_parameter_identifier ? "identifier" : nullptr;
+    DMITIGR_ASSERT(type_str);
+    std::string what{"named parameter "};
+    what.append(fragment.str).append(" declared as ").append(type_str);
+    if (!is_conn_ok)
+      what.append(" cannot be quoted without the active Connection object");
+    if (!value) {
+      if (!is_conn_ok)
+        what.append(" and");
+      what.append(" value bound");
+    }
+    throw Generic_exception{what};
+  };
+
+  const char* const begin{result};
+  std::size_t bound_counter{};
+  if constexpr (IsQueryString)
+    (void)bound_counter;
+  for (const auto& fragment : fragments_) {
+    switch (fragment.type) {
+    case text:
+      [[fallthrough]];
+    case quoted_text:
+      append_str(&result, fragment.str);
+      break;
+    case one_line_comment:
+      append_lit(&result, "--");
+      append_str(&result, fragment.str);
+      append_chr(&result, '\n');
+      break;
+    case multi_line_comment:
+      append_lit(&result, "/*");
+      append_str(&result, fragment.str);
+      append_lit(&result, "*/");
+      break;
+    case named_parameter_unquoted:
+      if constexpr (IsQueryString) {
+        if (const auto* const value = bound(fragment.str); !value) {
+          const auto idx = named_parameter_index(fragment.str);
+          DMITIGR_ASSERT(idx >= positional_parameter_count());
+          DMITIGR_ASSERT(idx < parameter_count());
+          append_chr(&result, '$');
+          append_str(&result, std::to_string(idx - bound_counter + 1));
+        } else {
+          append_str(&result, *value);
+          ++bound_counter;
+        }
+      } else {
+        append_chr(&result, ':');
+        append_chr(&result, '{');
+        append_str(&result, fragment.str);
+        append_chr(&result, '}');
+      }
+      break;
+    case named_parameter_literal:
+      if constexpr (IsQueryString) {
+        if (const auto* const value = bound(fragment.str))
+          append_str(&result, connection->to_quoted_literal(*value));
+        else
+          append_lit(&result, "NULL");
+      } else {
+        append_chr(&result, ':');
+        append_chr(&result, '\'');
+        append_str(&result, fragment.str);
+        append_chr(&result, '\'');
+      }
+      break;
+    case named_parameter_identifier: {
+      if constexpr (IsQueryString) {
+        const auto* const value = bound(fragment.str);
+        check_quoted_named_parameter(fragment, connection, value);
+        append_str(&result, connection->to_quoted_identifier(*value));
+      } else {
+        append_chr(&result, ':');
+        append_chr(&result, '"');
+        append_str(&result, fragment.str);
+        append_chr(&result, '"');
+      }
+      break;
+    }
+    case positional_parameter:
+      append_chr(&result, '$');
+      append_str(&result, fragment.str);
+      break;
+    }
+  }
+  if constexpr (IsQueryString)
+    DMITIGR_ASSERT(bound_counter <= bound_parameter_count());
+  if (!fragments_.empty() && fragments_.back().is_one_line_comment())
+    --result;
+  return static_cast<std::string::size_type>(result - begin);
+}
+
+DMITIGR_PGFE_INLINE std::string::size_type
+Statement::string_capacity() const noexcept
+{
+  return string_capacity<false>();
 }
 
 DMITIGR_PGFE_INLINE void Statement::erase(const Part part)
@@ -899,52 +1051,7 @@ DMITIGR_PGFE_INLINE void Statement::erase(const Part part)
 DMITIGR_PGFE_INLINE std::string::size_type
 Statement::write_string(char* result) const
 {
-  const char* const begin{result};
-  for (const auto& fragment : fragments_) {
-    using enum Fragment::Type;
-    switch (fragment.type) {
-    case text:
-      [[fallthrough]];
-    case quoted_text:
-      append_str(&result, fragment.str);
-      break;
-    case one_line_comment:
-      append_lit(&result, "--");
-      append_str(&result, fragment.str);
-      append_chr(&result, '\n');
-      break;
-    case multi_line_comment:
-      append_lit(&result, "/*");
-      append_str(&result, fragment.str);
-      append_lit(&result, "*/");
-      break;
-    case named_parameter_unquoted:
-      append_chr(&result, ':');
-      append_chr(&result, '{');
-      append_str(&result, fragment.str);
-      append_chr(&result, '}');
-      break;
-    case named_parameter_literal:
-      append_chr(&result, ':');
-      append_chr(&result, '\'');
-      append_str(&result, fragment.str);
-      append_chr(&result, '\'');
-      break;
-    case named_parameter_identifier:
-      append_chr(&result, ':');
-      append_chr(&result, '"');
-      append_str(&result, fragment.str);
-      append_chr(&result, '"');
-      break;
-    case positional_parameter:
-      append_chr(&result, '$');
-      append_str(&result, fragment.str);
-      break;
-    }
-  }
-  if (!fragments_.empty() && fragments_.back().is_one_line_comment())
-    --result;
-  return static_cast<std::string::size_type>(result - begin);
+  return write_string<false>(result, nullptr);
 }
 
 DMITIGR_PGFE_INLINE std::string Statement::to_string() const
@@ -959,142 +1066,13 @@ DMITIGR_PGFE_INLINE std::string Statement::to_string() const
 DMITIGR_PGFE_INLINE std::string::size_type
 Statement::query_string_capacity() const
 {
-  std::string::size_type result{};
-  for (const auto& fragment : fragments_) {
-    using enum Fragment::Type;
-    switch (fragment.type) {
-    case text:
-      [[fallthrough]];
-    case quoted_text:
-      result += fragment.str.size();
-      break;
-    case one_line_comment:
-      result += str::len("--");
-      result += fragment.str.size();
-      result += str::len("\n");
-      break;
-    case multi_line_comment:
-      result += str::len("/*");
-      result += fragment.str.size();
-      result += str::len("*/");
-      break;
-    case named_parameter_unquoted:
-      if (const auto* const value = bound(fragment.str)) {
-        result += value->size();
-        break;
-      }
-      result += str::len("$") + str::len("65535");
-      break;
-    case named_parameter_literal:
-      result += 2 * str::len("'");
-      if (const auto* const value = bound(fragment.str))
-        result += 2 * value->size();
-      else
-        result += str::len("NULL");
-      break;
-    case named_parameter_identifier:
-      result += 2 * str::len("\"");
-      if (const auto* const value = bound(fragment.str))
-        result += 2 * value->size();
-      else
-        throw Generic_exception{"cannot calculate query string capacity: "
-          "named parameter "+fragment.str+" declared as identifier has no "
-          "value bound"};
-      break;
-    case positional_parameter:
-      result += str::len("$") + fragment.str.size();
-      break;
-    }
-  }
-  if (!fragments_.empty() && fragments_.back().is_one_line_comment())
-    --result;
-  return result;
+  return string_capacity<true>();
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type
 Statement::write_query_string(char* result, const Connection* const connection) const
 {
-  using enum Fragment::Type;
-
-  if (has_missing_parameter())
-    throw Generic_exception{"cannot convert Statement to query string: "
-      "has missing parameter"};
-
-  static const auto check_quoted_named_parameter = [](const auto& fragment,
-    const auto* const conn, const auto* const value)
-  {
-    DMITIGR_ASSERT(fragment.is_quoted_named_parameter());
-    const bool is_conn_ok{conn && conn->is_connected()};
-    if (is_conn_ok && value)
-      return;
-
-    const char* const type_str =
-      fragment.type == named_parameter_literal ? "literal" :
-      fragment.type == named_parameter_identifier ? "identifier" : nullptr;
-    DMITIGR_ASSERT(type_str);
-    std::string what{"named parameter "};
-    what.append(fragment.str).append(" declared as ").append(type_str);
-    if (!is_conn_ok)
-      what.append(" cannot be quoted without the active Connection object");
-    if (!value) {
-      if (!is_conn_ok)
-        what.append(" and");
-      what.append(" value bound");
-    }
-    throw Generic_exception{what};
-  };
-
-  const char* const begin{result};
-  std::size_t bound_counter{};
-  for (const auto& fragment : fragments_) {
-    switch (fragment.type) {
-    case text:
-      [[fallthrough]];
-    case quoted_text:
-      append_str(&result, fragment.str);
-      break;
-    case one_line_comment:
-      append_lit(&result, "--");
-      append_str(&result, fragment.str);
-      append_chr(&result, '\n');
-      break;
-    case multi_line_comment:
-      append_lit(&result, "/*");
-      append_str(&result, fragment.str);
-      append_lit(&result, "*/");
-      break;
-    case named_parameter_unquoted:
-      if (const auto* const value = bound(fragment.str); !value) {
-        const auto idx = named_parameter_index(fragment.str);
-        DMITIGR_ASSERT(idx >= positional_parameter_count());
-        DMITIGR_ASSERT(idx < parameter_count());
-        append_chr(&result, '$');
-        append_str(&result, std::to_string(idx - bound_counter + 1));
-      } else {
-        append_str(&result, *value);
-        ++bound_counter;
-      }
-      break;
-    case named_parameter_literal:
-      if (const auto* const value = bound(fragment.str))
-        append_str(&result, connection->to_quoted_literal(*value));
-      else
-        append_lit(&result, "NULL");
-      break;
-    case named_parameter_identifier: {
-      const auto* const value = bound(fragment.str);
-      check_quoted_named_parameter(fragment, connection, value);
-      append_str(&result, connection->to_quoted_identifier(*value));
-      break;
-    }
-    case positional_parameter:
-      append_chr(&result, '$');
-      append_str(&result, fragment.str);
-      break;
-    }
-  }
-  DMITIGR_ASSERT(bound_counter <= bound_parameter_count());
-  return static_cast<std::string::size_type>(result - begin);
+  return write_string<true>(result, connection);
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type

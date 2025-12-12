@@ -827,6 +827,11 @@ private:
   std::size_t named_parameter_index(const std::string_view name) const noexcept;
   std::vector<Named_parameter> named_parameters() const;
 
+  template<bool IsQueryString>
+  std::string::size_type string_capacity() const noexcept(!IsQueryString);
+  template<bool IsQueryString>
+  std::string::size_type write_string(char*, const Connection*) const;
+
   // ---------------------------------------------------------------------------
   // Metadata
   // ---------------------------------------------------------------------------
