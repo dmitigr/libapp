@@ -68,7 +68,7 @@ enum class Fepsep_type {
 
 } // namespace str
 
-template<> struct Is_bitmask_enum<str::Trim> : std::true_type {};
+template<> struct Is_bitmask_enum<str::Trim> final : std::true_type {};
 
 } // namespace dmitigr
 
@@ -118,7 +118,7 @@ Ch* copy(Ch* dst, const Ch* const src, const std::size_t count) noexcept
 inline auto* next_non_space_pointer(const char* p) noexcept
 {
   if (p) {
-    while (*p && std::isspace(*p))
+    while (*p && std::isspace(static_cast<unsigned char>(*p)))
       ++p;
   }
   return p;
@@ -343,7 +343,7 @@ inline bool is_not_zero(const int ch) noexcept
 }
 
 /// @returns `true` if `str` is a blank or empty string.
-inline bool is_blank(const std::string_view str) noexcept
+inline bool is_all_spaces(const std::string_view str) noexcept
 {
   return std::all_of(cbegin(str), cend(str), is_space);
 }
@@ -451,21 +451,18 @@ std::vector<S> to_vector(const std::string_view input,
 // =============================================================================
 
 /**
- * @returns The position of the first non-space character of `str` in the range
- * [pos, str.size()), or `std::string_view::npos` if there is no such a position.
- *
- * @par Requires
- * `pos <= str.size()`.
+ * @returns The position of the first non-space character of `str`, or
+ * `std::string_view::npos` if there is no such a position.
  */
 inline std::string_view::size_type
-first_non_space_pos(const std::string_view str, const std::string_view::size_type pos)
+first_non_space_pos(const std::string_view str) noexcept
 {
-  if (!(pos <= str.size()))
-    throw Exception{"cannot get position of non space by using invalid offset"};
+  if (!str.data() || str.empty())
+    return std::string_view::npos;
 
   const auto b = cbegin(str);
   const auto e = cend(str);
-  const auto i = std::find_if(b + pos, e, is_not_space);
+  const auto i = std::find_if(b, e, is_not_space);
   return i != e ? static_cast<std::string_view::size_type>(i - b)
     : std::string_view::npos;
 }
@@ -755,10 +752,16 @@ void trim(std::string& str, const Trim tr, const Predicate& predicate)
   }
 }
 
-/// @overload
-inline void trim(std::string& str, const Trim tr = Trim::all)
+/// Trims not visible characters from `str`.
+inline void trim_not_visible(std::string& str, const Trim tr = Trim::all)
 {
   trim(str, tr, is_not_visible);
+}
+
+/// Trims spaces from `str`.
+inline void trim_spaces(std::string& str, const Trim tr = Trim::all)
+{
+  trim(str, tr, is_space);
 }
 
 /// @returns The result of call `trim(str, tr, predicate)`.
