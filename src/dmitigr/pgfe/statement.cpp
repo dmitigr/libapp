@@ -866,8 +866,6 @@ Statement::string_capacity() const noexcept(!IsQueryString)
       break;
     }
   }
-  if (!fragments_.empty() && fragments_.back().is_one_line_comment())
-    --result;
   return result;
 }
 
@@ -911,7 +909,7 @@ Statement::write_string(char* result, const Connection* const connection) const
 
   const char* const begin{result};
   std::size_t bound_counter{};
-  if constexpr (IsQueryString)
+  if constexpr (!IsQueryString)
     (void)bound_counter;
   for (const auto& fragment : fragments_) {
     switch (fragment.type) {
@@ -983,8 +981,10 @@ Statement::write_string(char* result, const Connection* const connection) const
   }
   if constexpr (IsQueryString)
     DMITIGR_ASSERT(bound_counter <= bound_parameter_count());
-  if (!fragments_.empty() && fragments_.back().is_one_line_comment())
+  if (!fragments_.empty() && fragments_.back().is_one_line_comment()) {
+    DMITIGR_ASSERT(*result == '\n');
     --result;
+  }
   return static_cast<std::string::size_type>(result - begin);
 }
 
