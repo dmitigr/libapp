@@ -1021,8 +1021,8 @@ DMITIGR_PGFE_INLINE void Statement::erase(const Part part)
   if (bool(part & Part::leading_spaces)) {
     for (auto i = fragments_.begin(); i != e;) {
       if (i->is_text()) {
-        if (!str::is_all_spaces(i->str)) {
-          str::trim_spaces(i->str, str::Trim::lhs);
+        str::trim_spaces(i->str, str::Trim::lhs);
+        if (!i->str.empty()) {
           i->renormalize();
           break;
         } else
@@ -1036,8 +1036,8 @@ DMITIGR_PGFE_INLINE void Statement::erase(const Part part)
     const auto re = fragments_.crend();
     for (auto i = fragments_.rbegin(); i != re;) {
       if (i->is_text()) {
-        if (!str::is_all_spaces(i->str)) {
-          str::trim_spaces(i->str, str::Trim::rhs);
+        str::trim_spaces(i->str, str::Trim::rhs);
+        if (!i->str.empty()) {
           i->renormalize();
           break;
         } else
