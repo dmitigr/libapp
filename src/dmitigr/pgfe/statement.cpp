@@ -16,6 +16,7 @@
 
 #include "../base/assert.hpp"
 #include "../base/str.hpp"
+#include "../base/traits.hpp"
 #include "connection.hpp"
 #include "statement.hpp"
 
@@ -290,7 +291,7 @@ public:
       do {
         --i;
         if (i->is_text()) {
-          if (const auto p = prev(i); p != b && p->is_multi_line_comment()) {
+          if (const auto p = prev(i); p->is_multi_line_comment()) {
             DMITIGR_ASSERT(!i->str.empty());
             using enum Scan_front;
             const auto sfr = scan_front(i->str);
@@ -996,56 +997,55 @@ Statement::string_capacity() const noexcept
 
 DMITIGR_PGFE_INLINE void Statement::erase(const Part part)
 {
-  const auto e = fragments_.cend();
   const auto [related_b, related_e] = bool(part & Part::comments) ?
-    Comments::related(fragments_) : std::pair{e, e};
+    Comments::related(fragments_) :
+    std::pair{fragments_.cend(), fragments_.cend()};
 
-  if (bool(part & Part::unrelated_comments)) {
-    if (related_b != e)
-      fragments_.erase(fragments_.begin(), related_b);
-  }
-
-  if (bool(part & Part::inner_comments)) {
-    for (auto i = related_e; i != e;) {
+  const auto erase_not_related_comments = [this](auto i, const auto& end) noexcept
+  {
+    while (i != end) {
       if (i->is_comment())
         i = fragments_.erase(i);
       else
         ++i;
     }
-  }
+  };
 
-  // Related comments should be erased only after other comments!
-  if (bool(part & Part::related_comments))
-    fragments_.erase(related_b, related_e);
-
-  if (bool(part & Part::leading_spaces)) {
-    for (auto i = fragments_.begin(); i != e;) {
+  const auto erase_edge_spaces = [this](auto i, const auto& end) noexcept
+  {
+    constexpr bool is_reverse{Is_reverse_iterator_v<std::decay_t<decltype(i)>>};
+    constexpr auto side = is_reverse ? str::Trim::rhs : str::Trim::lhs;
+    while (i != end) {
       if (i->is_text()) {
-        str::trim_spaces(i->str, str::Trim::lhs);
+        str::trim_spaces(i->str, side);
         if (!i->str.empty()) {
           i->renormalize();
           break;
-        } else
-          i = fragments_.erase(i);
+        } else {
+          if constexpr (is_reverse)
+            i = make_reverse_iterator(fragments_.erase(prev(i.base())));
+          else
+            i = fragments_.erase(i);
+        }
       } else
         ++i;
     }
-  }
+  };
 
-  if (bool(part & Part::trailing_spaces)) {
-    const auto re = fragments_.crend();
-    for (auto i = fragments_.rbegin(); i != re;) {
-      if (i->is_text()) {
-        str::trim_spaces(i->str, str::Trim::rhs);
-        if (!i->str.empty()) {
-          i->renormalize();
-          break;
-        } else
-          i = next(make_reverse_iterator(fragments_.erase(prev(i.base()))));
-      } else
-        --i;
-    }
-  }
+  if (bool(part & Part::unrelated_comments))
+    erase_not_related_comments(fragments_.begin(), related_b);
+
+  if (bool(part & Part::inner_comments))
+    erase_not_related_comments(related_e, fragments_.cend());
+
+  if (bool(part & Part::related_comments))
+    fragments_.erase(related_b, related_e);
+
+  if (bool(part & Part::leading_spaces))
+    erase_edge_spaces(fragments_.begin(), fragments_.cend());
+
+  if (bool(part & Part::trailing_spaces))
+    erase_edge_spaces(fragments_.rbegin(), fragments_.crend());
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type
