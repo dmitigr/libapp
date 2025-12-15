@@ -18,6 +18,7 @@
 #define DMITIGR_BASE_TRAITS_HPP
 
 #include <array>
+#include <iterator>
 #include <optional>
 #include <type_traits>
 
@@ -32,10 +33,10 @@ constexpr bool true_value{true};
 // -----------------------------------------------------------------------------
 
 template<typename>
-struct Is_std_array : std::false_type {};
+struct Is_std_array final : std::false_type {};
 
 template<typename T, auto N>
-struct Is_std_array<std::array<T, N>> : std::true_type {};
+struct Is_std_array<std::array<T, N>> final : std::true_type {};
 
 template<typename T>
 constexpr bool Is_std_array_v = Is_std_array<T>::value;
@@ -43,13 +44,24 @@ constexpr bool Is_std_array_v = Is_std_array<T>::value;
 // -----------------------------------------------------------------------------
 
 template<typename>
-struct Is_optional : std::false_type {};
+struct Is_optional final : std::false_type {};
 
 template<typename T>
-struct Is_optional<std::optional<T>> : std::true_type {};
+struct Is_optional<std::optional<T>> final : std::true_type {};
 
 template<typename T>
 constexpr bool Is_optional_v = Is_optional<T>::value;
+
+// -----------------------------------------------------------------------------
+
+template<typename>
+struct Is_reverse_iterator final : std::false_type {};
+
+template<typename T>
+struct Is_reverse_iterator<std::reverse_iterator<T>> final : std::true_type {};
+
+template<typename T>
+constexpr bool Is_reverse_iterator_v = Is_reverse_iterator<T>::value;
 
 } // namespace dmitigr
 
