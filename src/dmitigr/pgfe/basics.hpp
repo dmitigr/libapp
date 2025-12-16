@@ -612,23 +612,14 @@ enum class Statement_part : std::uint64_t {
   /// Nothing.
   nothing = 0x0,
 
-  /// Leading spaces.
-  leading_spaces = 0x1,
-
-  /// Trailing spaces.
-  trailing_spaces = 0x2,
-
   /// Unrelated comments.
-  unrelated_comments = 0x4,
+  unrelated_comments = 0x1,
 
   /// Related comments.
-  related_comments = 0x8,
+  related_comments = 0x2,
 
   /// Inner comments.
-  inner_comments = 0x10,
-
-  /// Edge spaces.
-  edge_spaces = leading_spaces | trailing_spaces,
+  inner_comments = 0x4,
 
   /// Comments.
   comments = unrelated_comments | related_comments | inner_comments

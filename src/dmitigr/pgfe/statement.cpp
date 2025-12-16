@@ -997,11 +997,14 @@ Statement::string_capacity() const noexcept
 
 DMITIGR_PGFE_INLINE void Statement::erase(const Part part)
 {
-  const auto [related_b, related_e] = bool(part & Part::comments) ?
-    Comments::related(fragments_) :
-    std::pair{fragments_.cend(), fragments_.cend()};
+  const auto related_comments = [this, part]
+  {
+    const auto e = fragments_.cend();
+    return bool(part & Part::comments) ?
+      Comments::related(fragments_) : std::pair{e, e};
+  };
 
-  const auto erase_not_related_comments = [this](auto i, const auto& end) noexcept
+  const auto erase_not_related_comments = [this](auto i, const auto& end)
   {
     while (i != end) {
       if (i->is_comment())
@@ -1011,26 +1014,7 @@ DMITIGR_PGFE_INLINE void Statement::erase(const Part part)
     }
   };
 
-  const auto erase_edge_spaces = [this](auto i, const auto& end) noexcept
-  {
-    constexpr bool is_reverse{Is_reverse_iterator_v<std::decay_t<decltype(i)>>};
-    constexpr auto side = is_reverse ? str::Trim::rhs : str::Trim::lhs;
-    while (i != end) {
-      if (i->is_text()) {
-        str::trim_spaces(i->str, side);
-        if (!i->str.empty()) {
-          i->renormalize();
-          break;
-        } else {
-          if constexpr (is_reverse)
-            i = make_reverse_iterator(fragments_.erase(prev(i.base())));
-          else
-            i = fragments_.erase(i);
-        }
-      } else
-        ++i;
-    }
-  };
+  const auto [related_b, related_e] = related_comments();
 
   if (bool(part & Part::unrelated_comments))
     erase_not_related_comments(fragments_.begin(), related_b);
@@ -1040,12 +1024,6 @@ DMITIGR_PGFE_INLINE void Statement::erase(const Part part)
 
   if (bool(part & Part::related_comments))
     fragments_.erase(related_b, related_e);
-
-  if (bool(part & Part::leading_spaces))
-    erase_edge_spaces(fragments_.begin(), fragments_.cend());
-
-  if (bool(part & Part::trailing_spaces))
-    erase_edge_spaces(fragments_.rbegin(), fragments_.crend());
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type

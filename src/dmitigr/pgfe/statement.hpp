@@ -368,8 +368,8 @@ public:
    */
   DMITIGR_PGFE_API std::string::size_type string_capacity() const noexcept;
 
-  /// Erases parts of statement.
-  DMITIGR_PGFE_API void erase(Part = Part::edge_spaces | Part::comments);
+  /// Erases specified parts of statement.
+  DMITIGR_PGFE_API void erase(Part part);
 
   /**
    * @brief Writes the result of converting this instance to a character sequence.
