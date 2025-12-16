@@ -724,14 +724,18 @@ inline void eliminate_duplicates(std::string& str)
  * @param predicate The callable with signature `bool(int)`, which is applied
  * to each character of `str` and returns `true` to indicate the character to
  * trim.
+ * @param offset The position to start trimming.
  */
 template<typename Predicate>
-void trim(std::string& str, const Trim tr, const Predicate& predicate)
+void trim(std::string& str, const Trim tr, const Predicate& predicate,
+  const std::string::size_type offset = 0)
 {
   if (str.empty())
     return;
+  else if (!(offset < str.size()))
+    throw Exception{"cannot trim string: invalid offset"};
 
-  const auto b = begin(str);
+  const auto b = begin(str) + offset;
   const auto e = end(str);
   const auto tb = static_cast<bool>(tr & Trim::lhs) ?
     find_if_not(b, e, predicate) : b;
@@ -753,29 +757,33 @@ void trim(std::string& str, const Trim tr, const Predicate& predicate)
 }
 
 /// Trims not visible characters from `str`.
-inline void trim_not_visible(std::string& str, const Trim tr = Trim::all)
+inline void trim_not_visible(std::string& str, const Trim tr = Trim::all,
+  const std::string::size_type offset = 0)
 {
-  trim(str, tr, is_not_visible);
+  trim(str, tr, is_not_visible, offset);
 }
 
 /// Trims spaces from `str`.
-inline void trim_spaces(std::string& str, const Trim tr = Trim::all)
+inline void trim_spaces(std::string& str, const Trim tr = Trim::all,
+  const std::string::size_type offset = 0)
 {
-  trim(str, tr, is_space);
+  trim(str, tr, is_space, offset);
 }
 
 /// @returns The result of call `trim(str, tr, predicate)`.
 template<typename Predicate>
-std::string trimmed(std::string str, const Trim tr, const Predicate& predicate)
+std::string trimmed(std::string str, const Trim tr, const Predicate& predicate,
+  const std::string::size_type offset = 0)
 {
-  trim(str, tr, predicate);
+  trim(str, tr, predicate, offset);
   return str;
 }
 
 /// @overload
-inline std::string trimmed(std::string str, const Trim tr = Trim::all)
+inline std::string trimmed(std::string str, const Trim tr = Trim::all,
+  const std::string::size_type offset = 0)
 {
-  return trimmed(str, tr, is_not_visible);
+  return trimmed(str, tr, is_not_visible, offset);
 }
 
 /// @overload
