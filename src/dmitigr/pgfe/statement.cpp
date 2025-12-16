@@ -1014,6 +1014,22 @@ DMITIGR_PGFE_INLINE void Statement::erase(const Part part)
     }
   };
 
+  const auto erase_edge_spaces = [this](const auto i, const auto& end)
+  {
+    if (i != end && i->is_text()) {
+      constexpr bool is_reverse{Is_reverse_iterator_v<std::decay_t<decltype(i)>>};
+      constexpr auto side = is_reverse ? str::Trim::rhs : str::Trim::lhs;
+      str::trim_spaces(i->str, side);
+      if (i->str.empty()) {
+        if constexpr (is_reverse)
+          fragments_.erase(prev(i.base()));
+        else
+          fragments_.erase(i);
+      } else
+        i->renormalize();
+    }
+  };
+
   const auto [related_b, related_e] = related_comments();
 
   if (bool(part & Part::unrelated_comments))
@@ -1024,6 +1040,12 @@ DMITIGR_PGFE_INLINE void Statement::erase(const Part part)
 
   if (bool(part & Part::related_comments))
     fragments_.erase(related_b, related_e);
+
+  if (bool(part & Part::leading_spaces))
+    erase_edge_spaces(fragments_.begin(), fragments_.cend());
+
+  if (bool(part & Part::trailing_spaces))
+    erase_edge_spaces(fragments_.rbegin(), fragments_.crend());
 }
 
 DMITIGR_PGFE_INLINE std::string::size_type
