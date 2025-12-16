@@ -397,9 +397,9 @@ std::string to_string(const Container& cont, const std::string_view sep,
 template<class Container>
 std::string to_string(const Container& cont, const std::string_view sep)
 {
-  return to_string(cont, sep, [](const std::string& e) -> const auto&
+  return to_string(cont, sep, [](const auto& e) noexcept
   {
-    return e;
+    return std::string_view{e};
   });
 }
 
