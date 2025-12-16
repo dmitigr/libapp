@@ -17,15 +17,17 @@
 #ifndef DMITIGR_BASE_STACK_HPP
 #define DMITIGR_BASE_STACK_HPP
 
-#include <deque>
 #include <utility>
 
 namespace dmitigr {
 
-/// A scope stack.
-template<typename T, class Container = std::deque<T>>
-struct Scope_stack final {
-  /// An Scope_stack guard.
+/// An unwindable stack.
+template<class C>
+struct Unwindable_stack final {
+  /// An underlying container.
+  using Container = C;
+
+  /// An Unwindable_stack guard.
   struct Guard final {
     /// Removes the top element.
     ~Guard()
@@ -43,12 +45,12 @@ struct Scope_stack final {
     Guard& operator=(Guard&&) = delete;
 
   private:
-    friend Scope_stack;
+    friend Unwindable_stack;
 
-    Scope_stack& self_;
+    Unwindable_stack& self_;
 
     template<typename U>
-    Guard(Scope_stack& self, U&& element)
+    Guard(Unwindable_stack& self, U&& element)
       : self_{self}
     {
       self_.stack_.emplace_back(std::forward<U>(element));
@@ -56,10 +58,10 @@ struct Scope_stack final {
   };
 
   /// The default constructor.
-  Scope_stack() = default;
+  Unwindable_stack() = default;
 
   /// The constructor.
-  explicit Scope_stack(Container stack)
+  explicit Unwindable_stack(Container&& stack)
     : stack_{std::move(stack)}
   {}
 
