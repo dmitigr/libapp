@@ -403,49 +403,6 @@ std::string to_string(const Container& cont, const std::string_view sep)
   });
 }
 
-/**
- * @brief Splits the `input` string into the parts by using the
- * specified `separators`.
- *
- * @param input An input string.
- * @param separators Separators.
- * @param to_type A converter from std::string_view to T.
- *
- * @returns The vector of splitted parts converted to T.
- */
-template<class T, typename F>
-std::vector<T> to_vector(const std::string_view input,
-  const std::string_view separators, const F& to_type)
-{
-  using Size = std::string_view::size_type;
-  std::vector<T> result;
-  result.reserve(8);
-  Size pos{std::string_view::npos};
-  Size offset{};
-  while (offset < input.size()) {
-    pos = input.find_first_of(separators, offset);
-    const auto part_size = std::min<Size>(pos, input.size()) - offset;
-    result.push_back(to_type(input.substr(offset, part_size)));
-    offset += part_size + 1;
-  }
-  if (pos != std::string_view::npos) // input ends with a separator
-    result.push_back(to_type(std::string_view{}));
-  return result;
-}
-
-/**
- * @brief Splits the `input` string into the parts separated by the
- * specified `separators`.
- *
- * @returns The vector of splitted parts.
- */
-template<class S = std::string>
-std::vector<S> to_vector(const std::string_view input,
-  const std::string_view separators)
-{
-  return to_vector<S>(input, separators, [](const auto& v){return S{v};});
-}
-
 // =============================================================================
 // Substrings
 // =============================================================================
