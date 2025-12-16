@@ -55,6 +55,14 @@ struct Scope_stack final {
     }
   };
 
+  /// The default constructor.
+  Scope_stack() = default;
+
+  /// The constructor.
+  explicit Scope_stack(Container stack)
+    : stack_{std::move(stack)}
+  {}
+
   /**
    * @brief Inserts `element` at the top.
    *
@@ -68,13 +76,8 @@ struct Scope_stack final {
     return Guard{*this, std::forward<U>(element)};
   }
 
-  /// The constructor.
-  Scope_stack(Container stack)
-    : stack_{std::move(stack)}
-  {}
-
   /// @returns The reference to the underlying container.
-  const Container& container() const noexcept
+  const Container& container() const & noexcept
   {
     return stack_;
   }
@@ -85,7 +88,7 @@ struct Scope_stack final {
    * @par Effects
    * `container().empty()`.
    */
-  Container release() noexcept
+  Container&& container() && noexcept
   {
     Container result;
     stack_.swap(result);
