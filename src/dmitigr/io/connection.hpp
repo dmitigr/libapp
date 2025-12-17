@@ -31,7 +31,7 @@ namespace dmitigr::io {
 
 /// A connection.
 struct Connection final {
-  boost::asio::ip::tcp::socket socket;
+  boost::asio::generic::stream_protocol::socket socket;
 };
 
 /// A proxy connection to link with another one.

@@ -31,8 +31,12 @@ namespace dmitigr::io {
 /// An acceptor.
 class Acceptor : public Async_agent {
 public:
+  /// An underlying acceptor.
+  using Underlying_acceptor =
+    boost::asio::basic_socket_acceptor<boost::asio::generic::stream_protocol>;
+
   /// The constructor.
-  Acceptor(Must_be_shared_ptr, boost::asio::ip::tcp::acceptor acceptor)
+  Acceptor(Must_be_shared_ptr, Underlying_acceptor acceptor)
     : acceptor_{std::move(acceptor)}
   {}
 
@@ -43,7 +47,8 @@ public:
     {
       acceptor_.async_accept(
         [self = std::static_pointer_cast<Acceptor>(shared_from_this())]
-        (const std::error_code& error, boost::asio::ip::tcp::socket peer)
+        (const std::error_code& error,
+          boost::asio::generic::stream_protocol::socket peer)
         {
           if (error)
             return self->handle_error(error, "async acceptation error");
@@ -57,7 +62,7 @@ public:
   }
 
 protected:
-  boost::asio::ip::tcp::acceptor acceptor_;
+  Underlying_acceptor acceptor_;
 
   /**
    * @brief Accept handler.
