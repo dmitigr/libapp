@@ -19,6 +19,7 @@
 
 #include "rapidjson.hpp" // must be first
 #include "conversions.hpp"
+#include "conversions_enum.hpp"
 #include "document.hpp"
 #include "emplace.hpp"
 #include "errc.hpp"
