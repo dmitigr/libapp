@@ -44,8 +44,8 @@ using Tcp_endpoint = boost::asio::ip::tcp::endpoint;
 /// An UDS endpoint.
 using Uds_endpoint = boost::asio::local::stream_protocol::endpoint;
 
-/// A connection endpoint.
-struct Connection_endpoint final {
+/// An unresolved endpoint.
+struct Unresolved_endpoint final {
   /// A TCP address or UDS path.
   std::string address;
 
@@ -105,17 +105,17 @@ E to_specific_endpoint(const boost::asio::generic::stream_protocol::endpoint& en
   throw std::invalid_argument{"cannot convert generic endpoint to specific endpoint"};
 }
 
-inline Connection_endpoint
-to_connection_endpoint(const boost::asio::generic::stream_protocol::endpoint& endpoint)
+inline Unresolved_endpoint
+to_unresolved_endpoint(const boost::asio::generic::stream_protocol::endpoint& endpoint)
 {
   if (is_tcp(endpoint)) {
     const auto ep = to_specific_endpoint<Tcp_endpoint>(endpoint);
-    return Connection_endpoint{ep.address().to_string(), ep.port()};
+    return Unresolved_endpoint{ep.address().to_string(), ep.port()};
   } else if (is_uds(endpoint)) {
     const auto ep = to_specific_endpoint<Uds_endpoint>(endpoint);
-    return Connection_endpoint{ep.path()};
+    return Unresolved_endpoint{ep.path()};
   }
-  throw std::invalid_argument{"cannot convert generic endpoint to Connection_endpoint"};
+  throw std::invalid_argument{"cannot convert generic endpoint to Unresolved_endpoint"};
 }
 
 } // namespace dmitigr::io
