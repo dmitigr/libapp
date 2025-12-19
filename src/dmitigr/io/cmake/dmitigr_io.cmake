@@ -38,7 +38,11 @@ set(dmitigr_io_implementations
 # Dependencies
 # ------------------------------------------------------------------------------
 
-set(dmitigr_libs_io_deps)
+include(dmitigr_boost)
+dmitigr_boost_find(REQUIRED)
+
+set(dmitigr_libs_io_deps base)
+list(APPEND dmitigr_io_target_link_libraries_interface Boost::boost)
 
 # ------------------------------------------------------------------------------
 # Tests
