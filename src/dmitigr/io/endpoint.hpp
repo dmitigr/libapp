@@ -109,6 +109,12 @@ public:
     return port_;
   }
 
+  /// @returns A TCP port if `is_tcp()`, or `0` otherwise.
+  int port_number() const
+  {
+    return is_tcp() ? std::stoi(port_) : 0;
+  }
+
   /// @returns A string representation of this instance.
   std::string to_string() const
   {
