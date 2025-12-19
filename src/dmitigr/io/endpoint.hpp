@@ -17,13 +17,17 @@
 #ifndef DMITIGR_IO_ENDPOINT_HPP
 #define DMITIGR_IO_ENDPOINT_HPP
 
+#include "../base/traits.hpp"
+
 #include <boost/asio.hpp>
 
 #include <cstring>
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 #include <sstream>
 #include <type_traits>
+#include <utility>
 
 namespace dmitigr::io {
 namespace detail {
@@ -45,12 +49,94 @@ using Tcp_endpoint = boost::asio::ip::tcp::endpoint;
 using Uds_endpoint = boost::asio::local::stream_protocol::endpoint;
 
 /// An unresolved endpoint.
-struct Unresolved_endpoint final {
-  /// A TCP address or UDS path.
-  std::string address;
+class Unresolved_endpoint final {
+public:
+  /// Constructs an empty endpoint.
+  Unresolved_endpoint() = default;
 
-  /// A TCP port, or zero if `address` stores an UDS path.
-  int port{};
+  /// Constructs an UDS endpoint.
+  explicit Unresolved_endpoint(const std::filesystem::path& path)
+    : Unresolved_endpoint{path.string()}
+  {}
+
+  /// @overload
+  explicit Unresolved_endpoint(std::string path)
+    : Unresolved_endpoint{std::move(path), std::string{}}
+  {}
+
+  /// Constructs a TCP endpoint.
+  Unresolved_endpoint(std::string host, const unsigned int port)
+    : Unresolved_endpoint{std::move(host), std::to_string(port)}
+  {}
+
+  /// Generic constructor.
+  Unresolved_endpoint(std::string host, std::string port)
+    : host_{std::move(host)}
+    , port_{std::move(port)}
+  {
+    if (host_.empty() && !port_.empty())
+      throw std::invalid_argument{"cannot create instance of"
+        " dmitigr::io::Unresolved_endpoint"};
+  }
+
+  /// @returns `true` if this instance represents empty endpoint.
+  bool is_empty() const noexcept
+  {
+    return !host_.empty();
+  }
+
+  /// @returns `true` if this instance represents a TCP endpoint.
+  bool is_tcp() const noexcept
+  {
+    return !host_.empty() && !port_.empty();
+  }
+
+  /// @returns `true` if this instance represents an UDS endpoint.
+  bool is_uds() const noexcept
+  {
+    return !is_tcp();
+  }
+
+  /// @returns A TCP address or UDS path.
+  const std::string& host() const noexcept
+  {
+    return host_;
+  }
+
+  /// @returns A TCP port, or empty string if `host()` returns an UDS path.
+  const std::string& port() const noexcept
+  {
+    return port_;
+  }
+
+  /// @returns A string representation of this instance.
+  std::string to_string() const
+  {
+    std::string result;
+    result.reserve(host_.size() + (!port_.empty() ? 1 + port_.size() : 0));
+    result.append(host_);
+    if (!port_.empty())
+      result.append(":").append(port_);
+    return result;
+  }
+
+  /**
+   * @brief Writes a string representation of this instance to `os`.
+   *
+   * @returns `os`.
+   */
+  std::ostream& operator<<(std::ostream& os) const
+  {
+    if (!host_.empty())
+      os<<host_;
+    if (!port_.empty())
+      os<<':'<<port_;
+    return os;
+  }
+
+private:
+  std::string host_;
+  std::string port_;
 };
 
 /// @returns `true` if `endpoint` is a TCP endpoint.
@@ -80,6 +166,12 @@ template<class P>
 std::string to_string(const boost::asio::local::basic_endpoint<P>& endpoint)
 {
   return detail::to_string(endpoint);
+}
+
+/// @overload
+inline std::string to_string(const Unresolved_endpoint& endpoint)
+{
+  return endpoint.to_string();
 }
 
 /// @returns A specific endpoint of type `E`.
