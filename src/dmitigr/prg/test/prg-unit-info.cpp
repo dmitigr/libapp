@@ -75,7 +75,8 @@ try {
 
   // Check synopsis.
   const auto [detach_o] = cmd.options("detach");
-  detach_o.is_valid_throw_if_value();
+  prg::with_exit_usage_on_throw([&detach_o]{
+    return detach_o.is_valid_throw_if_value();}, std::cerr);
 } catch (const std::exception& e) {
   std::cerr << e.what() << std::endl;
   return 1;

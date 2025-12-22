@@ -45,6 +45,25 @@ namespace dmitigr::prg {
   std::exit(code);
 }
 
+/**
+ * @brief Calls `callback` and if it throws an exception prints the exception's
+ * what-string to `out` and calls exit_usage(out, code).
+ */
+template<typename F>
+auto with_exit_usage_on_throw(F&& callback, std::ostream& out,
+  const int code = EXIT_FAILURE)
+{
+  try {
+    return callback();
+  } catch (const std::exception& e) {
+    out << e.what() << '\n';
+    exit_usage(out, code);
+  } catch (...) {
+    out << "unknown error\n";
+    exit_usage(out, code);
+  }
+}
+
 // =============================================================================
 
 /// A typical signal handler.
