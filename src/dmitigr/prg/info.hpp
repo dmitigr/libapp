@@ -23,6 +23,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace dmitigr::prg {
 
@@ -92,7 +93,7 @@ public:
   virtual std::filesystem::path executable_path() const = 0;
 
   /// @returns The program synopsis.
-  virtual std::string synopsis() const = 0;
+  virtual std::vector<std::string> synopsis() const = 0;
 
 protected:
   /// Called from initialize().

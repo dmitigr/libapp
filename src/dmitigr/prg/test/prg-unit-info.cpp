@@ -40,9 +40,9 @@ public:
     return executable_path_;
   }
 
-  std::string synopsis() const override
+  std::vector<std::string> synopsis() const override
   {
-    return "[--detach]";
+    return {"[--detach]"};
   }
 
 private:

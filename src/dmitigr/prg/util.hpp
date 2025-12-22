@@ -22,6 +22,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <ostream>
+#include <iterator>
 #include <string_view>
 
 namespace dmitigr::prg {
@@ -37,11 +38,13 @@ namespace dmitigr::prg {
   const int code = EXIT_FAILURE)
 {
   const auto& info = Info::instance();
-  out << "usage: " << info.program_name();
-  const auto synop = info.synopsis();
-  if (!synop.empty())
-    out << " " << synop;
-  out << std::endl;
+  if (const auto synop = info.synopsis(); !synop.empty()) {
+    out << "usage: " << info.program_name() << " " << synop.front() << '\n';
+    const auto e = synop.cend();
+    for (auto i = next(synop.cbegin()); i != e; ++i)
+      out << "       " << info.program_name() << " " << *i << '\n';
+    out << std::flush;
+  }
   std::exit(code);
 }
 
