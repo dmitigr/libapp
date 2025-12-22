@@ -20,7 +20,6 @@
 #include "../base/assert.hpp"
 #include "../base/noncopymove.hpp"
 
-#include <atomic>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -83,13 +82,10 @@ public:
     return *instance_;
   }
 
-  /// The stop signal.
-  std::atomic_int stop_signal{0};
-
   /// @returns The program name.
-  std::string program_name() const
+  virtual std::string program_name() const
   {
-    return executable_path().filename().string();
+    return executable_path().stem().string();
   }
 
   /// @returns The path to the executable.

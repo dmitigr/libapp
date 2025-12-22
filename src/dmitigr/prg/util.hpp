@@ -64,46 +64,6 @@ auto with_exit_usage_on_throw(F&& callback, std::ostream& out,
   }
 }
 
-// =============================================================================
-
-/// A typical signal handler.
-inline void handle_signal(const int sig) noexcept
-{
-  Info::instance().stop_signal = sig;
-}
-
-/// Assigns the `signals` as a signal handler of some signals.
-inline void set_signals(void(*signals)(int) = &handle_signal) noexcept
-{
-  std::signal(SIGABRT, signals);
-  std::signal(SIGFPE, signals);
-  std::signal(SIGILL, signals);
-  std::signal(SIGINT, signals);
-  std::signal(SIGSEGV, signals);
-  std::signal(SIGTERM, signals);
-}
-
-// =============================================================================
-
-/**
- * @brief Calls the function `f`.
- *
- * @details If the call of `callback` fails with exception then
- * `Info::instance().stop_signal` flag is sets to `stop_signal`.
- *
- * @param f A function to call
- */
-template<typename F>
-auto with_signal_on_error(F&& f, const int stop_signal = SIGTERM)
-{
-  try {
-    return f();
-  } catch (...) {
-    Info::instance().stop_signal = stop_signal;
-    throw;
-  }
-}
-
 } // namespace dmitigr::prg
 
 #endif  // DMITIGR_PRG_UTIL_HPP
