@@ -48,71 +48,65 @@ using Tcp_endpoint = boost::asio::ip::tcp::endpoint;
 /// An UDS endpoint.
 using Uds_endpoint = boost::asio::local::stream_protocol::endpoint;
 
-/// An unresolved endpoint.
-class Unresolved_endpoint final {
+/// An endpoint.
+class Endpoint final {
 public:
   /// Constructs an empty endpoint.
-  Unresolved_endpoint() = default;
+  Endpoint() = default;
 
   /// Constructs an UDS endpoint.
-  explicit Unresolved_endpoint(const std::filesystem::path& path)
-    : Unresolved_endpoint{path.string()}
+  explicit Endpoint(const std::filesystem::path& path)
+    : Endpoint{path.string()}
   {}
 
   /// @overload
-  explicit Unresolved_endpoint(std::string path)
-    : Unresolved_endpoint{std::move(path), std::string{}}
+  explicit Endpoint(std::string path)
+    : Endpoint{std::move(path), std::string{}}
   {}
 
-  /// Constructs a TCP endpoint.
-  Unresolved_endpoint(std::string host, const unsigned int port)
-    : Unresolved_endpoint{std::move(host), std::to_string(port)}
+  /// Constructs an IP endpoint.
+  Endpoint(std::string host, const unsigned int port)
+    : Endpoint{std::move(host), std::to_string(port)}
   {}
 
   /// Generic constructor.
-  Unresolved_endpoint(std::string host, std::string port)
+  Endpoint(std::string host, std::string port)
     : host_{std::move(host)}
     , port_{std::move(port)}
   {
     if (host_.empty() && !port_.empty())
       throw std::invalid_argument{"cannot create instance of"
-        " dmitigr::io::Unresolved_endpoint"};
+        " dmitigr::io::Endpoint"};
   }
 
   /// @returns `true` if this instance represents empty endpoint.
   bool is_empty() const noexcept
   {
-    return !host_.empty();
-  }
-
-  /// @returns `true` if this instance represents a TCP endpoint.
-  bool is_tcp() const noexcept
-  {
-    return !host_.empty() && !port_.empty();
+    return host_.empty();
   }
 
   /// @returns `true` if this instance represents an UDS endpoint.
   bool is_uds() const noexcept
   {
-    return !is_tcp();
+    return !host_.empty() && port_.empty();
   }
 
-  /// @returns A TCP address or UDS path.
+  /// @returns An address or UDS path.
   const std::string& host() const noexcept
   {
     return host_;
   }
 
-  /// @returns A TCP port, or empty string if `host()` returns an UDS path.
+  /// @returns A port, or empty string if `is_uds()`.
   const std::string& port() const noexcept
   {
     return port_;
   }
 
-  /// @returns A TCP port if `is_tcp()`, or `0` otherwise.
+  /// @returns A port if `!is_uds()`, or `0` otherwise.
   int port_number() const
   {
-    return is_tcp() ? std::stoi(port_) : 0;
+    return !is_uds() ? std::stoi(port_) : 0;
   }
 
   /// @returns A string representation of this instance.
@@ -145,9 +139,9 @@ private:
   std::string port_;
 };
 
-/// @returns `true` if `endpoint` is a TCP endpoint.
+/// @returns `true` if `endpoint` is an IP endpoint.
 inline bool
-is_tcp(const boost::asio::generic::stream_protocol::endpoint& endpoint) noexcept
+is_ip(const boost::asio::generic::stream_protocol::endpoint& endpoint) noexcept
 {
   const auto family = endpoint.protocol().family();
   return family == AF_INET || family == AF_INET6;
@@ -175,7 +169,7 @@ std::string to_string(const boost::asio::local::basic_endpoint<P>& endpoint)
 }
 
 /// @overload
-inline std::string to_string(const Unresolved_endpoint& endpoint)
+inline std::string to_string(const Endpoint& endpoint)
 {
   return endpoint.to_string();
 }
@@ -188,7 +182,7 @@ E to_specific_endpoint(const boost::asio::generic::stream_protocol::endpoint& en
   {
     using std::is_same_v;
     if constexpr (is_same_v<E, Tcp_endpoint>) {
-      return is_tcp(endpoint);
+      return is_ip(endpoint);
     } else if constexpr (is_same_v<E, Uds_endpoint>) {
       return is_uds(endpoint);
     } else
@@ -203,17 +197,18 @@ E to_specific_endpoint(const boost::asio::generic::stream_protocol::endpoint& en
   throw std::invalid_argument{"cannot convert generic endpoint to specific endpoint"};
 }
 
-inline Unresolved_endpoint
-to_unresolved_endpoint(const boost::asio::generic::stream_protocol::endpoint& endpoint)
+inline Endpoint
+to_endpoint(const boost::asio::generic::stream_protocol::endpoint& endpoint)
 {
-  if (is_tcp(endpoint)) {
+  if (is_ip(endpoint)) {
     const auto ep = to_specific_endpoint<Tcp_endpoint>(endpoint);
-    return Unresolved_endpoint{ep.address().to_string(), ep.port()};
+    return Endpoint{ep.address().to_string(), ep.port()};
   } else if (is_uds(endpoint)) {
     const auto ep = to_specific_endpoint<Uds_endpoint>(endpoint);
-    return Unresolved_endpoint{ep.path()};
+    return Endpoint{ep.path()};
   }
-  throw std::invalid_argument{"cannot convert generic endpoint to Unresolved_endpoint"};
+  throw std::invalid_argument{"cannot convert "
+    "asio::generic::stream_protocol::endpoint to Endpoint"};
 }
 
 } // namespace dmitigr::io
