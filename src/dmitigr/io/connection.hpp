@@ -85,7 +85,7 @@ public:
       if (!connection_.socket.is_open())
         throw std::system_error{make_error_code(std::errc::not_connected)};
 
-      connection_.socket.async_wait(boost::asio::ip::tcp::socket::wait_read,
+      connection_.socket.async_wait(boost::asio::generic::stream_protocol::socket::wait_read,
         [self = std::static_pointer_cast<Proxy_connection>(shared_from_this())]
         (const std::error_code& error)
         {
