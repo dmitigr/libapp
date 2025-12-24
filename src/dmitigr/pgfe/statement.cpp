@@ -267,14 +267,6 @@ public:
       return !count ? all_spaces_no_new_line : all_spaces_one_new_line;
     };
 
-    static const auto has_newline = [](const std::string_view str) noexcept
-    {
-      return std::any_of(cbegin(str), cend(str), [](const auto c) noexcept
-      {
-        return c == '\n';
-      });
-    };
-
     // Try to find the first fragment which is the "nearby string".
     const auto first_nearby = find_if(b, e, [](const Fragment& f) noexcept
     {
