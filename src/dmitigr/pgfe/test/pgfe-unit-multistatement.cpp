@@ -34,6 +34,12 @@ try {
 
   {
     pgfe::Multistatement mstmt{""};
+    DMITIGR_ASSERT(mstmt.is_empty());
+    DMITIGR_ASSERT(mstmt.size() == 0);
+  }
+
+  {
+    pgfe::Multistatement mstmt{" "};
     DMITIGR_ASSERT(!mstmt.is_empty());
     DMITIGR_ASSERT(mstmt.size() == 1);
   }
@@ -41,22 +47,41 @@ try {
   {
     pgfe::Multistatement mstmt{";"};
     DMITIGR_ASSERT(!mstmt.is_empty());
+    DMITIGR_ASSERT(mstmt.size() == 1);
+  }
+
+  {
+    pgfe::Multistatement mstmt{"; "};
+    DMITIGR_ASSERT(!mstmt.is_empty());
     DMITIGR_ASSERT(mstmt.size() == 2);
   }
 
   {
     pgfe::Multistatement mstmt{";;"};
     DMITIGR_ASSERT(!mstmt.is_empty());
+    DMITIGR_ASSERT(mstmt.size() == 2);
+  }
+
+  {
+    pgfe::Multistatement mstmt{" ; ;"};
+    DMITIGR_ASSERT(!mstmt.is_empty());
+    DMITIGR_ASSERT(mstmt.size() == 2);
+  }
+
+  {
+    pgfe::Multistatement mstmt{";; "};
+    DMITIGR_ASSERT(!mstmt.is_empty());
     DMITIGR_ASSERT(mstmt.size() == 3);
   }
 
   {
-    const std::string str{"select 1; select  2;   select    3     ;"};
-    pgfe::Multistatement mstmt{str};
+    const std::string str1{"select 1; select  2;   select    3     "};
+    const auto str2 = str1+";";
+    pgfe::Multistatement mstmt{str2};
     DMITIGR_ASSERT(!mstmt.is_empty());
-    DMITIGR_ASSERT(mstmt.size() == 4);
-    DMITIGR_ASSERT(mstmt.to_string() == str);
-    DMITIGR_ASSERT(mstmt.to_query_string() == str);
+    DMITIGR_ASSERT(mstmt.size() == 3);
+    DMITIGR_ASSERT(mstmt.to_string() == str1);
+    DMITIGR_ASSERT(mstmt.to_query_string() == str1);
   }
 
   pgfe::Multistatement bunch;

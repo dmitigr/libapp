@@ -117,25 +117,22 @@ public:
    * Returns `false` to stop the parsing process.
    * @param input An SQL input, which may contain multiple commands and
    * comments. In turn, comments may contain a metadata.
-   *
-   * @returns The number of constructed (parsed) statements.
    */
   template<typename F>
-  static std::size_t parse(F&& callback, std::string_view input)
+  static void parse(F&& callback, std::string_view input)
   {
-    std::size_t count{};
     while (true) {
       auto [stmt, pos] = parse_sql_input(input);
-      ++count;
-      if (!callback(std::move(stmt)))
-        break;
-
-      if (pos <= input.size())
-        input = input.substr(pos);
-      else
-        break;
+      if (!stmt.is_empty() || pos <= input.size()) {
+        if (callback(std::move(stmt))) {
+          if (pos <= input.size()) {
+            input = input.substr(pos);
+            continue;
+          }
+        }
+      }
+      break;
     }
-    return count;
   }
 
   /// @}
