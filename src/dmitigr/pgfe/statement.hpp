@@ -673,6 +673,7 @@ public:
             }
             push_back_if_not_empty(matching,
               make_view(nf->norm_str(), nf_norm_offset, nf->norm_str().size()));
+            nf_norm_offset = 0;
           } else if (nf->is_named_parameter()) {
             if (const auto* const b = bound(nf->str))
               push_back_if_not_empty(matching,

@@ -621,6 +621,25 @@ update task_step_log
       ASSERT(called_query == 1);
     }
 
+    {
+      int called_txt{};
+      const Statement pattern{"insert :{txt}"};
+      const Statement stmt{"insert into tab1(info, password)"
+        " select 'info1', 'password1'"};
+      const auto matched =
+        stmt.destructure([&called_txt](const auto& name, const auto& match)
+      {
+        ASSERT(name == "txt");
+        ++called_txt;
+        const auto txt = match.to_string();
+        ASSERT(txt == "into tab1(info,password)select'info1','password1'");
+        return true;
+      }, pattern);
+
+      ASSERT(matched);
+      ASSERT(called_txt == 1);
+    }
+
     // Statement with unbound parameter.
     {
       bool catched{};
