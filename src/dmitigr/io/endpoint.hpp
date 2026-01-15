@@ -17,6 +17,7 @@
 #ifndef DMITIGR_IO_ENDPOINT_HPP
 #define DMITIGR_IO_ENDPOINT_HPP
 
+#include "../base/stream.hpp"
 #include "../base/traits.hpp"
 
 #include <boost/asio.hpp>
@@ -30,17 +31,6 @@
 #include <utility>
 
 namespace dmitigr::io {
-namespace detail {
-
-template<class T>
-std::string to_string(const T& endpoint)
-{
-  std::ostringstream os;
-  os << endpoint;
-  return os.str();
-}
-
-} // namespace detail
 
 /// A TCP endpoint.
 using Tcp_endpoint = boost::asio::ip::tcp::endpoint;
@@ -158,14 +148,14 @@ is_uds(const boost::asio::generic::stream_protocol::endpoint& endpoint) noexcept
 template<class P>
 std::string to_string(const boost::asio::ip::basic_endpoint<P>& endpoint)
 {
-  return detail::to_string(endpoint);
+  return to_string(endpoint);
 }
 
 /// @overload
 template<class P>
 std::string to_string(const boost::asio::local::basic_endpoint<P>& endpoint)
 {
-  return detail::to_string(endpoint);
+  return to_string(endpoint);
 }
 
 /// @overload

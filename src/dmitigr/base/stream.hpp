@@ -24,6 +24,7 @@
 #include <cctype>
 #include <cstddef>
 #include <istream>
+#include <sstream>
 #include <filesystem>
 #include <fstream>
 #include <optional>
@@ -31,6 +32,15 @@
 #include <utility>
 
 namespace dmitigr {
+
+/// @returns The result of conversion `value` to string via std::ostringstream.
+template<class T>
+std::string to_string(const T& value)
+{
+  std::ostringstream os;
+  os << value;
+  return os.str();
+}
 
 /// @returns Size of `in` to read.
 inline auto seekg_size(std::istream& in, const std::istream::off_type offset = 0)
