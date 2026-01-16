@@ -18,7 +18,6 @@
 #define DMITIGR_NIX_DL_HPP
 
 #include "../base/assert.hpp"
-#include "../base/noncopymove.hpp"
 
 #include <algorithm>
 #include <filesystem>
@@ -134,7 +133,7 @@ private:
   }
 };
 
-class Object final : Noncopy {
+class Object final {
 public:
   ~Object()
   {
@@ -143,6 +142,9 @@ public:
   }
 
   Object() = default;
+
+  Object(const Object&) = delete;
+  Object& operator=(const Object&) = delete;
 
   Object(const std::filesystem::path& path, const int flags)
     : handle_{dlopen(path.string().c_str(), flags)}
@@ -191,6 +193,8 @@ public:
     else
       detail::throw_error("symbol not found");
   }
+
+  auto operator<=>(const Object&) const noexcept = default;
 
 private:
   void* handle_{};
