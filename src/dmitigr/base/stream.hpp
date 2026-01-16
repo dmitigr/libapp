@@ -24,19 +24,24 @@
 #include <cctype>
 #include <cstddef>
 #include <istream>
-#include <sstream>
 #include <filesystem>
 #include <fstream>
 #include <optional>
+#include <sstream>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 namespace dmitigr {
 
-/// @returns The result of conversion `value` to string via std::ostringstream.
+/// @returns The result of conversion `value` to string via `std::ostringstream`.
 template<class T>
-std::string to_string(const T& value)
+std::string to_string(T&& value) noexcept(std::is_same_v<T, std::string>)
 {
+  if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
+    return std::move(value);
+  else if constexpr (std::is_arithmetic_v<T>)
+    return std::to_string(value);
   std::ostringstream os;
   os << value;
   return os.str();
