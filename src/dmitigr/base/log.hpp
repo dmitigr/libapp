@@ -93,7 +93,7 @@ inline Level to_level(const std::string_view value)
 }
 
 /// A log level value.
-std::atomic<Level> level{Level::error};
+inline std::atomic<Level> level{Level::error};
 
 namespace detail {
 
