@@ -158,18 +158,6 @@ void cerr(const Level level, std::format_string<Types...> fmt, Types&& ... args)
 }
 
 /**
- * @brief Writes `args` to the `std::cerr` with `Level::error`.
- *
- * @par Thread-safety
- * Thread-safe.
- */
-template<typename ... Types>
-void cerr(std::format_string<Types...> fmt, Types&& ... args)
-{
-  detail::write(std::cerr, Level::error, fmt.get(), std::make_format_args(args...));
-}
-
-/**
  * @brief Writes `args` to the `std::clog`.
  *
  * @details If `is_with_now` then writes the result of dmitigr::chrono::now() to
@@ -185,17 +173,141 @@ void clog(const Level level, std::format_string<Types...> fmt, Types&& ... args)
 }
 
 /**
- * @brief Writes `args` to the `std::clog` with `Level::error`.
+ * @brief Acts as if called cerr() with Level::emergency.
  *
  * @par Thread-safety
  * Thread-safe.
  */
 template<typename ... Types>
-void clog(std::format_string<Types...> fmt, Types&& ... args)
+void emergency(std::format_string<Types...> fmt, Types&& ... args)
 {
-  detail::write(std::clog, Level::error, fmt.get(), std::make_format_args(args...));
+  detail::write(std::cerr, Level::emergency, fmt.get(), std::make_format_args(args...));
+}
+
+/**
+ * @brief Acts as if called cerr() with Level::alert.
+ *
+ * @par Thread-safety
+ * Thread-safe.
+ */
+template<typename ... Types>
+void alert(std::format_string<Types...> fmt, Types&& ... args)
+{
+  detail::write(std::cerr, Level::alert, fmt.get(), std::make_format_args(args...));
+}
+
+/**
+ * @brief Acts as if called cerr() with Level::critical.
+ *
+ * @par Thread-safety
+ * Thread-safe.
+ */
+template<typename ... Types>
+void critical(std::format_string<Types...> fmt, Types&& ... args)
+{
+  detail::write(std::cerr, Level::critical, fmt.get(), std::make_format_args(args...));
+}
+
+/**
+ * @brief Acts as if called cerr() with Level::error.
+ *
+ * @par Thread-safety
+ * Thread-safe.
+ */
+template<typename ... Types>
+void error(std::format_string<Types...> fmt, Types&& ... args)
+{
+  detail::write(std::cerr, Level::error, fmt.get(), std::make_format_args(args...));
+}
+
+/**
+ * @brief Acts as if called clog() with Level::warning.
+ *
+ * @par Thread-safety
+ * Thread-safe.
+ */
+template<typename ... Types>
+void warning(std::format_string<Types...> fmt, Types&& ... args)
+{
+  detail::write(std::clog, Level::warning, fmt.get(), std::make_format_args(args...));
+}
+
+/**
+ * @brief Acts as if called clog() with Level::notice.
+ *
+ * @par Thread-safety
+ * Thread-safe.
+ */
+template<typename ... Types>
+void notice(std::format_string<Types...> fmt, Types&& ... args)
+{
+  detail::write(std::clog, Level::notice, fmt.get(), std::make_format_args(args...));
+}
+
+/**
+ * @brief Acts as if called clog() with Level::info.
+ *
+ * @par Thread-safety
+ * Thread-safe.
+ */
+template<typename ... Types>
+void info(std::format_string<Types...> fmt, Types&& ... args)
+{
+  detail::write(std::clog, Level::info, fmt.get(), std::make_format_args(args...));
+}
+
+/**
+ * @brief Acts as if called clog() with Level::debug.
+ *
+ * @par Thread-safety
+ * Thread-safe.
+ */
+template<typename ... Types>
+void debug(std::format_string<Types...> fmt, Types&& ... args)
+{
+  detail::write(std::clog, Level::debug, fmt.get(), std::make_format_args(args...));
 }
 
 } // namespace dmitigr::log
+
+/// Expands to call dmitigr::log::emergency().
+#define DMITIGR_LOG_EMERGENCY(fmt, ...) do {                \
+    dmitigr::log::emergency(fmt __VA_OPT__(,) __VA_ARGS__); \
+  } while (false)
+
+/// Expands to call dmitigr::log::alert().
+#define DMITIGR_LOG_ALERT(fmt, ...) do {                \
+    dmitigr::log::alert(fmt __VA_OPT__(,) __VA_ARGS__); \
+  } while (false)
+
+/// Expands to call dmitigr::log::critical().
+#define DMITIGR_LOG_CRITICAL(fmt, ...) do {                 \
+    dmitigr::log::critical(fmt __VA_OPT__(,) __VA_ARGS__);  \
+  } while (false)
+
+/// Expands to call dmitigr::log::error().
+#define DMITIGR_LOG_ERROR(fmt, ...) do {                \
+    dmitigr::log::error(fmt __VA_OPT__(,) __VA_ARGS__); \
+  } while (false)
+
+/// Expands to call dmitigr::log::warning().
+#define DMITIGR_LOG_WARNING(fmt, ...) do {                  \
+    dmitigr::log::warning(fmt __VA_OPT__(,) __VA_ARGS__);   \
+  } while (false)
+
+/// Expands to call dmitigr::log::notice().
+#define DMITIGR_LOG_NOTICE(fmt, ...) do {                   \
+    dmitigr::log::notice(fmt __VA_OPT__(,) __VA_ARGS__);    \
+  } while (false)
+
+/// Expands to call dmitigr::log::info().
+#define DMITIGR_LOG_INFO(fmt, ...) do {                 \
+    dmitigr::log::info(fmt __VA_OPT__(,) __VA_ARGS__);  \
+  } while (false)
+
+/// Expands to call dmitigr::log::debug().
+#define DMITIGR_LOG_DEBUG(fmt, ...) do {                \
+    dmitigr::log::debug(fmt __VA_OPT__(,) __VA_ARGS__); \
+  } while (false)
 
 #endif  // DMITIGR_BASE_LOG_HPP
