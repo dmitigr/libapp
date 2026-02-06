@@ -48,7 +48,7 @@ namespace dmitigr::pgfe {
  * @details A dollar sign ("$") followed by digits is used to denote a parameter
  * with explicitly specified position. A colon (":") followed by an opening curly
  * bracket, or single or double quote, followed by alphabetic character, followed
- * by mix of alphabetic characters underscores and dashes is used to denote a
+ * by mix of alphanumeric characters underscores and dashes is used to denote a
  * named parameter with automatically assignable position, for example:
  *   - `:{this-is-a-valid_name}` - denotes a valid name;
  *   - `:{-this-is-an-invalid_name}` - denotes an invalid name.
