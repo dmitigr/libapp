@@ -65,23 +65,23 @@ inline void detach(const std::function<void()>& startup,
   namespace fsx = dmitigr::filesystem;
   DMITIGR_ASSERT(startup);
   if (working_directory.empty()) {
-    log::clog() << "cannot detach process because the working directory isn't "
-                << "specified\n";
+    log::cerr("cannot detach process because the working directory isn't "
+      "specified\n");
     std::exit(EXIT_SUCCESS);
   }
   if (pid_file.empty() || pid_file == "." || pid_file == "..") {
-    log::clog() << "cannot detach process because the PID file name is invalid\n";
+    log::cerr("cannot detach process because the PID file name is invalid\n");
     std::exit(EXIT_SUCCESS);
   }
   if (log_file.empty() || log_file == "." || log_file == "..") {
-    log::clog() << "cannot detach process because the log file name is invalid\n";
+    log::cerr("cannot detach process because the log file name is invalid\n");
     std::exit(EXIT_SUCCESS);
   }
 
   // Forking for a first time
   if (const auto pid = ::fork(); pid < 0) {
     const int err = errno;
-    log::clog() << "first fork() failed (" << error_message(err) << ")\n";
+    log::cerr("first fork() failed ({})\n", error_message(err));
     std::exit(EXIT_FAILURE); // exit parent
   } else if (pid > 0)
     std::exit(EXIT_SUCCESS); // exit parent
@@ -89,29 +89,29 @@ inline void detach(const std::function<void()>& startup,
   // Setting the umask for a new child process
   ::umask(S_IWGRP | S_IRWXO);
 
-  // Redirecting clog to `log_file`.
+  // Redirecting stderr streams to `log_file`.
   try {
-    log::redirect_clog(log_file, log_file_openmode);
+    log::redirect(log_file, log_file_openmode);
   } catch (const std::exception& e) {
-    log::clog() << e.what() << '\n';
+    log::cerr("{}\n", e.what());
     std::exit(EXIT_FAILURE); // exit parent
   } catch (...) {
-    log::clog() << "cannot redirect std::clog to " << log_file << '\n';
+    log::cerr("cannot redirect stderr streams to {}\n", log_file.string());
     std::exit(EXIT_FAILURE); // exit parent
   }
 
   // Setup the new process group leader
   if (const auto sid = ::setsid(); sid < 0) {
     const int err = errno;
-    log::clog() << "cannot setup the new process group leader ("
-                << error_message(err) << ")\n";
+    log::cerr("cannot setup the new process group leader ({})\n",
+      error_message(err));
     std::exit(EXIT_FAILURE);
   }
 
   // Forking for a second time
   if (const auto pid = ::fork(); pid < 0) {
     const int err = errno;
-    log::clog() << "second fork() failed (" << error_message(err) << ")\n";
+    log::cerr("second fork() failed ({})\n", error_message(err));
     std::exit(EXIT_FAILURE);
   } else if (pid > 0)
     std::exit(EXIT_SUCCESS);
@@ -120,10 +120,10 @@ inline void detach(const std::function<void()>& startup,
   try {
     fsx::overwrite(pid_file, std::to_string(getpid()));
   } catch (const std::exception& e) {
-    log::clog() << e.what() << '\n';
+    log::cerr("{}\n", e.what());
     std::exit(EXIT_FAILURE);
   } catch (...) {
-    log::clog() << "cannot open log file at " << log_file << '\n';
+    log::cerr("cannot open log file at {}\n", log_file.string());
     std::exit(EXIT_FAILURE);
   }
 
@@ -131,11 +131,11 @@ inline void detach(const std::function<void()>& startup,
   try {
     std::filesystem::current_path(working_directory);
   } catch (const std::exception& e) {
-    log::clog() << e.what() << '\n';
+    log::cerr("{}\n", e.what());
     std::exit(EXIT_FAILURE);
   } catch (...) {
-    log::clog() << "cannot change current working directory to "
-                << working_directory << '\n';
+    log::cerr("cannot change current working directory to {}\n",
+      working_directory.string());
     std::exit(EXIT_FAILURE);
   }
 
@@ -144,8 +144,7 @@ inline void detach(const std::function<void()>& startup,
   {
     if (::close(fd)) {
       const int err = errno;
-      log::clog() << "cannot close file descriptor " << fd
-                  << " (" << error_message(err) << ")\n";
+      log::cerr("cannot close file descriptor {}: {}\n", fd, error_message(err));
       std::exit(EXIT_FAILURE);
     }
   };
@@ -158,10 +157,10 @@ inline void detach(const std::function<void()>& startup,
   try {
     startup();
   } catch (const std::exception& e) {
-    log::clog() << e.what() << '\n';
+    log::cerr("{}\n", e.what());
     std::exit(EXIT_FAILURE);
   } catch (...) {
-    log::clog() << "start routine failed" << '\n';
+    log::cerr("start routine failed\n");
     std::exit(EXIT_FAILURE);
   }
 }
@@ -200,10 +199,10 @@ inline void start(const bool detach,
     try {
       startup();
     } catch (const std::exception& e) {
-      std::cerr << e.what() << std::endl;
+      log::cerr("{}\n", e.what());
       std::exit(EXIT_FAILURE);
     } catch (...) {
-      std::cerr << "unknown error" << std::endl;
+      log::cerr("unknown error\n");
       std::exit(EXIT_FAILURE);
     }
   };
@@ -230,7 +229,6 @@ inline void start(const bool detach,
 
   // Starting.
 
-  log::is_clog_with_now = detach;
   if (!detach) {
     DMITIGR_ASSERT(!working_directory.empty());
     std::error_code errc;
@@ -245,7 +243,7 @@ inline void start(const bool detach,
       fsx::overwrite(pid_file, std::to_string(getpid()));
 
     if (!log_file.empty())
-      log::redirect_clog(log_file, log_file_mode);
+      log::redirect(log_file, log_file_mode);
 
     run();
   } else
