@@ -20,11 +20,11 @@
 #include "chrono.hpp"
 #include "exceptions.hpp"
 
-#include <atomic>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <string_view>
 
 namespace dmitigr::log {
@@ -51,10 +51,15 @@ inline std::ofstream stderr_file_stream;
  *
  * @details If `is_with_now` then writes the result of dmitigr::chrono::now() to
  * the `os` before writing `args`.
+ *
+ * @par Thread-safety
+ * Thread-safe.
  */
 inline std::ostream& write(std::ostream& os, const Level level,
   const std::string_view fmt, std::format_args&& args)
 {
+  static std::mutex mutex;
+  const std::lock_guard lg{mutex};
 #ifdef __linux__
   os<<"<"<<static_cast<int>(level)<<">";
 #else
@@ -87,6 +92,9 @@ inline void redirect(const std::filesystem::path& path,
  *
  * @details If `is_with_now` then writes the result of dmitigr::chrono::now() to
  * the `std::cerr` before writing `args`.
+ *
+ * @par Thread-safety
+ * Thread-safe.
  */
 template<typename ... Types>
 void cerr(const Level level, std::format_string<Types...> fmt, Types&& ... args)
@@ -94,7 +102,12 @@ void cerr(const Level level, std::format_string<Types...> fmt, Types&& ... args)
   detail::write(std::cerr, level, fmt.get(), std::make_format_args(args...));
 }
 
-/// Writes `args` to the `std::cerr` with `Level::error`.
+/**
+ * @brief Writes `args` to the `std::cerr` with `Level::error`.
+ *
+ * @par Thread-safety
+ * Thread-safe.
+ */
 template<typename ... Types>
 void cerr(std::format_string<Types...> fmt, Types&& ... args)
 {
@@ -106,6 +119,9 @@ void cerr(std::format_string<Types...> fmt, Types&& ... args)
  *
  * @details If `is_with_now` then writes the result of dmitigr::chrono::now() to
  * the `std::clog` before writing `args`.
+ *
+ * @par Thread-safety
+ * Thread-safe.
  */
 template<typename ... Types>
 void clog(const Level level, std::format_string<Types...> fmt, Types&& ... args)
@@ -113,7 +129,12 @@ void clog(const Level level, std::format_string<Types...> fmt, Types&& ... args)
   detail::write(std::clog, level, fmt.get(), std::make_format_args(args...));
 }
 
-/// Writes `args` to the `std::clog` with `Level::error`.
+/**
+ * @brief Writes `args` to the `std::clog` with `Level::error`.
+ *
+ * @par Thread-safety
+ * Thread-safe.
+ */
 template<typename ... Types>
 void clog(std::format_string<Types...> fmt, Types&& ... args)
 {
