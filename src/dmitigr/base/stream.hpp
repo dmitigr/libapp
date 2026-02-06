@@ -19,14 +19,11 @@
 
 #include "exceptions.hpp"
 
-#include <algorithm>
 #include <array>
-#include <cctype>
 #include <cstddef>
 #include <istream>
 #include <filesystem>
 #include <fstream>
-#include <optional>
 #include <sstream>
 #include <string>
 #include <type_traits>
