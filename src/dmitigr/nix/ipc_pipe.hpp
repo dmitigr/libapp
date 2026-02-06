@@ -39,6 +39,10 @@
 
 #include <poll.h>
 #include <unistd.h>
+#ifdef __APPLE__
+#include <sys/types.h>
+#include <sys/uio.h>
+#endif
 #include <sys/wait.h>
 
 namespace dmitigr::nix::ipc::pp {
@@ -130,7 +134,7 @@ inline int exec_and_wait(const std::string& prog,
     const auto read_from_child = [pid](const int fd, std::string& buf, const auto& handler)
     {
       buf.resize(16384);
-      if (const ssize_t count{read(fd, buf.data(), buf.size())}; count > 0 && handler) {
+      if (const ssize_t count{::read(fd, buf.data(), buf.size())}; count > 0 && handler) {
         buf.resize(count);
         handler(pid, buf);
       }
