@@ -20,11 +20,13 @@
 #include "chrono.hpp"
 #include "exceptions.hpp"
 
+#include <atomic>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <iostream>
 #include <mutex>
+#include <stdexcept>
 #include <string_view>
 
 namespace dmitigr::log {
@@ -32,7 +34,6 @@ namespace dmitigr::log {
 /// A log level.
 enum class Level {
   emergency = 0,
-  panic = 0,
   alert = 1,
   critical = 2,
   error = 3,
@@ -41,6 +42,58 @@ enum class Level {
   info = 6,
   debug = 7
 };
+
+/// @returns The text representation of `value`.
+inline const char* to_literal(const Level value) noexcept
+{
+  using enum Level;
+  switch (value) {
+  case emergency: return "emergency";
+  case alert: return "alert";
+  case critical: return "critical";
+  case error: return "error";
+  case warning: return "warning";
+  case notice: return "notice";
+  case info: return "info";
+  case debug: return "debug";
+  }
+  return nullptr;
+}
+
+/// @returns The text representation of `value`.
+inline std::string_view to_string_view(const Level level)
+{
+  if (const auto* const result = to_literal(level))
+    return result;
+  else
+    throw std::invalid_argument{"cannot convert dmitigr::log::Level to text"};
+}
+
+/// @returns The binary representation of `value`.
+inline Level to_level(const std::string_view value)
+{
+  using enum Level;
+  if (value == "emergency")
+    return emergency;
+  else if (value == "alert")
+    return alert;
+  else if (value == "critical")
+    return critical;
+  else if (value == "error")
+    return error;
+  else if (value == "warning")
+    return warning;
+  else if (value == "notice")
+    return notice;
+  else if (value == "info")
+    return info;
+  else if (value == "debug")
+    return debug;
+  throw std::invalid_argument{"cannot convert text to dmitigr::log::Level"};
+}
+
+/// A log level value.
+std::atomic<Level> level{Level::error};
 
 namespace detail {
 
@@ -55,20 +108,22 @@ inline std::ofstream stderr_file_stream;
  * @par Thread-safety
  * Thread-safe.
  */
-inline std::ostream& write(std::ostream& os, const Level level,
+inline void write(std::ostream& os, const Level level,
   const std::string_view fmt, std::format_args&& args)
 {
-  static std::mutex mutex;
-  const std::lock_guard lg{mutex};
+  if (level <= log::level) {
+    static std::mutex mutex;
+    const std::lock_guard lg{mutex};
 #ifdef __linux__
-  os<<"<"<<static_cast<int>(level)<<">";
+    os<<"<"<<static_cast<int>(level)<<">";
 #else
-  (void)level;
+    (void)level;
 #endif
 #ifdef DMITIGR_LOG_WITH_NOW
-  os << dmitigr::chrono::now() << ": ";
+    os << dmitigr::chrono::now() << ": ";
 #endif
-  return os << std::vformat(fmt, args);
+    os << std::vformat(fmt, args);
+  }
 }
 
 } // namespace detail
