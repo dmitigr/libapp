@@ -64,5 +64,5 @@ endif()
 
 if(DMITIGR_LIBS_TESTS)
   set(dmitigr_base_tests assoc_vector buffer chrono filesystem
-    fifo_array fifo_string hash math rnd stack str thread utility)
+    fifo_array fifo_string hash log math rnd stack str thread utility)
 endif()
