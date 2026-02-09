@@ -18,12 +18,12 @@
 #define DMITIGR_NET_DESCRIPTOR_HPP
 
 #include "../base/assert.hpp"
+#include "../base/log.hpp"
 #include "../os/exceptions.hpp"
 #include "socket.hpp"
 
 #include <algorithm>
 #include <array>
-#include <cstdio>
 #include <ios> // std::streamsize
 #include <utility> // std::move()
 
@@ -91,9 +91,9 @@ public:
       try {
         close();
       } catch (const std::exception& e) {
-        std::fprintf(stderr, "%s\n", e.what());
+        log::error("{}", e.what());
       } catch (...) {
-        std::fprintf(stderr, "bug\n");
+        log::error("bug");
       }
     }
   }
@@ -212,10 +212,10 @@ public:
   {
     if (pipe_ != INVALID_HANDLE_VALUE) {
       if (!::FlushFileBuffers(pipe_))
-        std::fprintf(stderr, "%s\n", "FlushFileBuffers() failed");
+        log::error("FlushFileBuffers() failed");
 
       if (!::DisconnectNamedPipe(pipe_))
-        std::fprintf(stderr, "%s\n", "DisconnectNamedPipe() failed");
+        log::error("DisconnectNamedPipe() failed");
     }
   }
 

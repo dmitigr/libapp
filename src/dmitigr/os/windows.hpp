@@ -23,7 +23,7 @@
 #ifndef DMITIGR_OS_WINDOWS_HPP
 #define DMITIGR_OS_WINDOWS_HPP
 
-#include <cstdio>
+#include "../base/log.hpp"
 #include <utility>
 
 /*
@@ -52,7 +52,7 @@ struct Handle_guard final {
   ~Handle_guard()
   {
     if (!close())
-      std::fprintf(stderr, "%s: error %d\n", "CloseHandle", GetLastError());
+      log::error("CloseHandle(): error {}", GetLastError());
   }
 
   /// The constructor.

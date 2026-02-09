@@ -18,11 +18,11 @@
 #define DMITIGR_SQLIXX_CONNECTION_HPP
 
 #include "../base/assert.hpp"
+#include "../base/log.hpp"
 #include "statement.hpp"
 
 #include <sqlite3.h>
 
-#include <cstdio>
 #include <exception>
 #include <filesystem>
 #include <new>
@@ -42,7 +42,7 @@ public:
     try {
       close();
     } catch(const std::exception& e) {
-      std::fprintf(stderr, "%s\n", e.what());
+      log::error("dmitigr::sqlixx::~Connection error: {}", e.what());
     } catch(...) {}
   }
 

@@ -41,7 +41,7 @@ protected:
     try {
       if (format != ws::Data_format::utf8) {
         // Ignore binary format request.
-        log::warning("wsjrpc::handle_message: binary format request ignored\n");
+        log::warning("wsjrpc::handle_message: binary format request ignored");
         return;
       }
 
@@ -50,7 +50,7 @@ protected:
         const auto req = jrpc::Request::from_json(payload);
         if (!req.id()) {
           // Ignore notification.
-          log::warning("wsjrpc::handle_message: notification ignored\n");
+          log::warning("wsjrpc::handle_message: notification ignored");
           return;
         } else if (!req.id()->IsUint() && !req.id()->IsUint64())
           req.throw_error(Jerrc::invalid_request,
@@ -66,44 +66,43 @@ protected:
           req.throw_error(Errc::service_not_ready,
             "service is temporarily unavailable");
       } catch(const jrpc::Error& e) {
-        log::error("wsjrpc::handle_message: ");
-        std::string what = e.what();
-        const bool what_was_empty = what.empty();
-        if (what_was_empty)
+        std::string what{e.what()};
+        const bool what_was_empty{what.empty()};
+        if (what.empty())
           what = jrpc::to_literal_anyway(jrpc::Server_errc{e.code().value()});
-        log::error("{}\n", what);
+        log::error("wsjrpc::handle_message: {}", what);
         const auto& err = what_was_empty ? jrpc::Error{e.code(), id, what} : e;
         send_utf8(err);
       } catch(const dmitigr::Exception& e) {
-        std::string what = e.what();
+        std::string what{e.what()};
         if (what.empty())
           what = e.err().message();
         const jrpc::Error err{e.code(), id, what};
-        log::error("wsjrpc::handle_message: {}\n", what);
+        log::error("wsjrpc::handle_message: {}", what);
         send_utf8(err);
       } catch(const std::logic_error& e) {
-        std::string what = e.what();
+        std::string what{e.what()};
         if (what.empty())
           what = "bug";
         const jrpc::Error err{Jerrc::internal_error, id, what};
-        log::error("wsjrpc::handle_message: bug: {}\n", what);
+        log::error("wsjrpc::handle_message: {}", what);
         send_utf8(err);
       } catch(const std::exception& e) {
-        std::string what = e.what();
+        std::string what{e.what()};
         if (what.empty())
           what = "generic internal error";
         const jrpc::Error err{Jerrc::internal_error, id, what};
-        log::error("wsjrpc::handle_message: internal error: {}\n", what);
+        log::error("wsjrpc::handle_message: internal error: {}", what);
         send_utf8(err);
       } catch(...) {
         const jrpc::Error err{Jerrc::internal_error, id, "unknown internal error"};
-        log::error("wsjrpc::handle_message: internal error: unknown error\n");
+        log::error("wsjrpc::handle_message: internal error: unknown error");
         send_utf8(err);
       }
     } catch(const std::exception& e) {
-      log::error("wsjrpc::handle_message: {}\n", e.what());
+      log::error("wsjrpc::handle_message: {}", e.what());
     } catch(...) {
-      log::error("wsjrpc::handle_message: unknown error\n");
+      log::error("wsjrpc::handle_message: unknown error");
     }
   }
 

@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #include "../base/assert.hpp"
+#include "../base/log.hpp"
 #include "basics.hpp"
 #include "exceptions.hpp"
 #include "server_connection.hpp"
@@ -22,7 +23,6 @@
 
 #include <array>
 #include <cstdio>
-#include <iostream>
 #include <limits>
 
 namespace dmitigr::fcgi::detail {
@@ -56,9 +56,9 @@ public:
       // -----------------------------------------------------------------------
 
     } catch (const std::exception& e) {
-      std::clog << "error upon closing FastCGI connection: %s\n" << e.what();
+      log::error("error upon closing FastCGI connection: {}", e.what());
     } catch (...) {
-      std::clog << "unknown error upon closing FastCGI connection\n";
+      log::error("unknown error upon closing FastCGI connection");
     }
   }
 

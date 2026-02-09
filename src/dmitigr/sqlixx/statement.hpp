@@ -18,12 +18,12 @@
 #define DMITIGR_SQLIXX_STATEMENT_HPP
 
 #include "../base/assert.hpp"
+#include "../base/log.hpp"
 #include "conversions.hpp"
 
 #include <sqlite3.h>
 
 #include <cstddef>
-#include <cstdio>
 #include <cstring>
 #include <new>
 #include <stdexcept>
@@ -72,7 +72,7 @@ public:
     try {
       close();
     } catch(const std::exception& e) {
-      std::fprintf(stderr, "%s\n", e.what());
+      log::error("dmitigr::sqlixx::~Statement error: {}", e.what());
     } catch(...) {}
   }
 

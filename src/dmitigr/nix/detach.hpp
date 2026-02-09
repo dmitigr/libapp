@@ -66,22 +66,22 @@ inline void detach(const std::function<void()>& startup,
   DMITIGR_ASSERT(startup);
   if (working_directory.empty()) {
     log::error("cannot detach process because the working directory isn't "
-      "specified\n");
+      "specified");
     std::exit(EXIT_SUCCESS);
   }
   if (pid_file.empty() || pid_file == "." || pid_file == "..") {
-    log::error("cannot detach process because the PID file name is invalid\n");
+    log::error("cannot detach process because the PID file name is invalid");
     std::exit(EXIT_SUCCESS);
   }
   if (log_file.empty() || log_file == "." || log_file == "..") {
-    log::error("cannot detach process because the log file name is invalid\n");
+    log::error("cannot detach process because the log file name is invalid");
     std::exit(EXIT_SUCCESS);
   }
 
   // Forking for a first time
   if (const auto pid = ::fork(); pid < 0) {
     const int err = errno;
-    log::error("first fork() failed ({})\n", error_message(err));
+    log::error("first fork() failed ({})", error_message(err));
     std::exit(EXIT_FAILURE); // exit parent
   } else if (pid > 0)
     std::exit(EXIT_SUCCESS); // exit parent
@@ -93,17 +93,17 @@ inline void detach(const std::function<void()>& startup,
   try {
     log::redirect(log_file, log_file_openmode);
   } catch (const std::exception& e) {
-    log::error("{}\n", e.what());
+    log::error("{}", e.what());
     std::exit(EXIT_FAILURE); // exit parent
   } catch (...) {
-    log::error("cannot redirect stderr streams to {}\n", log_file.string());
+    log::error("cannot redirect stderr streams to {}", log_file.string());
     std::exit(EXIT_FAILURE); // exit parent
   }
 
   // Setup the new process group leader
   if (const auto sid = ::setsid(); sid < 0) {
     const int err = errno;
-    log::error("cannot setup the new process group leader ({})\n",
+    log::error("cannot setup the new process group leader ({})",
       error_message(err));
     std::exit(EXIT_FAILURE);
   }
@@ -111,7 +111,7 @@ inline void detach(const std::function<void()>& startup,
   // Forking for a second time
   if (const auto pid = ::fork(); pid < 0) {
     const int err = errno;
-    log::error("second fork() failed ({})\n", error_message(err));
+    log::error("second fork() failed ({})", error_message(err));
     std::exit(EXIT_FAILURE);
   } else if (pid > 0)
     std::exit(EXIT_SUCCESS);
@@ -120,10 +120,10 @@ inline void detach(const std::function<void()>& startup,
   try {
     fsx::overwrite(pid_file, std::to_string(getpid()));
   } catch (const std::exception& e) {
-    log::error("{}\n", e.what());
+    log::error("{}", e.what());
     std::exit(EXIT_FAILURE);
   } catch (...) {
-    log::error("cannot open log file at {}\n", log_file.string());
+    log::error("cannot open log file at {}", log_file.string());
     std::exit(EXIT_FAILURE);
   }
 
@@ -131,10 +131,10 @@ inline void detach(const std::function<void()>& startup,
   try {
     std::filesystem::current_path(working_directory);
   } catch (const std::exception& e) {
-    log::error("{}\n", e.what());
+    log::error("{}", e.what());
     std::exit(EXIT_FAILURE);
   } catch (...) {
-    log::error("cannot change current working directory to {}\n",
+    log::error("cannot change current working directory to {}",
       working_directory.string());
     std::exit(EXIT_FAILURE);
   }
@@ -144,7 +144,7 @@ inline void detach(const std::function<void()>& startup,
   {
     if (::close(fd)) {
       const int err = errno;
-      log::error("cannot close file descriptor {}: {}\n", fd, error_message(err));
+      log::error("cannot close file descriptor {}: {}", fd, error_message(err));
       std::exit(EXIT_FAILURE);
     }
   };
@@ -157,10 +157,10 @@ inline void detach(const std::function<void()>& startup,
   try {
     startup();
   } catch (const std::exception& e) {
-    log::error("{}\n", e.what());
+    log::error("{}", e.what());
     std::exit(EXIT_FAILURE);
   } catch (...) {
-    log::error("start routine failed\n");
+    log::error("start routine failed");
     std::exit(EXIT_FAILURE);
   }
 }
@@ -199,10 +199,10 @@ inline void start(const bool detach,
     try {
       startup();
     } catch (const std::exception& e) {
-      log::error("{}\n", e.what());
+      log::error("{}", e.what());
       std::exit(EXIT_FAILURE);
     } catch (...) {
-      log::error("unknown error\n");
+      log::error("unknown error");
       std::exit(EXIT_FAILURE);
     }
   };

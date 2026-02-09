@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #include "../base/assert.hpp"
+#include "../base/log.hpp"
 #include "../net/socket.hpp"
 #include "connection.hpp"
 #include "copier.hpp"
@@ -22,8 +23,6 @@
 #include "large_object.hpp"
 #include "ready_for_query.hpp"
 #include "statement.hpp"
-
-#include <iostream>
 
 namespace dmitigr::pgfe {
 
@@ -261,11 +260,11 @@ Connection::aio_handle(const Err& err, const Request& req) noexcept
     if (const auto& handler = req.response_handler_)
       handler(err, *this);
   } catch (const dmitigr::Exception& e) {
-    std::clog << "AIO handler: " << e.err().message() << '\n';
+    log::error("AIO handler: {}", e.err().message());
   } catch (const std::exception& e) {
-    std::clog << "AIO handler: " << e.what() << '\n';
+    log::error("AIO handler: {}", e.what());
   } catch (...) {
-    std::clog << "AIO handler: unknown error\n";
+    log::error("AIO handler: unknown error");
   }
 }
 
@@ -312,10 +311,10 @@ DMITIGR_PGFE_INLINE void Connection::aio_set_connected_read_ready_handler()
 
   loop_sock().async_wait(Asio_ip_tcp::socket::wait_read, asio_handler([this]
   {
-    // std::clog << "AIO connected read handler\n";
+    log::debug("AIO connected read handler");
     read_input();
     while (handle_input(false) == Response_status::ready) {
-      // std::clog << "  call AIO handler\n";
+      log::debug("  call AIO handler");
       const auto& req = response_.status() == PGRES_SINGLE_TUPLE ?
         requests_.front() : last_processed_request_;
       DMITIGR_ASSERT(req.response_handler_);
@@ -334,7 +333,7 @@ DMITIGR_PGFE_INLINE void Connection::aio_set_connected_write_ready_handler()
 
   loop_sock().async_wait(Asio_ip_tcp::socket::wait_write, asio_handler([this]
   {
-    // std::clog << "AIO connected write handler\n";
+    log::debug("AIO connected write handler");
     aio_flush_output();
   }));
 }
@@ -685,9 +684,9 @@ Connection::handle_input(const bool wait_response)
         notification_handler_(Notification{n});
     }
   } catch (const std::exception& e) {
-    std::clog << "notification handler: error: " << e.what() << '\n';
+    log::error("notification handler: error: {}", e.what());
   } catch (...) {
-    std::clog << "notification handler: unknown error\n";
+    log::error("notification handler: unknown error");
   }
 
   assert(is_invariant_ok());
@@ -1216,16 +1215,11 @@ DMITIGR_PGFE_INLINE bool Connection::is_invariant_ok() const noexcept
   const bool pid_ok = !is_connected() || server_pid();
   const bool readiness_ok = is_ready_for_nio_request() || !is_ready_for_request();
 
-  // std::clog << conn_ok << " "
-  //           << polling_status_ok << " "
-  //           << requests_ok << " "
-  //           << session_start_time_ok << " "
-  //           << session_data_ok << " "
-  //           << trans_ok << " "
-  //           << sess_time_ok << " "
-  //           << pid_ok << " "
-  //           << readiness_ok << " "
-  //           << std::endl;
+  log::debug("pgfe::Connection invariant: conn_ok = {}, polling_status_ok = {}, "
+    "requests_ok = {}, session_start_time_ok = {}, session_data_ok = {}, "
+    "trans_ok = {}, sess_time_ok = {}, pid_ok = {}, readiness_ok = {}", conn_ok,
+    polling_status_ok, requests_ok, session_start_time_ok, session_data_ok,
+    trans_ok, sess_time_ok, pid_ok, readiness_ok);
 
   return
     conn_ok &&
@@ -1308,9 +1302,9 @@ Connection::notice_receiver(void* const arg, const PGresult* const r) noexcept
     try {
       cn->notice_handler_(Notice{r});
     } catch (const std::exception& e) {
-      std::clog << "notice handler: error: " << e.what() << '\n';
+      log::error("notice handler: error: {}", e.what());
     } catch (...) {
-      std::clog << "notice handler: unknown error\n";
+      log::error("notice handler: unknown error");
     }
   }
 }
@@ -1318,7 +1312,7 @@ Connection::notice_receiver(void* const arg, const PGresult* const r) noexcept
 DMITIGR_PGFE_INLINE void
 Connection::default_notice_handler(const Notice& n) noexcept
 {
-  std::clog << "PostgreSQL Notice: " << n.brief() << '\n';
+  log::notice("PostgreSQL Notice: {}", n.brief());
 }
 
 DMITIGR_PGFE_INLINE void

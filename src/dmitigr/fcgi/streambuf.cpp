@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #include "../base/assert.hpp"
+#include "../base/log.hpp"
 #include "../base/math.hpp"
 #include "basics.hpp"
 #include "exceptions.hpp"
@@ -23,7 +24,6 @@
 
 #include <algorithm>
 #include <array>
-#include <iostream>
 #include <limits>
 
 /*
@@ -59,9 +59,9 @@ public:
     try {
       close();
     } catch (const std::exception& e) {
-      std::clog << "error upon closing FastCGI stream buffer: %s\n" << e.what();
+      log::error("error upon closing FastCGI stream buffer: {}", e.what());
     } catch (...) {
-      std::clog << "uknown error upon closing FastCGI stream buffer\n";
+      log::error("uknown error upon closing FastCGI stream buffer");
     }
   }
 

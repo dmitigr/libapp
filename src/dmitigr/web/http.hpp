@@ -186,10 +186,10 @@ inline bool send_error(std::shared_ptr<ws::Http_io> io,
     io->end(content);
     return true;
   } catch (const std::exception& e) {
-    log::error("HTTP: send error: {}\n", e.what());
+    log::error("HTTP: send error: {}", e.what());
     return false;
   } catch (...) {
-    log::error("HTTP: send error: unknown error\n");
+    log::error("HTTP: send error: unknown error");
     return false;
   }
 }
@@ -214,10 +214,10 @@ inline bool send_data(std::shared_ptr<ws::Http_io> io,
     io->end(data);
     return true;
   } catch (const std::exception& e) {
-    log::error("HTTP: send data: {}\n", e.what());
+    log::error("HTTP: send data: {}", e.what());
     return false;
   } catch (...) {
-    log::error("HTTP: send data: unknown error\n");
+    log::error("HTTP: send data: unknown error");
     return false;
   }
 }
@@ -251,7 +251,7 @@ inline bool send_file(std::shared_ptr<ws::Http_io> io,
     {
       // badbit shouldn't be possible here, but check it just in case.
       if (in->bad()) {
-        log::error("HTTP: send file: badbit input file stream\n");
+        log::error("HTTP: send file: badbit input file stream");
         io->abort();
         return true;
       }
@@ -296,10 +296,10 @@ inline bool send_file(std::shared_ptr<ws::Http_io> io,
     }
     return true;
   } catch (const std::exception& e) {
-    log::error("HTTP: send file: {}\n", e.what());
+    log::error("HTTP: send file: {}", e.what());
     return false;
   } catch (...) {
-    log::error("HTTP: send file: unknown error\n");
+    log::error("HTTP: send file: unknown error");
     return false;
   }
 }
@@ -773,7 +773,7 @@ public:
       // Set abort handler.
       io->set_abort_handler([remote_ip = request.remote_ip_address()]
       {
-        log::error("HTTP: request from {} aborted\n", remote_ip.to_string());
+        log::error("HTTP: request from {} aborted", remote_ip.to_string());
       });
 
       // Check the method.
@@ -792,7 +792,7 @@ public:
       auto reqpath = reqpathfs.generic_string();
       auto filepath = docroot_ / reqpathfs.relative_path();
       auto filename = filepath.filename();
-      // log::info("Request path = {}\n", reqpath);
+      log::debug("Request path = {}", reqpath);
 
       // Maybe redirect from /path/to -> /path/to/.
       if (!filename.empty() && !filename.has_extension() && !is_regular_file(filepath)) {
@@ -965,7 +965,7 @@ public:
                   if (auto [err, out] = tpl.to_output(); !err)
                     send_data(io, std::move(out), content_type(path));
                   else
-                    log::error("HTTP: {}\n", err.message());
+                    log::error("HTTP: {}", err.message());
                 });
                 return true;
               } else if (err == Errc::file_not_found)
@@ -1011,7 +1011,7 @@ public:
             });
             return; // done: error is queued
           } catch (const dmitigr::Exception& e) {
-            log::error("HTTP: {}\n", e.err().message());
+            log::error("HTTP: {}", e.err().message());
             if (e.code().category() == http::server_error_category()) {
               io->loop_submit([io, err = e.code().value()]
               {
@@ -1020,7 +1020,7 @@ public:
               return;
             }
           } catch (...) {
-            log::error("HTTP: unknown error\n");
+            log::error("HTTP: unknown error");
           }
 
           io->loop_submit([io]
@@ -1036,7 +1036,7 @@ public:
             return; // done: request handling is submitted to the thread pool
           } else
             log::error("HTTP: thread pool is not active, "
-              "handling the request on the IO thread!!!\n");
+              "handling the request on the IO thread!!!");
         }
         handle_request();
       };
@@ -1048,7 +1048,7 @@ public:
           (const std::string_view data, const bool is_last)
         {
           if (req->body.size() + data.size() > req->body.capacity()) {
-            log::error("HTTP: request body too large\n");
+            log::error("HTTP: request body too large");
             if (io->is_valid()) {
               send_error(io, http::Server_errc::payload_too_large);
               io->abort();
@@ -1066,11 +1066,11 @@ public:
 
       return true; // done: request is scheduled or handled
     } catch (const dmitigr::Exception& e) {
-      log::error("HTTP scheduler: {}\n", e.err().message());
+      log::error("HTTP scheduler: {}", e.err().message());
       if (e.code().category() == http::server_error_category())
         return send_error(io, static_cast<http::Server_errc>(e.code().value()));
     } catch (...) {
-      log::error("HTTP scheduler: unknown error\n");
+      log::error("HTTP scheduler: unknown error");
     }
     return send_error(io, http::Server_errc::internal_server_error);
   }

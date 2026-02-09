@@ -15,11 +15,11 @@
 // limitations under the License.
 
 #include "../base/assert.hpp"
+#include "../base/log.hpp"
 #include "connection_pool.hpp"
 
 #include <algorithm>
 #include <cassert>
-#include <iostream>
 
 namespace dmitigr::pgfe {
 
@@ -229,9 +229,9 @@ DMITIGR_PGFE_INLINE void Connection_pool::release(Handle& handle) noexcept
     try {
       release_handler_(conn); // kinda of DISCARD ALL
     } catch (const std::exception& e) {
-      std::clog << "connection pool's release handler: error:" << e.what() << '\n';
+      log::error("connection pool's release handler: error: {}", e.what());
     } catch (...) {
-      std::clog << "connection pool's release handler: unknown error\n";
+      log::error("connection pool's release handler: unknown error");
     }
   }
 
