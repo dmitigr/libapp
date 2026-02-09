@@ -80,7 +80,7 @@ namespace dmitigr::log {
 inline void default_prefix_writer(std::ostream& os, const auto tp)
 {
   const auto time = chrono::to_string_view_iso8601(tp);
-  os.write("[", 1);
+  os.put('[');
   os.write(time.data(), time.size());
   os.write("] ", 2);
 }
@@ -195,7 +195,7 @@ inline void write(std::ostream& os, const Level level,
     DMITIGR_LOG_PREFIX_WRITER(os, now);
 #endif
     os.write(output.data(), output.size());
-    os.write("\n", 1);
+    os.put('\n');
   }
 }
 
