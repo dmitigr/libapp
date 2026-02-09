@@ -184,6 +184,8 @@ inline void write(std::ostream& os, const Level level,
     (void)level;
 #endif
 
+    const auto output = std::vformat(fmt, args);
+
     static std::mutex mutex;
     const std::lock_guard lg{mutex};
 #ifdef DMITIGR_LOG_WITH_LEVEL
@@ -192,7 +194,6 @@ inline void write(std::ostream& os, const Level level,
 #ifdef DMITIGR_LOG_PREFIX_WRITER
     DMITIGR_LOG_PREFIX_WRITER(os, now);
 #endif
-    const auto output = std::vformat(fmt, args);
     os.write(output.data(), output.size());
     os.write("\n", 1);
   }
