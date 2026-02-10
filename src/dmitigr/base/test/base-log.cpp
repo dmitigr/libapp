@@ -23,6 +23,7 @@ int main()
 {
   try {
     namespace log = dmitigr::log;
+    tzset();
     log::level = log::Level::debug;
     log::emergency("emergency");
     log::alert("alert");
