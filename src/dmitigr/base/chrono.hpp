@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
-#include <cstring>
+#include <cstddef>
 #include <cstdio>
 #include <ctime>
 #include <string_view>
@@ -43,6 +43,15 @@ inline auto loctime(const time_t* timer, struct tm* buf) noexcept
 }
 } // namespace detail
 
+/**
+ * @defgroup Format time strings API
+ *
+ * @details For portability, tzset() must be called at least once before calling
+ * any function of this API.
+ *
+ * @{
+ */
+
 /// @returns The formatted string representation of the given timepoint.
 template<class Clock, class Duration>
 std::string_view
@@ -53,7 +62,6 @@ to_string_view(const std::chrono::time_point<Clock, Duration> tp,
   const auto tp_time_t = Clock::to_time_t(tp);
   static thread_local tm tm_val;
   static thread_local char buf[detail::time_buf_size];
-  tzset();
   if (const auto len = std::strftime(buf,
       sizeof(buf), format, detail::loctime(&tp_time_t, &tm_val)))
     return {buf, len};
@@ -61,7 +69,10 @@ to_string_view(const std::chrono::time_point<Clock, Duration> tp,
   return {buf, 0};
 }
 
-/// @returns The ISO 8601 extended format string representation of the given timepoint.
+/**
+ * @returns The ISO 8601 extended format string representation of the given
+ * timepoint.
+ */
 template<class Clock, class Duration>
 std::string_view
 to_string_view_iso8601(const std::chrono::time_point<Clock, Duration> tp) noexcept
@@ -117,8 +128,8 @@ to_string_view_us(const std::chrono::time_point<Clock, Duration> tp) noexcept
         return "%c%lld";
       }
     }();
-    const auto rest_length = std::snprintf(const_cast<char*>(result.data()) + dt_length,
-      max_rest_length, fmt, '.', us.count());
+    const auto rest_length = std::snprintf(const_cast<char*>(result.data()) +
+      dt_length, max_rest_length, fmt, '.', us.count());
     DMITIGR_ASSERT(rest_length > 0 &&
       static_cast<std::size_t>(rest_length) < max_rest_length);
     return {result.data(), dt_length + rest_length};
@@ -146,6 +157,8 @@ inline std::string_view now_us() noexcept
 {
   return to_string_view_us(Clock::now());
 }
+
+/** @} */ // @defgroup
 
 } // namespace dmitigr::chrono
 
