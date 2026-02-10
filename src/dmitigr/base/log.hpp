@@ -28,16 +28,15 @@
 
 /**
  * @def DMITIGR_LOG_PREFIX_WRITER
- * Defines the name of a function with signature
- * `void f(std::ostream&, std::chrono::time_point)` for writing log entry prefix.
- * The default is DMITIGR_LOG_DEFAULT_PREFIX_WRITER.
+ * Defines the name of a function with signature `void w(std::ostream&, Time)`
+ * for writing log entry prefix. The default is DMITIGR_LOG_DEFAULT_PREFIX_WRITER.
  */
 
 /**
- * @def DMITIGR_LOG_CLOCK
- * Defines the name of a class which defines a clock in terms of std::chrono
- * library used for generating time points for passing to DMITIGR_LOG_PREFIX_WRITER.
- * The default is DMITIGR_LOG_DEFAULT_CLOCK.
+ * @def DMITIGR_LOG_NOW
+ * Defines the name of a function with signature `Time t()` for getting time
+ * point which is passed to DMITIGR_LOG_PREFIX_WRITER. The default is
+ * DMITIGR_LOG_DEFAULT_NOW.
  */
 
 /**
@@ -60,7 +59,7 @@
 #include <string_view>
 
 #define DMITIGR_LOG_DEFAULT_PREFIX_WRITER dmitigr::log::default_prefix_writer
-#define DMITIGR_LOG_DEFAULT_CLOCK std::chrono::system_clock
+#define DMITIGR_LOG_DEFAULT_NOW std::chrono::system_clock::now
 
 #ifdef DMITIGR_LOG_WITH_DEFAULT_PREFIX
 #ifndef DMITIGR_LOG_PREFIX_WRITER
@@ -70,8 +69,8 @@
 #endif
 #endif
 
-#if defined(DMITIGR_LOG_PREFIX_WRITER) && !defined(DMITIGR_LOG_CLOCK)
-#define DMITIGR_LOG_CLOCK DMITIGR_LOG_DEFAULT_CLOCK
+#if defined(DMITIGR_LOG_PREFIX_WRITER) && !defined(DMITIGR_LOG_NOW)
+#define DMITIGR_LOG_NOW DMITIGR_LOG_DEFAULT_NOW
 #endif
 
 namespace dmitigr::log {
@@ -172,8 +171,8 @@ inline void write(std::ostream& os, const Level level,
   const std::string_view fmt, std::format_args&& args)
 {
   if (level <= log::level) {
-#ifdef DMITIGR_LOG_CLOCK
-    const auto now = DMITIGR_LOG_CLOCK::now();
+#ifdef DMITIGR_LOG_NOW
+    const auto now = DMITIGR_LOG_NOW();
 #endif
 #ifdef DMITIGR_LOG_WITH_LEVEL
     char lvl[3];
