@@ -24,7 +24,6 @@ int main()
   namespace fcgi = dmitigr::fcgi;
   namespace rnd = dmitigr::rnd;
 
-  rnd::seed_by_now();
   std::streamsize str_size{100500};
   try {
     const auto port = 9000;
@@ -36,7 +35,7 @@ int main()
         conn->out() << "Content-Type: text/plain" << fcgi::crlfcrlf;
         const auto str = rnd::str("abc", str_size);
         conn->out() << str << "\n" << str_size;
-        str_size += rnd::week_integer<std::string::size_type>(0, str_size);
+        str_size += rnd::ud_integer<std::string::size_type>(0, str_size);
       }
     }
   } catch (const std::exception& e) {

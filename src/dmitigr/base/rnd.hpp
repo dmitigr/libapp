@@ -18,16 +18,17 @@
 #define DMITIGR_BASE_RND_HPP
 
 #include "assert.hpp"
-#include "exceptions.hpp"
 
 #include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
-#include <cstdlib>
 #include <limits>
+#include <random>
+#include <stdexcept>
 #include <string>
+#include <type_traits>
 
 namespace dmitigr::rnd {
 
@@ -35,13 +36,14 @@ namespace dmitigr::rnd {
 // Number generators
 // -----------------------------------------------------------------------------
 
-/// Seeds the pseudo-random number generator.
-inline void seed_by_now() noexcept
-{
-  const auto seed = std::chrono::duration_cast<std::chrono::seconds>(
-    std::chrono::system_clock::now().time_since_epoch()).count();
-  std::srand(static_cast<unsigned>(seed));
-}
+/// Represents a concept of uniformly distributed integer.
+template<typename T>
+concept Uniformly_distributed_integer =
+  std::is_same_v<short, T> || std::is_same_v<int, T> ||
+  std::is_same_v<long, T> || std::is_same_v<long long, T> ||
+  std::is_same_v<unsigned short, T> || std::is_same_v<unsigned int, T> ||
+  std::is_same_v<unsigned long, T> || std::is_same_v<unsigned long long, T>;
+
 
 /**
  * @returns The random number in range `[minimum, maximum]`.
@@ -50,19 +52,13 @@ inline void seed_by_now() noexcept
  * `(minimum <= maximum)`.
  */
 template<typename T>
-T week_integer(const T minimum, const T maximum)
+requires Uniformly_distributed_integer<T>
+T ud_integer(const T minimum, const T maximum)
 {
-  if ((minimum < 0) || !(minimum <= maximum))
-    throw Exception{"invalid interval for random number generation"};
-
-  static const auto rand_num = [](const auto up) noexcept
-  {
-    const auto num = static_cast<double>(std::rand() + 1);
-    return static_cast<T>(up * (num / RAND_MAX));
-  };
-
-  const auto range_length = maximum - minimum + 1;
-  return (rand_num(maximum + !minimum) % range_length) + minimum;
+  if (!(minimum <= maximum))
+    throw std::invalid_argument{"invalid interval for random integer generation"};
+  static std::mt19937 gen{std::random_device{}()};
+  return std::uniform_int_distribution<T>{minimum, maximum}(gen);
 }
 
 // -----------------------------------------------------------------------------
@@ -82,7 +78,7 @@ inline std::string str(const std::string& palette,
   result.resize(size);
   if (const auto pallete_size = palette.size()) {
     for (std::string::size_type i{}; i < size; ++i)
-      result[i] = palette[week_integer<std::string::size_type>(0, pallete_size - 1)];
+      result[i] = palette[ud_integer<std::string::size_type>(0, pallete_size - 1)];
   }
   return result;
 }
@@ -101,14 +97,14 @@ inline std::string str(const char beg, const char end,
   const std::string::size_type size)
 {
   if (!(beg <= end))
-    throw Exception{"invalid character range for random string generation"};
+    throw std::invalid_argument{"invalid character range for random string generation"};
 
   std::string result;
   if (beg < end) {
     result.resize(size);
     const auto len = end - beg;
     for (std::string::size_type i{}; i < size; ++i)
-      result[i] = static_cast<char>((week_integer<char>(0, end) % len) + beg);
+      result[i] = static_cast<char>((ud_integer<unsigned int>(0, end) % len) + beg);
   }
   return result;
 }
@@ -132,13 +128,7 @@ public:
     data_.raw_ = raw;
   }
 
-  /**
-   * @returns The random UUID (version 4).
-   *
-   * @remarks Please be sure to seed the pseudo-random number generator with
-   * `std::srand()` (or use convenient `dmitigr::rnd::seed_by_now()`) before
-   * calling this maker function.
-   */
+  /// @returns The random UUID (version 4).
   static Uuid make_v4()
   {
     Uuid result;
@@ -148,7 +138,7 @@ public:
       constexpr auto minimum = static_cast<unsigned char>(1);
       constexpr auto maximum = std::numeric_limits<unsigned char>::max();
       for (std::size_t i{}; i < sizeof(result.data_.raw_); ++i)
-        result.data_.raw_[i] = week_integer(minimum, maximum);
+        result.data_.raw_[i] = ud_integer<unsigned int>(minimum, maximum);
     }
 
     /*
@@ -169,7 +159,7 @@ public:
   {
     constexpr std::size_t buf_size{36};
     char buf[buf_size + 1];
-    const int count = std::snprintf(buf, sizeof(buf),
+    const int count{std::snprintf(buf, sizeof(buf),
       "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
       data_.rep_.time_low_,
       data_.rep_.time_mid_,
@@ -181,7 +171,7 @@ public:
       data_.rep_.node_[2],
       data_.rep_.node_[3],
       data_.rep_.node_[4],
-      data_.rep_.node_[5]);
+      data_.rep_.node_[5])};
     DMITIGR_ASSERT(count == buf_size);
     return std::string{buf, buf_size};
   }

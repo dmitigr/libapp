@@ -40,7 +40,7 @@ class Connection : public ws::Connection {
   {
     std::clog << "The received payload \"" << payload << "\" is handled" << std::endl;
     std::vector<std::thread> workers{16};
-    const auto closer_index = rnd::week_integer<std::size_t>(0, workers.size());
+    const auto closer_index = rnd::ud_integer<std::size_t>(0, workers.size());
     for (std::size_t i = 0; i < workers.size(); ++i) {
       workers[i] = std::thread{[ws = shared_from_this(), format,
           is_closer = (i == closer_index)]
@@ -87,7 +87,7 @@ class Server : public ws::Server {
     std::shared_ptr<ws::Http_io>) noexcept override
   {
     std::clog << "The connection is about to be opened" << std::endl;
-    const bool is_should_be_created = rnd::week_integer(0, 1);
+    const bool is_should_be_created = rnd::ud_integer(0, 1);
     return is_should_be_created ?
       std::shared_ptr<Connection>{new (std::nothrow) Connection} : nullptr;
   }
@@ -101,8 +101,6 @@ class Server : public ws::Server {
 int main()
 {
   using namespace std::chrono;
-
-  rnd::seed_by_now();
 
   try {
     constexpr auto listening_duration = seconds{15};

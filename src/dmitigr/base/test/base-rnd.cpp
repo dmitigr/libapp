@@ -21,7 +21,6 @@ int main()
 {
   try {
     namespace rnd = dmitigr::rnd;
-    rnd::seed_by_now();
     const auto u = rnd::Uuid::make_v4();
     const auto s = u.to_string();
     DMITIGR_ASSERT(s.size() == 36);
