@@ -17,6 +17,8 @@
 #include "../../base/assert.hpp"
 #include "../../base/rnd.hpp"
 
+#include <string>
+
 int main()
 {
   try {
@@ -24,7 +26,18 @@ int main()
     const auto u = rnd::Uuid::make_v4();
     const auto s = u.to_string();
     DMITIGR_ASSERT(s.size() == 36);
+
+    // Print string representation.
     std::cout << s << std::endl;
+
+    // Print decimals sequence representation.
+    std::string dec;
+    for (const auto b : u.raw()) {
+      dec += std::to_string(b);
+      dec += ',';
+    }
+    dec.pop_back();
+    std::cout << '{' << dec << '}' << std::endl;
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;
     return 1;
