@@ -20,10 +20,10 @@
 #include "assert.hpp"
 
 #include <algorithm>
-#include <array>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <limits>
 #include <random>
 #include <stdexcept>
@@ -120,12 +120,12 @@ public:
   Uuid() = default;
 
   /// An alias of raw representation type.
-  using Raw = std::array<unsigned char, 16>;
+  using Raw = unsigned char[16];
 
   /// Constructs UUID by using a raw representation.
   Uuid(const Raw& raw)
   {
-    data_.raw_ = raw;
+    std::memcpy(data_.raw_, raw, sizeof(raw));
   }
 
   /// @returns The random UUID (version 4).
@@ -135,10 +135,10 @@ public:
 
     // Filling the data with random bytes.
     {
-      constexpr auto minimum = static_cast<unsigned char>(1);
-      constexpr auto maximum = std::numeric_limits<unsigned char>::max();
+      constexpr unsigned short minimum{1};
+      constexpr unsigned short maximum{std::numeric_limits<unsigned char>::max()};
       for (std::size_t i{}; i < sizeof(result.data_.raw_); ++i)
-        result.data_.raw_[i] = ud_integer<unsigned int>(minimum, maximum);
+        result.data_.raw_[i] = ud_integer(minimum, maximum);
     }
 
     /*
