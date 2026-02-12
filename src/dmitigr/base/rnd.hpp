@@ -24,7 +24,6 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
-#include <limits>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -116,29 +115,36 @@ inline std::string str(const char beg, const char end,
 /// An UUID.
 class Uuid final {
 public:
-  /// Constructs Nil UUID.
-  Uuid() = default;
-
   /// An alias of raw representation type.
   using Raw = unsigned char[16];
 
+  /// Constructs Nil UUID.
+  Uuid() noexcept = default;
+
   /// Constructs UUID by using a raw representation.
-  Uuid(const Raw& raw)
+  Uuid(const Raw& raw) noexcept
   {
     std::memcpy(data_.raw_, raw, sizeof(raw));
   }
 
-  /// @returns The random UUID (version 4).
-  static Uuid make_v4()
+  /**
+   * @returns The random UUID (version 4).
+   *
+   * @par Thread-safety
+   * Thread-safe.
+   */
+  static Uuid make_v4() noexcept
   {
     Uuid result;
 
     // Filling the data with random bytes.
     {
-      constexpr unsigned short minimum{1};
-      constexpr unsigned short maximum{std::numeric_limits<unsigned char>::max()};
-      for (std::size_t i{}; i < sizeof(result.data_.raw_); ++i)
-        result.data_.raw_[i] = ud_integer(minimum, maximum);
+      for (int i{}; i < 2; ++i) {
+        const auto num = generator_();
+        static_assert(sizeof(num) == 8);
+        static_assert(sizeof(result.data_.raw_) == 2*sizeof(num));
+        std::memcpy(result.data_.raw_ + i*sizeof(num), &num, sizeof(num));
+      }
     }
 
     /*
@@ -182,6 +188,7 @@ public:
   }
 
 private:
+  inline static thread_local std::mt19937_64 generator_{std::random_device{}()};
   union {
     struct {
       std::uint32_t time_low_;
