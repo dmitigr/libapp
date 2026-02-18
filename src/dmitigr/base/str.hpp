@@ -78,12 +78,55 @@ namespace dmitigr::str {
 // Constexpr
 // ============================================================================
 
+/// A literal character.
+template<typename T>
+concept Literal_character = std::is_same_v<char, T> || std::is_same_v<wchar_t, T>;
+
+/// A string literal.
+template<Literal_character T, std::size_t Size>
+struct Literal final {
+  /// The type of character.
+  using Character = T;
+
+  /// The data.
+  Character data[Size];
+
+  /// @returns The size of literal in characters.
+  constexpr std::size_t size() const noexcept
+  {
+    return Size;
+  }
+
+  /// @returns The decayed literal.
+  constexpr auto to_string_view() const noexcept
+  {
+    return std::basic_string_view<Character>{data, Size - 1};
+  }
+};
+
+/// Guide for 1-byte character literal.
 template<std::size_t Size>
-constexpr auto len(const char(&str)[Size]) noexcept
+Literal(const char (&)[Size]) -> Literal<char, Size>;
+
+/// Guide for 2-byte character literal.
+template<std::size_t Size>
+Literal(const wchar_t (&)[Size]) -> Literal<wchar_t, Size>;
+
+/// @returns The length of `str` without the last character.
+template<Literal_character T, std::size_t Size>
+constexpr auto len(const T(&str)[Size]) noexcept
 {
-  return std::size(str) - sizeof(char);
+  return std::size(str) - 1;
 }
-static_assert(len("") == 0 && len("dmitigr") == 7);
+static_assert(len("") == 0 && len(L"dmitigr") == 7);
+
+/// @overload
+template<Literal_character T, std::size_t Size>
+constexpr auto len(const Literal<T, Size>& str) noexcept
+{
+  return str.size() - 1;
+}
+static_assert(len(Literal{""}) == 0 && len(Literal{L"dmitigr"}) == 7);
 
 // =============================================================================
 // C-strings

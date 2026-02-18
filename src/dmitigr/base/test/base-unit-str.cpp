@@ -219,6 +219,17 @@ int main()
       ++i;
       return true;
     }, "1abc23bc456b", str::Fepsep_none{"abc"});
+
+    // -------------------------------------------------------------------------
+    // Literal
+    // -------------------------------------------------------------------------
+
+    constexpr str::Literal l1{""};
+    static_assert(l1.to_string_view().size() == 0);
+
+    constexpr str::Literal l2{L"dmitigr"};
+    static_assert(l2.to_string_view().size() == 7);
+    static_assert(l2.to_string_view() == L"dmitigr");
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;
     return 1;
