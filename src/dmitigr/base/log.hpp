@@ -44,10 +44,24 @@
  * If defined, the default log entry prefix is writen.
  */
 
+/**
+ * @def DMITIGR_LOG_CALL_DEBUG
+ * Defines the routine which called by dmitigr::log::call() to log the debug
+ * output. The default is dmitigr::log::debug().
+ */
+
+/**
+ * @def DMITIGR_LOG_CALL_ERROR
+ * Defines the routine which called by dmitigr::log::call() to log the error
+ * output. The default is dmitigr::log::error().
+ */
+
 #ifndef DMITIGR_BASE_LOG_HPP
 #define DMITIGR_BASE_LOG_HPP
 
+#include "basics.hpp"
 #include "chrono.hpp"
+#include "str.hpp"
 
 #include <atomic>
 #include <filesystem>
@@ -71,6 +85,14 @@
 
 #if defined(DMITIGR_LOG_PREFIX_WRITER) && !defined(DMITIGR_LOG_NOW)
 #define DMITIGR_LOG_NOW DMITIGR_LOG_DEFAULT_NOW
+#endif
+
+#ifndef DMITIGR_LOG_CALL_DEBUG
+#define DMITIGR_LOG_CALL_DEBUG(...) dmitigr::log::debug(__VA_ARGS__)
+#endif
+
+#ifndef DMITIGR_LOG_CALL_ERROR
+#define DMITIGR_LOG_CALL_ERROR(...) dmitigr::log::error(__VA_ARGS__)
 #endif
 
 namespace dmitigr::log {
@@ -372,6 +394,97 @@ void write(const Level level, std::format_string<Types...> fmt, Types&& ... args
     }
   };
   detail::write(stream(level), level, fmt.get(), std::make_format_args(args...));
+}
+
+/**
+ * @brief Calls `callback`, catches exceptions and logs them as errors.
+ *
+ * @tparam Action An action description.
+ * @tparam ErrorLogFmt A format string of an error message, which is printed
+ * in case of exception. The first two placeholders of this string refers to
+ * Action and `std::exception::what()` correspondingly.
+ * @tparam DebugLogFmt A format string of a debug message, which is printed
+ * just before and after calling the callback. The first two placeholders of
+ * this string refers to milestone mark and Action correspondingly.
+ * @param callback A function to call.
+ * @param fmt_extra_args Additional arguments of the both ErrorLogFmt and
+ * DebugLogFmt.
+ *
+ * @returns `true` if no exceptions thrown during calling `callback`.
+ */
+template<Throwable CanThrow,
+  str::Literal Action,
+  str::Literal ErrorLogFmt = "cannot {}: {}",
+  str::Literal DebugLogFmt = "{} {}",
+  std::invocable F,
+  typename ... Types>
+bool call(F&& callback, Types&& ... fmt_extra_args)
+  noexcept(CanThrow == Throwable::no)
+{
+  static_assert(str::len(Action) > 0, "action literal required");
+  static_assert(str::len(ErrorLogFmt) > 0, "error format literal required");
+  static_assert(str::len(DebugLogFmt) > 0, "debug format literal required");
+  constexpr bool IsPromoteThrow{CanThrow == Throwable::yes};
+  try {
+    DMITIGR_LOG_CALL_DEBUG(DebugLogFmt.to_string_view(),
+      "started", Action.to_string_view(),
+      std::forward<Types>(fmt_extra_args)...);
+
+    callback();
+
+    DMITIGR_LOG_CALL_DEBUG(DebugLogFmt.to_string_view(),
+      "finished", Action.to_string_view(),
+      std::forward<Types>(fmt_extra_args)...);
+  } catch (const std::exception& e) {
+    try {
+      DMITIGR_LOG_CALL_ERROR(ErrorLogFmt.to_string_view(),
+        Action.to_string_view(), e.what(),
+        std::forward<Types>(fmt_extra_args)...);
+    } catch (...) {}
+    if constexpr (IsPromoteThrow)
+      throw;
+    else
+      return false;
+  } catch (...) {
+    try {
+      DMITIGR_LOG_CALL_ERROR(ErrorLogFmt.to_string_view(),
+        Action.to_string_view(), "unknown error",
+        std::forward<Types>(fmt_extra_args)...);
+    } catch (...) {}
+    if constexpr (IsPromoteThrow)
+      throw;
+    else
+      return false;
+  }
+  return true;
+}
+
+/**
+ * @overload
+ *
+ * @details Calls call() with `Throwable::yes`.
+ */
+template<str::Literal Action,
+  str::Literal ErrorLogFmt = "cannot {}: {}",
+  str::Literal DebugLogFmt = "{} {}",
+  std::invocable F,
+  typename ... Types>
+inline bool call(F&& callback, Types&& ... args)
+{
+  return call<Throwable::yes, Action, ErrorLogFmt, DebugLogFmt>(
+    std::forward<F>(callback), std::forward<Types>(args)...);
+}
+
+/// Calls call() with `Throwable::no`.
+template<str::Literal Action,
+  str::Literal ErrorLogFmt = "cannot {}: {}",
+  str::Literal DebugLogFmt = "{} {}",
+  std::invocable F,
+  typename ... Types>
+inline bool call_nothrow(F&& callback, Types&& ... args) noexcept
+{
+  return call<Throwable::no, Action, ErrorLogFmt, DebugLogFmt>(
+    std::forward<F>(callback), std::forward<Types>(args)...);
 }
 
 } // namespace dmitigr::log

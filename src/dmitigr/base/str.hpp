@@ -91,6 +91,12 @@ struct Literal final {
   /// The data.
   Character data[Size];
 
+  /// Constructs the literal.
+  constexpr Literal(const Character(&lit)[Size]) noexcept
+  {
+    std::copy_n(lit, Size, data);
+  }
+
   /// @returns The size of literal in characters.
   constexpr std::size_t size() const noexcept
   {
@@ -103,14 +109,6 @@ struct Literal final {
     return std::basic_string_view<Character>{data, Size - 1};
   }
 };
-
-/// Guide for 1-byte character literal.
-template<std::size_t Size>
-Literal(const char (&)[Size]) -> Literal<char, Size>;
-
-/// Guide for 2-byte character literal.
-template<std::size_t Size>
-Literal(const wchar_t (&)[Size]) -> Literal<wchar_t, Size>;
 
 /// @returns The length of `str` without the last character.
 template<Literal_character T, std::size_t Size>

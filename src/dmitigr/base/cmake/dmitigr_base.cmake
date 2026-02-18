@@ -27,6 +27,7 @@ dmitigr_libs_set_library_info(base 0 0 0 "Base")
 set(dmitigr_base_headers
   algorithm.hpp
   assert.hpp
+  basics.hpp
   chrono.hpp
   endianness.hpp
   enum.hpp

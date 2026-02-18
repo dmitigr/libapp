@@ -33,6 +33,15 @@ int main()
     log::notice("notice");
     log::info("info");
     log::debug("debug");
+
+    log::call_nothrow<"test log::call">([]
+    {
+      throw std::runtime_error{"it's expected"};
+    });
+    log::call_nothrow<"test log::call", "failure to {}: {}", "{} {} ({})">([]
+    {
+      throw "it's expected";
+    }, "additional info");
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;
     return 1;
