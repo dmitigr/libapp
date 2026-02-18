@@ -416,4 +416,9 @@ void write(const Level level, std::format_string<Types...> fmt, Types&& ... args
     dmitigr::log::debug(fmt __VA_OPT__(,) __VA_ARGS__); \
   } while (false)
 
+/// Expands to call dmitigr::log::write().
+#define DMITIGR_LOG_WRITE(lvl, fmt, ...) do {                   \
+    dmitigr::log::write(lvl, fmt __VA_OPT__(,) __VA_ARGS__);    \
+  } while (false)
+
 #endif  // DMITIGR_BASE_LOG_HPP
