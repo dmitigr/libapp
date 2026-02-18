@@ -340,6 +340,40 @@ void debug(std::format_string<Types...> fmt, Types&& ... args)
   detail::write(std::clog, Level::debug, fmt.get(), std::make_format_args(args...));
 }
 
+/**
+ * @brief Writes the log entry to the proper stream depending on `level`.
+ *
+ * @par Thread-safety
+ * Thread-safe.
+ */
+template<typename ... Types>
+void write(const Level level, std::format_string<Types...> fmt, Types&& ... args)
+{
+  static const auto stream = [](const Level level) noexcept -> std::ostream&
+  {
+    using enum Level;
+    switch (level) {
+    case emergency:
+      [[fallthrough]];
+    case alert:
+      [[fallthrough]];
+    case critical:
+      [[fallthrough]];
+    case error:
+      return std::cerr;
+    case warning:
+      [[fallthrough]];
+    case notice:
+      [[fallthrough]];
+    case info:
+      [[fallthrough]];
+    case debug:
+      return std::clog;
+    }
+  };
+  detail::write(stream(level), level, fmt.get(), std::make_format_args(args...));
+}
+
 } // namespace dmitigr::log
 
 /// Expands to call dmitigr::log::emergency().
