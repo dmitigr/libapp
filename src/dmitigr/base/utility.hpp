@@ -48,15 +48,28 @@ bool with_catch(const F& f) noexcept
   return false;
 }
 
-/// @returns The duration of call of `f`.
-template<typename D = std::chrono::milliseconds, typename F>
-auto with_measure(const F& f)
+/**
+ * @returns The result of `f()`.
+ *
+ * @param[out] The duration of calling `f()`.
+ */
+template<typename D, typename F>
+decltype(auto) call(D& duration_of_call, F&& f)
 {
   namespace chrono = std::chrono;
-  const auto start = chrono::high_resolution_clock::now();
-  f();
-  const auto end = chrono::high_resolution_clock::now();
-  return chrono::duration_cast<D>(end - start);
+
+  struct Guard final {
+    ~Guard()
+    {
+      duration =
+        chrono::duration_cast<D>(chrono::high_resolution_clock::now() - start);
+    }
+    decltype(duration_of_call) duration;
+    const decltype(chrono::high_resolution_clock::now()) start =
+      chrono::high_resolution_clock::now();
+  } const guard{duration_of_call};
+
+  return std::forward<F>(f)();
 }
 
 /**

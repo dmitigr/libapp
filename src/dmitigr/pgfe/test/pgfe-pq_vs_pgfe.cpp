@@ -98,11 +98,15 @@ inline void test_pgfe()
 
 int main()
 {
-  using dmitigr::with_measure;
+  using dmitigr::call;
+
+  std::chrono::milliseconds elapsed;
+
   std::cout << "Pq: ";
-  const auto elapsed_pq = with_measure(test_pq);
-  std::cout << elapsed_pq.count() << std::endl;
+  call(elapsed, test_pq);
+  std::cout << elapsed.count() << std::endl;
+
   std::cout << "Pgfe: ";
-  const auto elapsed_pgfe = with_measure(test_pgfe);
-  std::cout << elapsed_pgfe.count() << std::endl;
+  call(elapsed, test_pgfe);
+  std::cout << elapsed.count() << std::endl;
 }

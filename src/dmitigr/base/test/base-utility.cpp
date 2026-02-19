@@ -21,7 +21,8 @@
 
 int main()
 {
-  const auto t = dmitigr::with_measure([]
+  std::chrono::microseconds t;
+  dmitigr::call(t, []
   {
     std::this_thread::sleep_for(std::chrono::milliseconds{10});
   });
