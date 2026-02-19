@@ -25,13 +25,6 @@
 
 namespace dmitigr {
 
-struct Nothing final {
-  using Type = void;
-};
-
-template<typename T>
-using Ret_result = std::conditional_t<std::is_void_v<T>, Nothing, T>;
-
 /**
  * @brief A function return value.
  *
@@ -40,11 +33,16 @@ using Ret_result = std::conditional_t<std::is_void_v<T>, Nothing, T>;
  */
 template<typename T>
 struct Ret final {
+  /// A wrapper around `void`.
+  struct Nothing final {
+    using Type = void;
+  };
+
   /// The alias of the error type.
   using Error = Err;
 
   /// The alias of the result type.
-  using Result = Ret_result<T>;
+  using Result = std::conditional_t<std::is_void_v<T>, Nothing, T>;
 
   static_assert(!std::is_same_v<std::decay_t<Result>, Error>);
 
@@ -99,8 +97,8 @@ struct Ret final {
     return !err;
   }
 
-  Err err;
-  T res{};
+  Error err;
+  Result res{};
 };
 
 } // namespace dmitigr
