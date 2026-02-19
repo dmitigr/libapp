@@ -34,9 +34,7 @@ namespace dmitigr {
 template<typename T>
 struct Ret final {
   /// A wrapper around `void`.
-  struct Nothing final {
-    using Type = void;
-  };
+  struct Nothing final {};
 
   /// The alias of the error type.
   using Error = Err;
