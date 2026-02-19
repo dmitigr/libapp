@@ -28,7 +28,7 @@
 namespace dmitigr {
 
 template<class E, typename T>
-T&& forward_or_throw(T&& value, const char* const what)
+decltype(auto) forward_or_throw(T&& value, const char* const what)
 {
   if (value)
     return std::forward<T>(value);
@@ -53,10 +53,12 @@ bool with_catch(const F& f) noexcept
  *
  * @param[out] The duration of calling `f()`.
  */
-template<typename D, typename F>
-decltype(auto) call(D& duration_of_call, F&& f)
+template<typename Rep, typename Period, typename F>
+decltype(auto) call(std::chrono::duration<Rep, Period>& duration_of_call, F&& f)
 {
   namespace chrono = std::chrono;
+
+  using D = std::decay_t<decltype(duration_of_call)>;
 
   struct Guard final {
     ~Guard()
