@@ -17,6 +17,7 @@
 #define DMITIGR_LOG_WITH_LEVEL
 #define DMITIGR_LOG_WITH_DEFAULT_PREFIX
 
+#include "../../base/assert.hpp"
 #include "../../base/log.hpp"
 
 int main()
@@ -38,10 +39,11 @@ int main()
     {
       throw std::runtime_error{"it's expected"};
     });
-    log::call_nothrow<"test log::call", "failure to {}: {}", "{} {} ({})">([]
+    const auto ret = log::call_nothrow<"test log::call", "failure to {}: {}", "{} {} ({})">([]
     {
       throw "it's expected";
     }, "additional info");
+    DMITIGR_ASSERT(!ret);
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;
     return 1;
