@@ -58,7 +58,7 @@ inline auto read_to_str(const std::filesystem::path& path)
 {
   static const auto read = static_cast<
     std::string(*)(const std::filesystem::path&)>(&read_to_string);
-  return call_noexcept(read, path);
+  return call_nothrow(read, path);
 }
 
 } // namespace detail

@@ -79,7 +79,7 @@ decltype(auto) call(std::chrono::duration<Rep, Period>& duration_of_call, F&& f)
  * by `func`.
  */
 template<typename F, typename ... Types>
-auto call_noexcept(F&& func, Types&& ... args) noexcept
+auto call_nothrow(F&& func, Types&& ... args) noexcept
 {
   using F_result = std::invoke_result_t<F, Types...>;
   using Ret = Ret<F_result>;

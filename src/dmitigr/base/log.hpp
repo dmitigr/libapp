@@ -530,7 +530,7 @@ decltype(auto) call(F&& callback, Types&& ... fmt_extra_args)
   DMITIGR_ASSERT(false);
 }
 
-/// Calls call() via dmitigr::call_noexcept().
+/// Calls call() via dmitigr::call_nothrow().
 template<str::Literal Action,
   str::Literal ErrorLogFmt = "cannot {}: {}",
   str::Literal DebugLogFmt = "{} {}",
@@ -538,7 +538,7 @@ template<str::Literal Action,
   typename ... Types>
 auto call_nothrow(F&& callback, Types&& ... args) noexcept
 {
-  return call_noexcept([&]
+  return dmitigr::call_nothrow([&]
   {
     call<Action, ErrorLogFmt, DebugLogFmt>(std::forward<F>(callback),
       std::forward<Types>(args)...);
