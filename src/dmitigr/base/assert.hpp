@@ -22,22 +22,11 @@
 #include <iostream>
 #endif
 
-namespace dmitigr {
-
-/// The debug mode indicator.
-#ifndef NDEBUG
-constexpr bool is_debug{true};
-#else
-constexpr bool is_debug{false};
-#endif
-
-} // namespace dmitigr
-
 #ifndef DMITIGR_ASSERT
 /**
  * @brief Checks the assertion `a`.
  *
- * @details Always active regardless of `is_debug` (or `NDEBUG`).
+ * @details Always active regardless of `NDEBUG`.
  *
  * @par Effects Terminates the process if `!a`.
  */

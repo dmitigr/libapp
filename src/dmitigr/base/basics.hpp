@@ -19,6 +19,13 @@
 
 namespace dmitigr {
 
+/// The debug mode indicator.
+#ifndef NDEBUG
+constexpr bool is_debug{true};
+#else
+constexpr bool is_debug{false};
+#endif
+
 /// A throw mode.
 enum class Throwable { no, yes };
 
