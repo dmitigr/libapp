@@ -26,8 +26,8 @@ constexpr bool is_debug{true};
 constexpr bool is_debug{false};
 #endif
 
-/// A throw mode.
-enum class Throwable { no, yes };
+/// A flag used to disambiguate throwing and non-throwing APIs.
+enum class Nothrow { no, yes };
 
 } // namespace dmitigr
 

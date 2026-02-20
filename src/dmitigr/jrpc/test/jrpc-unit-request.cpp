@@ -24,7 +24,6 @@ int main()
   try {
     namespace jrpc = dmitigr::jrpc;
     namespace math = dmitigr::math;
-    using dmitigr::with_catch;
 
     // Parse request.
     {
@@ -101,7 +100,6 @@ int main()
       {
         jrpc::Request::from_json(R"({"jsonrpc": "2.1", "method": "subtract", "params": [42, 23], "id": 1})");
       };
-      DMITIGR_ASSERT(with_catch<jrpc::Exception>(f));
       try {
         f();
       } catch (const jrpc::Error& e) {
@@ -119,7 +117,6 @@ int main()
       {
         jrpc::Request::from_json(R"({"excess": 0, "jsonrpc": "2.0", "method": "subtract", "params": [2, 1], "id": 1})");
       };
-      DMITIGR_ASSERT(with_catch<jrpc::Exception>(f));
       try {
         f();
       } catch (const jrpc::Error& e) {
@@ -137,7 +134,6 @@ int main()
       {
         jrpc::Request::from_json(R"({"jsonrpc": "2.0", "METHOD": "subtract", "params": [42, 23]})");
       };
-      DMITIGR_ASSERT(with_catch<jrpc::Exception>(f));
       try {
         f();
       } catch (const jrpc::Error& e) {

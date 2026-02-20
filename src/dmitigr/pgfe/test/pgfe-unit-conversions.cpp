@@ -76,7 +76,7 @@ int main()
 {
   try {
     namespace pgfe = dmitigr::pgfe;
-    using dmitigr::with_catch;
+    using dmitigr::call_nothrow;
     using std::numeric_limits;
 
     // short
@@ -300,7 +300,7 @@ int main()
         const auto data = pgfe::make_string_data(valid_literal);
         const auto native_arr = pgfe::to<Arr>(*data);
         DMITIGR_ASSERT((native_arr == Arr{1,{}}));
-        DMITIGR_ASSERT(with_catch<std::exception>([&]
+        DMITIGR_ASSERT(!call_nothrow([&]
         {
           const auto native_vec = pgfe::to<Vec>(*data);
         }));

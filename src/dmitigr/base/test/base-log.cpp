@@ -35,14 +35,17 @@ int main()
     log::info("info");
     log::debug("debug");
 
-    log::call_nothrow<"test log::call">([]
+    log::call_nothrow<"test log::call">([](const auto action)
     {
+      DMITIGR_LOG_INFO("started {}", action);
       throw std::runtime_error{"it's expected"};
     });
-    const auto ret = log::call_nothrow<"test log::call", "failure to {}: {}", "{} {} ({})">([]
-    {
-      throw "it's expected";
-    }, "additional info");
+    const auto ret = log::call_nothrow<"test log::call", dmitigr::log::Level::critical,
+      "failure to {}: {}">(
+      []
+      {
+        throw "it's expected";
+      });
     DMITIGR_ASSERT(!ret);
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;

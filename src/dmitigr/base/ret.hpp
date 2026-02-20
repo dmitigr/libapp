@@ -33,7 +33,7 @@ namespace dmitigr {
  */
 template<typename T>
 struct Ret final {
-  /// A wrapper around `void`.
+  /// Denotes `void`.
   struct Nothing final {};
 
   /// The alias of the error type.
@@ -93,6 +93,12 @@ struct Ret final {
   explicit operator bool() const noexcept
   {
     return !err;
+  }
+
+  /// @returns `true` if the type of result is actually `void`.
+  constexpr bool is_void() const noexcept
+  {
+    return std::is_same_v<Result, Nothing>;
   }
 
   Error err;

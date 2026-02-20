@@ -45,15 +45,9 @@
  */
 
 /**
- * @def DMITIGR_LOG_CALL_DEBUG
- * Defines the routine which called by dmitigr::log::call() to log the debug
- * output. The default is dmitigr::log::debug().
- */
-
-/**
- * @def DMITIGR_LOG_CALL_ERROR
+ * @def DMITIGR_LOG_CALL_WRITE
  * Defines the routine which called by dmitigr::log::call() to log the error
- * output. The default is dmitigr::log::error().
+ * output. The default is DMITIGR_LOG_WRITE().
  */
 
 #ifndef DMITIGR_BASE_LOG_HPP
@@ -72,75 +66,77 @@
 #include <mutex>
 #include <stdexcept>
 #include <string_view>
-
-#define DMITIGR_LOG_DEFAULT_PREFIX_WRITER dmitigr::log::default_prefix_writer
-#define DMITIGR_LOG_DEFAULT_NOW std::chrono::system_clock::now
+#include <type_traits>
 
 #ifdef DMITIGR_LOG_WITH_DEFAULT_PREFIX
 #ifndef DMITIGR_LOG_PREFIX_WRITER
-#define DMITIGR_LOG_PREFIX_WRITER DMITIGR_LOG_DEFAULT_PREFIX_WRITER
+#define DMITIGR_LOG_PREFIX_WRITER dmitigr::log::default_prefix_writer
 #else
 #error DMITIGR_LOG_WITH_DEFAULT_PREFIX conflicts with DMITIGR_LOG_PREFIX_WRITER
 #endif
 #endif
 
 #if defined(DMITIGR_LOG_PREFIX_WRITER) && !defined(DMITIGR_LOG_NOW)
-#define DMITIGR_LOG_NOW DMITIGR_LOG_DEFAULT_NOW
+#define DMITIGR_LOG_NOW std::chrono::system_clock::now
 #endif
 
-#ifndef DMITIGR_LOG_CALL_DEBUG
-#define DMITIGR_LOG_CALL_DEBUG(...) DMITIGR_LOG_DEBUG(__VA_ARGS__)
+#ifndef DMITIGR_LOG_CALL_SEVERITY
+#define DMITIGR_LOG_CALL_SEVERITY Level::error
 #endif
 
-#ifndef DMITIGR_LOG_CALL_ERROR
-#define DMITIGR_LOG_CALL_ERROR(...) DMITIGR_LOG_ERROR(__VA_ARGS__)
+#ifndef DMITIGR_LOG_CALL_ERR_LOG_FMT
+#define DMITIGR_LOG_CALL_ERR_LOG_FMT "cannot {}: {}"
+#endif
+
+#ifndef DMITIGR_LOG_CALL_WRITE
+#define DMITIGR_LOG_CALL_WRITE(...) DMITIGR_LOG_WRITE(__VA_ARGS__)
 #endif
 
 /// Expands to call dmitigr::log::emergency().
 #define DMITIGR_LOG_EMERGENCY(fmt, ...) do {                    \
-    if (dmitigr::log::level >= Level::emergency)                \
+    if (dmitigr::log::level >= dmitigr::log::Level::emergency)  \
       dmitigr::log::emergency(fmt __VA_OPT__(,) __VA_ARGS__);   \
   } while (false)
 
 /// Expands to call dmitigr::log::alert().
 #define DMITIGR_LOG_ALERT(fmt, ...) do {                    \
-    if (dmitigr::log::level >= Level::alert)                \
+    if (dmitigr::log::level >= dmitigr::log::Level::alert)  \
       dmitigr::log::alert(fmt __VA_OPT__(,) __VA_ARGS__);   \
   } while (false)
 
 /// Expands to call dmitigr::log::critical().
 #define DMITIGR_LOG_CRITICAL(fmt, ...) do {                     \
-    if (dmitigr::log::level >= Level::critical)                 \
+    if (dmitigr::log::level >= dmitigr::log::Level::critical)   \
       dmitigr::log::critical(fmt __VA_OPT__(,) __VA_ARGS__);    \
   } while (false)
 
 /// Expands to call dmitigr::log::error().
 #define DMITIGR_LOG_ERROR(fmt, ...) do {                    \
-    if (dmitigr::log::level >= Level::error)                \
+    if (dmitigr::log::level >= dmitigr::log::Level::error)  \
       dmitigr::log::error(fmt __VA_OPT__(,) __VA_ARGS__);   \
   } while (false)
 
 /// Expands to call dmitigr::log::warning().
-#define DMITIGR_LOG_WARNING(fmt, ...) do {                  \
-    if (dmitigr::log::level >= Level::warning)              \
-      dmitigr::log::warning(fmt __VA_OPT__(,) __VA_ARGS__); \
+#define DMITIGR_LOG_WARNING(fmt, ...) do {                      \
+    if (dmitigr::log::level >= dmitigr::log::Level::warning)    \
+      dmitigr::log::warning(fmt __VA_OPT__(,) __VA_ARGS__);     \
   } while (false)
 
 /// Expands to call dmitigr::log::notice().
 #define DMITIGR_LOG_NOTICE(fmt, ...) do {                   \
-    if (dmitigr::log::level >= Level::notice)               \
+    if (dmitigr::log::level >= dmitigr::log::Level::notice) \
       dmitigr::log::notice(fmt __VA_OPT__(,) __VA_ARGS__);  \
   } while (false)
 
 /// Expands to call dmitigr::log::info().
 #define DMITIGR_LOG_INFO(fmt, ...) do {                     \
-    if (dmitigr::log::level >= Level::info)                 \
+    if (dmitigr::log::level >= dmitigr::log::Level::info)   \
       dmitigr::log::info(fmt __VA_OPT__(,) __VA_ARGS__);    \
   } while (false)
 
 /// Expands to call dmitigr::log::debug().
 #define DMITIGR_LOG_DEBUG(fmt, ...) do {                    \
-    if (dmitigr::log::level >= Level::debug)                \
+    if (dmitigr::log::level >= dmitigr::log::Level::debug)  \
       dmitigr::log::debug(fmt __VA_OPT__(,) __VA_ARGS__);   \
   } while (false)
 
@@ -454,95 +450,65 @@ void write(const Level level, std::format_string<Types...> fmt, Types&& ... args
  * @brief Calls `callback`, catches exceptions and logs them as errors.
  *
  * @tparam Action An action description.
+ * @tparam Severity A severity of action used as log level in case of exception.
  * @tparam ErrorLogFmt A format string of an error message, which is printed
  * in case of exception. The first two placeholders of this string refers to
  * Action and `std::exception::what()` correspondingly.
- * @tparam DebugLogFmt A format string of a debug message, which is printed
- * just before and after calling the callback. The first two placeholders of
- * this string refers to milestone mark and Action correspondingly.
- * @param callback A function to call.
- * @param fmt_extra_args Additional arguments of the both ErrorLogFmt and
- * DebugLogFmt.
+ * @tparam NoThrow Throw mode switch.
+ * @param callback A function to call. It can be either parameter free or accept
+ * Action as std::string_view.
  *
- * @returns The result of `callback`.
+ * @returns The result of `callback` if `NoThrow == NoThrow::no`,
+ * or Ret<T> otherwise.
  */
 template<str::Literal Action,
-  str::Literal ErrorLogFmt = "cannot {}: {}",
-  str::Literal DebugLogFmt = "{} {}",
-  std::invocable F,
-  typename ... Types>
-decltype(auto) call(F&& callback, Types&& ... fmt_extra_args)
+  Level Severity = DMITIGR_LOG_CALL_SEVERITY,
+  str::Literal ErrLogFmt = DMITIGR_LOG_CALL_ERR_LOG_FMT,
+  Nothrow NoThrow = Nothrow::no,
+  typename F>
+requires (std::invocable<F> || std::invocable<F, std::string_view>)
+decltype(auto) call(F&& callback) noexcept(NoThrow == Nothrow::yes)
 {
   static_assert(str::len(Action) > 0, "action literal required");
-  static_assert(str::len(ErrorLogFmt) > 0, "error format literal required");
-  static_assert(str::len(DebugLogFmt) > 0, "debug format literal required");
+  static_assert(Severity <= Level::error, "severity error+ required");
+  static_assert(str::len(ErrLogFmt) > 0, "error format literal required");
+  constexpr bool can_throw{NoThrow == Nothrow::no};
   try {
-    struct Guard final {
-      Guard(Types&& ... args)
-        : fmt_extra_args{std::forward<Types>(args)...}
-      {
-        std::apply([](const auto& ... args)
-        {
-          DMITIGR_LOG_CALL_DEBUG(DebugLogFmt.to_string_view(),
-            "started", Action.to_string_view(),
-            std::forward<decltype(args)>(args)...);
-        }, fmt_extra_args);
-      }
-
-      ~Guard()
-      {
-        try {
-          if (uncaught_count == std::uncaught_exceptions()) {
-            std::apply([](const auto& ... args)
-            {
-              DMITIGR_LOG_CALL_DEBUG(DebugLogFmt.to_string_view(),
-                "finished", Action.to_string_view(),
-                std::forward<decltype(args)>(args)...);
-            }, fmt_extra_args);
-          }
-        } catch (...) {}
-      }
-
-      const int uncaught_count{std::uncaught_exceptions()};
-      std::tuple<Types&& ...> fmt_extra_args;
-    };
-
-    if (dmitigr::log::level >= Level::debug) [[unlikely]] {
-      const Guard guard{fmt_extra_args...};
-      return std::forward<F>(callback)();
-    } else
-      return std::forward<F>(callback)();
+    if constexpr (can_throw) {
+      if constexpr (std::is_invocable_v<F>)
+        return std::forward<F>(callback)();
+      else
+        return std::forward<F>(callback)(Action.to_string_view());
+    } else {
+      if constexpr (std::is_invocable_v<F>)
+        return dmitigr::call_nothrow(std::forward<F>(callback));
+      else
+        return dmitigr::call_nothrow(std::forward<F>(callback),
+          Action.to_string_view());
+    }
   } catch (const std::exception& e) {
     try {
-      DMITIGR_LOG_CALL_ERROR(ErrorLogFmt.to_string_view(),
-        Action.to_string_view(), e.what(),
-        fmt_extra_args...);
+      DMITIGR_LOG_CALL_WRITE(Severity, ErrLogFmt.to_string_view(),
+        Action.to_string_view(), e.what());
     } catch (...) {}
     throw;
   } catch (...) {
     try {
-      DMITIGR_LOG_CALL_ERROR(ErrorLogFmt.to_string_view(),
-        Action.to_string_view(), "unknown error",
-        std::forward<Types>(fmt_extra_args)...);
+      DMITIGR_LOG_CALL_WRITE(Severity, ErrLogFmt.to_string_view(),
+        Action.to_string_view(), "unknown error");
     } catch (...) {}
     throw;
   }
-  DMITIGR_ASSERT(false);
 }
 
-/// Calls call() via dmitigr::call_nothrow().
+/// Calls call() with Nothrow::yes.
 template<str::Literal Action,
-  str::Literal ErrorLogFmt = "cannot {}: {}",
-  str::Literal DebugLogFmt = "{} {}",
-  std::invocable F,
-  typename ... Types>
-auto call_nothrow(F&& callback, Types&& ... args) noexcept
+  Level Severity = DMITIGR_LOG_CALL_SEVERITY,
+  str::Literal ErrLogFmt = DMITIGR_LOG_CALL_ERR_LOG_FMT,
+  typename F>
+auto call_nothrow(F&& callback) noexcept
 {
-  return dmitigr::call_nothrow([&]
-  {
-    call<Action, ErrorLogFmt, DebugLogFmt>(std::forward<F>(callback),
-      std::forward<Types>(args)...);
-  });
+  return call<Action, Severity, ErrLogFmt, Nothrow::yes>(std::forward<F>(callback));
 }
 
 } // namespace dmitigr::log

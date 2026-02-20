@@ -21,31 +21,26 @@
 #include "ret.hpp"
 
 #include <chrono>
+#include <exception>
 #include <functional>
+#include <system_error>
 #include <type_traits>
 #include <utility>
 
 namespace dmitigr {
 
+/**
+ * @returns `value` if `!!value`.
+ *
+ * @throws `E` if `!value`.
+ */
 template<class E, typename T>
 decltype(auto) forward_or_throw(T&& value, const char* const what)
 {
   if (value)
     return std::forward<T>(value);
   else
-    throw E{what ? what : "dmitigr::forward_or_throw(value)"};
-}
-
-/// @returns `true` if instance of type `E` is thrown upon calling of `f`.
-template<class E, typename F>
-bool with_catch(const F& f) noexcept
-{
-  try {
-    f();
-  } catch (const E&) {
-    return true;
-  } catch (...) {}
-  return false;
+    throw E{what ? what : "dmitigr::forward_or_throw()"};
 }
 
 /**
