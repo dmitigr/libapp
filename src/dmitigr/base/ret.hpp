@@ -17,6 +17,7 @@
 #ifndef DMITIGR_BASE_RET_HPP
 #define DMITIGR_BASE_RET_HPP
 
+#include "concepts.hpp"
 #include "error.hpp"
 
 #include <system_error>
@@ -28,16 +29,15 @@ namespace dmitigr {
 /**
  * @brief A function return value.
  *
- * @details This template struct is useful as the return type of functions which
- * must not throw exceptions.
+ * @details This type is useful for returning instead of throwing an exception.
  */
-template<typename T>
+template<typename T, Pure_type E = Err>
 struct Ret final {
   /// Denotes `void`.
   struct Nothing final {};
 
   /// The alias of the error type.
-  using Error = Err;
+  using Error = E;
 
   /// The alias of the result type.
   using Result = std::conditional_t<std::is_void_v<T>, Nothing, T>;
@@ -59,25 +59,24 @@ struct Ret final {
     : err{ec}
   {}
 
-  /// Holds not an error and a given value of type T.
-  Ret(Result r) noexcept
-    : res{std::move(r)}
+  /// Holds not an error and a given `result`.
+  Ret(Result result) noexcept
+    : res{std::move(result)}
   {}
 
   /**
-   * @brief Holds the both `err` and `res`.
+   * @brief Holds the both `error` and `result`.
    *
-   * @details This constructor is useful to return an error with an information
-   * provided by `res`.
+   * @details Useful to return both an error and a partial result.
    */
-  Ret(Error e, Result r) noexcept
-    : err{e}
-    , res{std::move(r)}
+  Ret(Error error, Result result) noexcept
+    : err{error}
+    , res{std::move(result)}
   {}
 
   /// @returns The error.
-  template<typename E, typename ... Types>
-  static auto make_error(E e, Types&& ... res_args) noexcept
+  template<typename Er, typename ... Types>
+  static auto make_error(Er e, Types&& ... res_args) noexcept
   {
     return Ret{Error{std::move(e)}, Result{std::forward<Types>(res_args)...}};
   }

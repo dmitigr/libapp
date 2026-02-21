@@ -92,6 +92,10 @@
 #define DMITIGR_LOG_CALL_WRITE(...) DMITIGR_LOG_WRITE(__VA_ARGS__)
 #endif
 
+#ifndef DMITIGR_LOG_CALL_ERR
+#define DMITIGR_LOG_CALL_ERR Errcode
+#endif
+
 /// Expands to call dmitigr::log::emergency().
 #define DMITIGR_LOG_EMERGENCY(fmt, ...) do {                    \
     if (dmitigr::log::level >= dmitigr::log::Level::emergency)  \
@@ -464,28 +468,18 @@ void write(const Level level, std::format_string<Types...> fmt, Types&& ... args
 template<str::Literal Action,
   Level Severity = DMITIGR_LOG_CALL_SEVERITY,
   str::Literal ErrLogFmt = DMITIGR_LOG_CALL_ERR_LOG_FMT,
-  Nothrow NoThrow = Nothrow::no,
   typename F>
 requires (std::invocable<F> || std::invocable<F, std::string_view>)
-decltype(auto) call(F&& callback) noexcept(NoThrow == Nothrow::yes)
+decltype(auto) call(F&& callback)
 {
   static_assert(str::len(Action) > 0, "action literal required");
   static_assert(Severity <= Level::error, "severity error+ required");
   static_assert(str::len(ErrLogFmt) > 0, "error format literal required");
-  constexpr bool can_throw{NoThrow == Nothrow::no};
   try {
-    if constexpr (can_throw) {
-      if constexpr (std::is_invocable_v<F>)
-        return std::forward<F>(callback)();
-      else
-        return std::forward<F>(callback)(Action.to_string_view());
-    } else {
-      if constexpr (std::is_invocable_v<F>)
-        return dmitigr::call_nothrow(std::forward<F>(callback));
-      else
-        return dmitigr::call_nothrow(std::forward<F>(callback),
-          Action.to_string_view());
-    }
+    if constexpr (std::is_invocable_v<F>)
+      return std::forward<F>(callback)();
+    else
+      return std::forward<F>(callback)(Action.to_string_view());
   } catch (const std::exception& e) {
     try {
       DMITIGR_LOG_CALL_WRITE(Severity, ErrLogFmt.to_string_view(),
@@ -505,10 +499,25 @@ decltype(auto) call(F&& callback) noexcept(NoThrow == Nothrow::yes)
 template<str::Literal Action,
   Level Severity = DMITIGR_LOG_CALL_SEVERITY,
   str::Literal ErrLogFmt = DMITIGR_LOG_CALL_ERR_LOG_FMT,
+  class E = DMITIGR_LOG_CALL_ERR,
   typename F>
+requires (std::invocable<F> || std::invocable<F, std::string_view>)
 auto call_nothrow(F&& callback) noexcept
 {
-  return call<Action, Severity, ErrLogFmt, Nothrow::yes>(std::forward<F>(callback));
+  static const auto eh = [](auto code, const char* const what) noexcept
+  {
+    try {
+      DMITIGR_LOG_CALL_WRITE(Severity, ErrLogFmt.to_string_view(),
+        Action.to_string_view(), what);
+    } catch (...) {}
+    return E{std::move(code)};
+  };
+
+  if constexpr (std::is_invocable_v<F>)
+    return dmitigr::call_nothrow(eh, std::forward<F>(callback));
+  else
+    return dmitigr::call_nothrow(eh, std::forward<F>(callback),
+      Action.to_string_view());
 }
 
 } // namespace dmitigr::log

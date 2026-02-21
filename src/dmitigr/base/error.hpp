@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2025 Dmitry Igrishin
+// Copyright 2026 Dmitry Igrishin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -297,6 +297,40 @@ inline bool operator!=(const Err& lhs, const Err& rhs) noexcept
 {
   return !(lhs == rhs);
 }
+
+/// A wrapper around std::error_code.
+struct Errcode final {
+  std::error_code code;
+
+  /// The default constructor.
+  Errcode() = default;
+
+  /// The constructor.
+  Errcode(std::error_code code)
+    : code{code}
+  {}
+
+  /**
+   * @overload
+   *
+   * @remarks For compatibility with Err::Err().
+   */
+  Errcode(std::error_code code, const char*)
+    : code{code}
+  {}
+
+  /// @returns `true` if the instance represents an error.
+  explicit operator bool() const noexcept
+  {
+    return static_cast<bool>(code);
+  }
+
+  /// @returns A result of conversion to `std::error_code`.
+  operator std::error_code() const noexcept
+  {
+    return code;
+  }
+};
 
 } // namespace dmitigr
 

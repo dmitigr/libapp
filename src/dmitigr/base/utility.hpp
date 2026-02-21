@@ -70,29 +70,41 @@ decltype(auto) call(std::chrono::duration<Rep, Period>& duration_of_call, F&& f)
 }
 
 /**
- * @returns The value of type `Ret<R>`, where `R` is a type of value returned
- * by `func`.
+ * @returns The value of type `Ret<Fres, Eres>`, where `Fres` is a type of value
+ * returned by `func`, `Eres` is a type of value returned by `eh`.
  */
-template<typename F, typename ... Types>
-auto call_nothrow(F&& func, Types&& ... args) noexcept
+template<typename E, typename F, typename ... Types>
+requires(std::invocable<E, std::error_code, const char*> &&
+  std::invocable<F, Types...>)
+auto call_nothrow(E&& eh, F&& func, Types&& ... args) noexcept
 {
+  using E_result = std::invoke_result_t<E, std::error_code, const char*>;
   using F_result = std::invoke_result_t<F, Types...>;
-  using Ret = Ret<F_result>;
+  using Ret = Ret<F_result, E_result>;
   try {
     if constexpr (std::is_same_v<F_result, void>) {
       std::invoke(std::forward<F>(func), std::forward<Types>(args)...);
       return Ret{};
     } else
       return Ret{std::invoke(std::forward<F>(func), std::forward<Types>(args)...)};
-  } catch (const Exception& e) {
-    return Ret{e.err()};
   } catch (const std::system_error& e) {
-    return Ret{Err{e.code(), e.what()}};
+    return Ret{eh(e.code(), e.what())};
   } catch (const std::exception& e) {
-    return Ret{Err{Errc::generic, e.what()}};
+    return Ret{eh(Errc::generic, e.what())};
   } catch (...) {
-    return Ret{Err{Errc::generic, "unknown error"}};
+    return Ret{eh(Errc::generic, "unknown error")};
   }
+}
+
+/// @overload
+template<typename F, typename ... Types>
+auto call_nothrow(F&& func, Types&& ... args) noexcept
+{
+  static const auto eh = [](auto code, const char* const what) noexcept
+  {
+    return Err{std::move(code), what};
+  };
+  return call_nothrow(eh, std::forward<F>(func), std::forward<Types>(args)...);
 }
 
 } // namespace dmitigr
