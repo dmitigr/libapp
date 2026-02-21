@@ -965,7 +965,7 @@ public:
                   if (auto [err, out] = tpl.to_output(); !err)
                     send_data(io, std::move(out), content_type(path));
                   else
-                    log::error("HTTP: {}", err.message());
+                    log::error("HTTP: {}", message(err));
                 });
                 return true;
               } else if (err == Errc::file_not_found)
@@ -1011,7 +1011,7 @@ public:
             });
             return; // done: error is queued
           } catch (const dmitigr::Exception& e) {
-            log::error("HTTP: {}", e.err().message());
+            log::error("HTTP: {}", message(e.err()));
             if (e.code().category() == http::server_error_category()) {
               io->loop_submit([io, err = e.code().value()]
               {
@@ -1066,7 +1066,7 @@ public:
 
       return true; // done: request is scheduled or handled
     } catch (const dmitigr::Exception& e) {
-      log::error("HTTP scheduler: {}", e.err().message());
+      log::error("HTTP scheduler: {}", message(e.err()));
       if (e.code().category() == http::server_error_category())
         return send_error(io, static_cast<http::Server_errc>(e.code().value()));
     } catch (...) {

@@ -186,7 +186,6 @@ public:
   {
     try {
       what_ = rhs.what_;
-      message_ = rhs.message_;
     } catch (...) {}
   }
 
@@ -202,7 +201,6 @@ public:
   Err(Err&& rhs) noexcept
     : code_{std::move(rhs.code_)}
     , what_{std::move(rhs.what_)}
-    , message_{std::move(rhs.message_)}
   {}
 
   Err& operator=(Err&& rhs) noexcept
@@ -219,7 +217,6 @@ public:
     using std::swap;
     swap(code_, rhs.code_);
     swap(what_, rhs.what_);
-    swap(message_, rhs.message_);
   }
 
   /// @returns `true` if the instance represents an error.
@@ -235,31 +232,14 @@ public:
   }
 
   /// @returns The what-string.
-  const std::string& what() const noexcept
+  const char* what() const noexcept
   {
-    return what_;
-  }
-
-  /// @returns The error message combined from `code().message()` and `what()`.
-  const std::string& message() const noexcept
-  {
-    try {
-      if (message_.empty()) {
-        message_ = code_.message();
-        if (!what_.empty())
-          message_.append(": ").append(what_);
-      }
-      return message_;
-    } catch (...) {
-      message_.clear();
-    }
-    return what_;
+    return what_.c_str();
   }
 
 private:
   std::error_code code_;
   std::string what_;
-  mutable std::string message_;
 };
 
 /// @returns `true` if `lhs` is equals to `rhs`.
@@ -331,6 +311,24 @@ struct Errcode final {
     return code;
   }
 };
+
+// -----------------------------------------------------------------------------
+
+/// @returns The error message combined from `err.code().message()` and `err.what()`.
+template<class E>
+const std::string& message(const E& err) noexcept
+{
+  thread_local std::string message;
+  try {
+    message = err.code().message();
+    const std::string_view what{err.what()};
+    if (!what.empty())
+      message.append(": ").append(what.data(), what.size());
+  } catch (...) {
+    message.clear();
+  }
+  return message;
+}
 
 } // namespace dmitigr
 

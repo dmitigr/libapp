@@ -78,7 +78,7 @@ public:
   /// @returns The what-string.
   const char* what() const noexcept override
   {
-    return err_.what().c_str();
+    return err_.what();
   }
 
   /// @returns The error code.

@@ -76,7 +76,7 @@ protected:
       } catch(const dmitigr::Exception& e) {
         std::string what{e.what()};
         if (what.empty())
-          what = e.err().message();
+          what = message(e.err());
         const jrpc::Error err{e.code(), id, what};
         log::error("wsjrpc::handle_message: {}", what);
         send_utf8(err);

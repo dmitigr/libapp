@@ -568,7 +568,7 @@ public:
 
   Ret<std::string> to_output() const override
   {
-    return std::string{"error: "}.append(err_.message());
+    return std::string{"error: "}.append(message(err_));
   }
 
   Ret<int> cmp(const Shared_expr& rhs) const noexcept override

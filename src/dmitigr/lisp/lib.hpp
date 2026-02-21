@@ -1023,7 +1023,7 @@ inline Ret_expr fun_error_message(const Tup_expr& fun, Env& env)
 
   if (auto r = (*arg)->eval(env)) {
     if (is_err(r.res))
-      return make_expr<Str_expr>(r.res->err().message());
+      return make_expr<Str_expr>(message(r.res->err()));
     else
       return Nil_expr::instance();
   } else

@@ -44,8 +44,8 @@ int main()
       if (!err)
         std::cout << exp->to_string() << std::endl;
       else
-        std::cerr << "Eval error: " << err.message() << std::endl;
+        std::cerr << "Eval error: " << message(err) << std::endl;
     } else
-      std::cerr << "Parse error: " << r.err.message() << std::endl;
+      std::cerr << "Parse error: " << message(r.err) << std::endl;
   }
 }
