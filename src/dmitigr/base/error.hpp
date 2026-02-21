@@ -212,6 +212,7 @@ public:
     return *this;
   }
 
+  /// Swaps this instance with `rhs`.
   void swap(Err& rhs) noexcept
   {
     using std::swap;
@@ -278,16 +279,15 @@ inline bool operator!=(const Err& lhs, const Err& rhs) noexcept
   return !(lhs == rhs);
 }
 
-/// A wrapper around std::error_code.
-struct Errcode final {
-  std::error_code code;
-
+/// A wrapper around std::error_code, API-compatible with Err.
+class Errcode final {
+public:
   /// The default constructor.
-  Errcode() = default;
+  Errcode() noexcept = default;
 
   /// The constructor.
-  Errcode(std::error_code code)
-    : code{code}
+  Errcode(std::error_code code) noexcept
+    : code_{code}
   {}
 
   /**
@@ -295,21 +295,37 @@ struct Errcode final {
    *
    * @remarks For compatibility with Err::Err().
    */
-  Errcode(std::error_code code, const char*)
-    : code{code}
+  Errcode(std::error_code code, const char*) noexcept
+    : code_{code}
   {}
+
+  /// Swaps this instance with `rhs`.
+  void swap(Errcode& rhs) noexcept
+  {
+    using std::swap;
+    swap(code_, rhs.code_);
+  }
 
   /// @returns `true` if the instance represents an error.
   explicit operator bool() const noexcept
   {
-    return static_cast<bool>(code);
+    return static_cast<bool>(code_);
   }
 
-  /// @returns A result of conversion to `std::error_code`.
-  operator std::error_code() const noexcept
+  /// @returns The error code.
+  const std::error_code& code() const noexcept
   {
-    return code;
+    return code_;
   }
+
+  /// @returns The what-string.
+  const char* what() const noexcept
+  {
+    return code_.category().name();
+  }
+
+private:
+  std::error_code code_;
 };
 
 // -----------------------------------------------------------------------------
