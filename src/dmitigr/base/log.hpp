@@ -510,7 +510,7 @@ auto call_nothrow(F&& callback) noexcept
       DMITIGR_LOG_CALL_WRITE(Severity, ErrLogFmt.to_string_view(),
         Action.to_string_view(), what);
     } catch (...) {}
-    return E{std::move(code)};
+    return E{std::move(code), what};
   };
 
   if constexpr (std::is_invocable_v<F>)
