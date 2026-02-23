@@ -243,42 +243,6 @@ private:
   std::string what_;
 };
 
-/// @returns `true` if `lhs` is equals to `rhs`.
-inline bool operator==(const Err& lhs, const std::error_code& rhs) noexcept
-{
-  return lhs.code() == rhs;
-}
-
-/// @overload
-inline bool operator==(const std::error_code& lhs, const Err& rhs) noexcept
-{
-  return lhs == rhs.code();
-}
-
-/// @overload
-inline bool operator==(const Err& lhs, const Err& rhs) noexcept
-{
-  return lhs.code() == rhs.code();
-}
-
-/// @returns `true` if `lhs` is not equals to `rhs`.
-inline bool operator!=(const Err& lhs, const std::error_code& rhs) noexcept
-{
-  return !(lhs.code() == rhs);
-}
-
-/// @overload
-inline bool operator!=(const std::error_code& lhs, const Err& rhs) noexcept
-{
-  return !(lhs == rhs.code());
-}
-
-/// @overload
-inline bool operator!=(const Err& lhs, const Err& rhs) noexcept
-{
-  return !(lhs == rhs);
-}
-
 /// A wrapper around std::error_code, API-compatible with Err.
 class Errcode final {
 public:
@@ -327,6 +291,45 @@ public:
 private:
   std::error_code code_;
 };
+
+template<class E>
+concept Error_info = std::same_as<E, Err> || std::same_as<E, Errcode>;
+
+template<Error_info E>
+auto operator<=>(const E& lhs, const std::error_code& rhs) noexcept
+{
+  return lhs.code() <=> rhs;
+}
+
+template<Error_info E>
+bool operator==(const E& lhs, const std::error_code& rhs) noexcept
+{
+  return (lhs <=> rhs) == std::strong_ordering::equal;
+}
+
+template<Error_info E>
+auto operator<=>(const std::error_code& lhs, const E& rhs) noexcept
+{
+  return lhs <=> rhs.code();
+}
+
+template<Error_info E>
+bool operator==(const std::error_code& lhs, const E& rhs) noexcept
+{
+  return (lhs <=> rhs) == std::strong_ordering::equal;
+}
+
+template<Error_info E>
+auto operator<=>(const E& lhs, const E& rhs) noexcept
+{
+  return lhs.code() <=> rhs.code();
+}
+
+template<Error_info E>
+bool operator==(const E& lhs, const E& rhs) noexcept
+{
+  return (lhs <=> rhs) == std::strong_ordering::equal;
+}
 
 // -----------------------------------------------------------------------------
 
