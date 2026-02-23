@@ -246,7 +246,7 @@ inline Ret_expr fun_begin(const Tup_expr& fun, Env& env)
     if (auto r = (*a)->eval(env))
       result = std::move(r.res);
     else if (r.err == Errc::unhandled_end)
-      return r.res;
+      return std::move(r.res);
     else
       return r;
   }
@@ -276,7 +276,7 @@ inline Ret_expr fun_while_until(const Tup_expr& fun, Env& env, const bool is_whi
         if (asz > 1) {
           if (auto r = args[1]->eval(env); !r) {
             if (r.err == Errc::unhandled_break)
-              return r.res;
+              return std::move(r.res);
             else
               return r;
           }
@@ -358,11 +358,11 @@ inline Ret_expr fun_throw(const Tup_expr& fun, Env& env)
 
   if (auto r = (*arg)->eval(env)) {
     if (is_err(r.res))
-      return r.res->err();
+      return Err{r.res->err()};
     else
       return Err{Errc::fun_usage, fun.fun_name()};
   } else
-    return r.err;
+    return std::move(r.err);
 }
 
 // -----------------------------------------------------------------------------
@@ -424,7 +424,7 @@ inline Ret_expr fun_not(const Tup_expr& fun, Env& env)
 
 namespace detail {
 inline Ret_expr fun_math_calc(const Tup_expr& fun, Env& env, const int def0,
-  Err (Num_expr_base::*op)(const Shared_expr&))
+  std::error_code (Num_expr_base::*op)(const Shared_expr&))
 {
   if (auto r = eval(fun.tail(), fun.end(), env)) {
     const auto calc = [&fun, def0, &op, &r](auto&& result) -> Ret_expr
@@ -440,13 +440,13 @@ inline Ret_expr fun_math_calc(const Tup_expr& fun, Env& env, const int def0,
       }
 
       if (auto e = result->num_set(eargs[0]))
-        return e;
+        return Err{std::move(e), fun.fun_name()};
 
       for (std::size_t i{1}; i < easz; ++i) {
         if (auto e = (result.get()->*op)(eargs[i]))
-          return Ret_expr::make_error(Err{e.code(), fun.fun_name()});
+          return Err{std::move(e), fun.fun_name()};
       }
-      return Ret_expr::make_result(result);
+      return Ret_expr::Result{std::move(result)};
     };
 
     if (has_float_expr(cbegin(r.res), cend(r.res)))
@@ -454,11 +454,11 @@ inline Ret_expr fun_math_calc(const Tup_expr& fun, Env& env, const int def0,
     else
       return calc(std::make_shared<Integer_expr>());
   } else
-    return r.err;
+    return std::move(r.err);
 }
 
 inline Ret_expr fun_math_calcm(const Tup_expr& fun, Env& env,
-  Err (Expr::*op)(const Shared_expr&))
+  std::error_code (Expr::*op)(const Shared_expr&))
 {
   const auto args = fun.tail();
   const auto asz = fun.tail_size();
@@ -475,7 +475,7 @@ inline Ret_expr fun_math_calcm(const Tup_expr& fun, Env& env,
   for (auto a = args + 1, e = fun.end(); a != e; ++a) {
     if (auto r = (*a)->eval(env)) {
       if (auto eop = (n0.get()->*op)(r.res))
-        return eop;
+        return Err{std::move(eop), fun.fun_name()};
     } else
       return r;
   }
@@ -552,21 +552,21 @@ inline Ret_expr fun_cmp(const Tup_expr& fun, Env& env, const Op& op)
   if (asz < 1)
     return Err{Errc::fun_usage, fun.fun_name()};
 
-  const auto cmp = [&env, &op](auto first, const auto last) -> Ret<bool>
+  const auto cmp = [&env, &op](auto first, const auto last) -> Ret<bool, Err>
   {
-    const auto [lerr, lhs] = (*first)->eval(env);
+    auto [lerr, lhs] = (*first)->eval(env);
     if (lerr)
-      return lerr;
+      return std::move(lerr);
 
     for (++first; first != last; ++first) {
-      const auto [rerr, rhs] = (*first)->eval(env);
+      auto [rerr, rhs] = (*first)->eval(env);
       if (rerr)
-        return rerr;
+        return std::move(rerr);
       else if (auto r = lhs->cmp(rhs)) {
         if (!op(r.res))
           return false;
       } else
-        return r.err;
+        return Err{r.err};
     }
     return true;
   };
@@ -576,7 +576,7 @@ inline Ret_expr fun_cmp(const Tup_expr& fun, Env& env, const Op& op)
       if (!rcmp.res)
         return Nil_expr::instance();
     } else
-      return rcmp.err;
+      return std::move(rcmp.err);
   }
   return True_expr::instance();
 }
@@ -710,7 +710,7 @@ inline Ret_expr fun_string_cat(const Tup_expr& fun, Env& env, const bool is_modi
     } else
       return r;
   }
-  return Ret_expr::make_result(str);
+  return Ret_expr::Result{std::move(str)};
 }
 } // namespace detail
 
@@ -750,7 +750,7 @@ inline Ret_expr fun_tuple(const Tup_expr& fun, Env& env)
   if (auto r = eval(fun.tail(), fun.end(), env))
     return make_expr<Tup_expr>(std::move(r.res));
   else
-    return r.err;
+    return std::move(r.err);
 }
 
 /**
@@ -795,7 +795,7 @@ inline Ret_expr fun_tuple_flat(const Tup_expr& fun, Env& env)
     } else
       return r;
   }
-  return Ret_expr::make_result(result);
+  return Ret_expr::Result{std::move(result)};
 }
 
 // -----------------------------------------------------------------------------
@@ -821,9 +821,9 @@ inline Ret_expr fun_tuple_append(const Tup_expr& fun, Env& env, const bool is_mo
   if (auto r = eval(args + 1, fun.end(), env)) {
     auto& tuple = tup->tup();
     push_back(tuple, r.res);
-    return Ret_expr::make_result(tup);
+    return Ret_expr::Result{std::move(tup)};
   } else
-    return r.err;
+    return std::move(r.err);
 }
 } // namespace detail
 
@@ -950,7 +950,7 @@ inline Ret_expr fun_error(const Tup_expr& fun, Env& env)
       user_error_category()};
     return make_expr<Err_expr>(what ? Err{code, what->str()} : Err{code});
   } else
-    return r.err;
+    return std::move(r.err);
 }
 
 // -----------------------------------------------------------------------------
@@ -1103,7 +1103,7 @@ inline Ret_expr fun_fs_file_data(const Tup_expr& fun, Env& env)
       if (!err)
         return make_expr<Str_expr>(std::move(data));
       else // throw by default
-        return err;
+        return std::move(err);
     } else
       return Err{Errc::fun_usage, fun.fun_name()};
   } else

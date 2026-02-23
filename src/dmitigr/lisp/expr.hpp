@@ -41,9 +41,9 @@ using Shared_expr = std::shared_ptr<Expr>;
 /// The alias of tuple type.
 using Tuple = std::vector<Shared_expr>;
 /// The alias of Ret<Shared_expr>.
-using Ret_expr = Ret<Shared_expr>;
+using Ret_expr = Ret<Shared_expr, Err>;
 /// The alias of Ret<Tuple>.
-using Ret_tuple = Ret<Tuple>;
+using Ret_tuple = Ret<Tuple, Err>;
 /// An alias of function handler.
 using Funer = std::function<Ret_expr(const Tup_expr&, Env&)>;
 
@@ -93,7 +93,7 @@ public:
   {
     const auto i = expr_iter(name);
     if (i != cend(exprs_))
-      return i->second;
+      return std::move(i->second);
     else
       return Err{Errc::var_unbound, std::string{name}};
   }
@@ -192,27 +192,27 @@ public:
     DMITIGR_ASSERT(false);
   }
   /// Sets the value of number.
-  virtual Err num_set(const Shared_expr&) noexcept
+  virtual std::error_code num_set(const Shared_expr&) noexcept
   {
     DMITIGR_ASSERT(false);
   }
   /// Adds the number to number.
-  virtual Err num_add(const Shared_expr&) noexcept
+  virtual std::error_code num_add(const Shared_expr&) noexcept
   {
     DMITIGR_ASSERT(false);
   }
   /// Subtracts the number from number.
-  virtual Err num_sub(const Shared_expr&) noexcept
+  virtual std::error_code num_sub(const Shared_expr&) noexcept
   {
     DMITIGR_ASSERT(false);
   }
   /// Multiplies the number by number.
-  virtual Err num_mul(const Shared_expr&) noexcept
+  virtual std::error_code num_mul(const Shared_expr&) noexcept
   {
     DMITIGR_ASSERT(false);
   }
   /// Divides the number by number.
-  virtual Err num_div(const Shared_expr&) noexcept
+  virtual std::error_code num_div(const Shared_expr&) noexcept
   {
     DMITIGR_ASSERT(false);
   }
@@ -253,7 +253,7 @@ public:
   virtual std::string to_string() const = 0;
 
   /// @returns The output of this expression.
-  virtual Ret<std::string> to_output() const
+  virtual Ret<std::string, Err> to_output() const
   {
     return to_string();
   }
@@ -261,7 +261,7 @@ public:
   /// @returns `-1`, `0`, `1` if this `<`, `==`, `>` than `rhs`.
   virtual Ret<int> cmp(const Shared_expr&) const noexcept
   {
-    return Err{Errc::expr_undefined_cmp};
+    return Errc::expr_undefined_cmp;
   }
 };
 
@@ -360,7 +360,7 @@ inline Ret_tuple eval(In first, In last, Env& env)
     if (auto r = (*first)->eval(env))
       result.res.push_back(std::move(r.res));
     else
-      return Ret_tuple{r.err};
+      return Ret_tuple{std::move(r.err)};
   }
   return result;
 }
@@ -422,7 +422,7 @@ public:
     if (is_lvar(rhs))
       return var_name() < rhs->var_name() ? -1 : var_name() == rhs->var_name() ? 0 : 1;
     else
-      return Err{Errc::expr_not_lvar};
+      return Errc::expr_not_lvar;
   }
 
 private:
@@ -460,7 +460,7 @@ public:
     if (is_gvar(rhs))
       return var_name() < rhs->var_name() ? -1 : var_name() == rhs->var_name() ? 0 : 1;
     else
-      return Err{Errc::expr_not_gvar};
+      return Errc::expr_not_gvar;
   }
 private:
   mutable Shared_expr val_;
@@ -515,9 +515,9 @@ public:
     return name_;
   }
 
-  Ret<std::string> to_output() const override
+  Ret<std::string, Err> to_output() const override
   {
-    return std::string{"function "}.append(name_);
+    return std::move(std::string{"function "}.append(name_));
   }
 
   Ret<int> cmp(const Shared_expr& rhs) const noexcept override
@@ -525,7 +525,7 @@ public:
     if (is_fun(rhs))
       return fun_name() < rhs->fun_name() ? -1 : fun_name() == rhs->fun_name() ? 0 : 1;
     else
-      return Err{Errc::expr_not_function};
+      return Errc::expr_not_function;
   }
 
 private:
@@ -566,9 +566,9 @@ public:
       .append("'").append(err_.what()).append("'").append(")");
   }
 
-  Ret<std::string> to_output() const override
+  Ret<std::string, Err> to_output() const override
   {
-    return std::string{"error: "}.append(message(err_));
+    return std::move(std::string{"error: "}.append(message(err_)));
   }
 
   Ret<int> cmp(const Shared_expr& rhs) const noexcept override
@@ -577,7 +577,7 @@ public:
       return err().code() < rhs->err().code() ? -1
         : err().code() == rhs->err().code() ? 0 : 1;
     else
-      return Err{Errc::expr_not_error};
+      return Errc::expr_not_error;
   }
 
 private:
@@ -596,7 +596,7 @@ public:
     if (is_bool(rhs))
       return boolean() < rhs->boolean() ? -1 : boolean() == rhs->boolean() ? 0 : 1;
     else
-      return Err{Errc::expr_not_boolean};
+      return Errc::expr_not_boolean;
   }
 };
 
@@ -757,54 +757,54 @@ public:
     else if (is_float(rhs))
       return compare(value_, rhs->num_float());
     else
-      return Err{Errc::expr_not_number};
+      return Errc::expr_not_number;
   }
 
-  Err num_set(const Shared_expr& rhs) noexcept override
+  std::error_code num_set(const Shared_expr& rhs) noexcept override
   {
     return set_num_value(value_, rhs, [](auto& lh, const auto& rh)noexcept
     {
       lh = rh;
-      return Err{};
+      return Errc::ok;
     });
   }
 
-  Err num_add(const Shared_expr& rhs) noexcept override
+  std::error_code num_add(const Shared_expr& rhs) noexcept override
   {
     return set_num_value(value_, rhs, [](auto& lh, const auto& rh)noexcept
     {
       lh += rh;
-      return Err{};
+      return Errc::ok;
     });
   }
 
-  Err num_sub(const Shared_expr& rhs) noexcept override
+  std::error_code num_sub(const Shared_expr& rhs) noexcept override
   {
     return set_num_value(value_, rhs, [](auto& lh, const auto& rh)noexcept
     {
       lh -= rh;
-      return Err{};
+      return Errc::ok;
     });
   }
 
-  Err num_mul(const Shared_expr& rhs) noexcept override
+  std::error_code num_mul(const Shared_expr& rhs) noexcept override
   {
     return set_num_value(value_, rhs, [](auto& lh, const auto& rh)noexcept
     {
       lh *= rh;
-      return Err{};
+      return Errc::ok;
     });
   }
 
-  Err num_div(const Shared_expr& rhs) noexcept override
+  std::error_code num_div(const Shared_expr& rhs) noexcept override
   {
     return set_num_value(value_, rhs, [](auto& lh, const auto& rh)noexcept
     {
       if (rh) {
         lh /= rh;
-        return Err{};
+        return Errc::ok;
       } else
-        return Err{Errc::num_division_by_zero};
+        return Errc::num_division_by_zero;
     });
   }
 
@@ -829,14 +829,14 @@ private:
 
 /// Applies `op` to both numeric values: `tgt` and `src`.
 template<typename T, typename BinaryOp>
-Err set_num_value(T& tgt, const Shared_expr& src, const BinaryOp& op) noexcept
+std::error_code set_num_value(T& tgt, const Shared_expr& src, const BinaryOp& op) noexcept
 {
   if (is_integer(src))
     return op(tgt, src->num_integer());
   else if (is_float(src))
     return op(tgt, src->num_float());
   else
-    return Err{Errc::expr_not_number};
+    return Errc::expr_not_number;
 }
 
 #ifdef __GNUG__
@@ -869,9 +869,9 @@ public:
     return std::string{"'"}.append(value_).append("'");
   }
 
-  Ret<std::string> to_output() const override
+  Ret<std::string, Err> to_output() const override
   {
-    return value_;
+    return std::string{value_};
   }
 
   int type() const noexcept override
@@ -889,7 +889,7 @@ public:
     if (is_str(rhs))
       return str() < rhs->str() ? -1 : str() == rhs->str() ? 0 : 1;
     else
-      return Err{Errc::expr_not_string};
+      return Errc::expr_not_string;
   }
 
 private:
@@ -987,7 +987,7 @@ public:
     return result;
   }
 
-  Ret<std::string> to_output() const override
+  Ret<std::string, Err> to_output() const override
   {
     return to_output(0);
   }
@@ -1007,13 +1007,13 @@ public:
     if (is_tup(rhs))
       return cmp(value_, rhs->tup());
     else
-      return Err{Errc::expr_not_tuple};
+      return Errc::expr_not_tuple;
   }
 
 private:
   Tuple value_;
 
-  Ret<std::string> to_output(const std::size_t indent_size) const
+  Ret<std::string, Err> to_output(const std::size_t indent_size) const
   {
     std::string result;
     for (const auto& e : value_) {

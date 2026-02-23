@@ -31,7 +31,7 @@ namespace dmitigr {
  *
  * @details This type is useful for returning instead of throwing an exception.
  */
-template<typename T, Pure_type E = Err>
+template<typename T, Pure_type E = std::error_code>
 struct Ret final {
   /// Denotes `void`.
   struct Nothing final {};
@@ -42,13 +42,19 @@ struct Ret final {
   /// The alias of the result type.
   using Result = std::conditional_t<std::is_void_v<T>, Nothing, T>;
 
+  /// The result and error types must not be the same.
   static_assert(!std::is_same_v<std::decay_t<Result>, Error>);
 
   /// Holds not an error and a default-constructed value of type Result.
   Ret() noexcept = default;
 
+  /// Holds not an error and a given `result`.
+  Ret(Result&& result) noexcept
+    : res{std::move(result)}
+  {}
+
   /// Holds an error and a default-constructed value of type Result.
-  Ret(Error e) noexcept
+  Ret(Error&& e) noexcept
     : err{std::move(e)}
   {}
 
@@ -59,34 +65,15 @@ struct Ret final {
     : err{ec}
   {}
 
-  /// Holds not an error and a given `result`.
-  Ret(Result result) noexcept
-    : res{std::move(result)}
-  {}
-
   /**
    * @brief Holds the both `error` and `result`.
    *
    * @details Useful to return both an error and a partial result.
    */
-  Ret(Error error, Result result) noexcept
-    : err{error}
+  Ret(Error&& error, Result&& result) noexcept
+    : err{std::move(error)}
     , res{std::move(result)}
   {}
-
-  /// @returns The error.
-  template<typename Er, typename ... Types>
-  static auto make_error(Er e, Types&& ... res_args) noexcept
-  {
-    return Ret{Error{std::move(e)}, Result{std::forward<Types>(res_args)...}};
-  }
-
-  /// @returns The result.
-  template<typename ... Types>
-  static auto make_result(Types&& ... res_args) noexcept
-  {
-    return Ret{Result{std::forward<Types>(res_args)...}};
-  }
 
   /// @returns `true` if this instance is not an error.
   explicit operator bool() const noexcept

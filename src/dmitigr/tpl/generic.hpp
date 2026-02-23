@@ -46,7 +46,7 @@ public:
    * values by using Parameter::set_value() method. The parameter name *must* be
    * surrounded with left delimiter (*ldelim*) and right delimiter (*rdelim*).
    */
-  static Ret<Generic> make(const std::string_view input,
+  static Ret<Generic, Err> make(const std::string_view input,
     const std::string_view ldelim, const std::string_view rdelim)
   {
     Generic result;
@@ -442,7 +442,7 @@ public:
    * @par Requires
    * `!has_unbound_parameters()`.
    */
-  Ret<std::string> to_output() const
+  Ret<std::string, Err> to_output() const
   {
     std::string result;
     for (const auto& fragment : fragments_) {

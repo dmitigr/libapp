@@ -46,6 +46,6 @@ int main()
       else
         std::cerr << "Eval error: " << message(err) << std::endl;
     } else
-      std::cerr << "Parse error: " << message(r.err) << std::endl;
+      std::cerr << "Parse error near the position of " << r.res.pos << std::endl;
   }
 }

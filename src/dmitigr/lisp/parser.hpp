@@ -31,7 +31,7 @@ struct Parse_result final {
   /// Position followed the parsed `expr`.
   std::string_view::size_type pos{};
   /// The parsed expression.
-  Shared_expr expr{};
+  Shared_expr expr;
 };
 
 /// @returns The error or parse result.
@@ -40,7 +40,7 @@ inline Ret<Parse_result> parse(const std::string_view input)
   using Ret = Ret<Parse_result>;
 
   if (input.empty())
-    return Ret::make_error(Errc::parse_empty);
+    return Errc::parse_empty;
 
   enum {
     space,
@@ -72,7 +72,7 @@ inline Ret<Parse_result> parse(const std::string_view input)
   {
     return std::isdigit(ch) || ch == '.' || ch == '+' || ch == '-';
   };
-  static const auto parse_num = [](const std::string& data, const auto pos)
+  static const auto parse_num = [](const std::string& data, const auto pos) -> Ret
   {
     char* end{};
     {
@@ -81,44 +81,44 @@ inline Ret<Parse_result> parse(const std::string_view input)
       if (end == data.c_str())
         ; // data does not starts with an integer.
       else if (errno)
-        return Ret::make_error(Errc::parse_num_invalid, pos);
+        return Ret{Errc::parse_num_invalid, Parse_result{pos}};
       else if (data.c_str() + data.size() == end)
-        return Ret::make_result(pos, make_expr<Integer_expr>(val));
+        return Parse_result{pos, make_expr<Integer_expr>(val)};
     }
     {
       errno = 0;
       const auto val = std::strtold(data.c_str(), &end);
       if (end == data.c_str() || errno || data.c_str() + data.size() != end)
-        return Ret::make_error(Errc::parse_num_invalid, pos);
+        return Ret{Errc::parse_num_invalid, Parse_result{pos}};
       else
-        return Ret::make_result(pos, make_expr<Float_expr>(val));
+        return Parse_result{pos, make_expr<Float_expr>(val)};
     }
   };
-  static const auto parse_fun = [](std::string&& data, const auto pos)
+  static const auto parse_fun = [](std::string&& data, const auto pos) -> Ret
   {
-    return Ret::make_result(pos, make_expr<Fun_expr>(std::move(data)));
+    return Parse_result{pos, make_expr<Fun_expr>(std::move(data))};
   };
-  static const auto parse_spec = [](const std::string& data, const auto pos)
+  static const auto parse_spec = [](const std::string& data, const auto pos) -> Ret
   {
     if (data == "nil")
-      return Ret::make_result(pos, Nil_expr::instance());
+      return Parse_result{pos, Nil_expr::instance()};
     else if (data == "true")
-      return Ret::make_result(pos, True_expr::instance());
+      return Parse_result{pos, True_expr::instance()};
     else
-      return Ret::make_error(Errc::parse_spec_invalid_name, pos);
+      return Ret{Errc::parse_spec_invalid_name, Parse_result{pos}};
   };
   static const auto parse_var = [](std::string&& data,
-    const std::string_view::size_type pos, const char prefix)
+    const std::string_view::size_type pos, const char prefix) -> Ret
   {
     if (!data.empty()) {
       if (prefix == '$')
-        return Ret::make_result(pos, make_expr<Lvar_expr>(std::move(data)));
+        return Parse_result{pos, make_expr<Lvar_expr>(std::move(data))};
       else if (prefix == '@')
-        return Ret::make_result(pos, make_expr<Gvar_expr>(std::move(data)));
+        return Parse_result{pos, make_expr<Gvar_expr>(std::move(data))};
       else
         DMITIGR_ASSERT(false);
     } else
-      return Ret::make_error(Errc::parse_var_invalid_name, pos);
+      return Ret{Errc::parse_var_invalid_name, Parse_result{pos}};
   };
 
   char prefix{};
@@ -157,7 +157,7 @@ inline Ret<Parse_result> parse(const std::string_view input)
             state = fun;
             goto case_fun;
           } else
-            return Ret::make_error(Errc::parse_malformed, pos + 1);
+            return Ret{Errc::parse_malformed, Parse_result{pos + 1}};
         }
       }
       break;
@@ -181,7 +181,7 @@ inline Ret<Parse_result> parse(const std::string_view input)
         data += ch;
         break;
       } else
-        return Ret::make_result(pos + 1, make_expr<Str_expr>(std::move(data)));
+        return Parse_result{pos + 1, make_expr<Str_expr>(std::move(data))};
 
     case num:
       if (is_num_char(ch) || ch == 'e') {
@@ -201,15 +201,15 @@ inline Ret<Parse_result> parse(const std::string_view input)
 
     case expr:
       if (ch == ')')
-        return Ret::make_result(pos + 1, make_expr<Tup_expr>(std::move(tup)));
+        return Parse_result{pos + 1, make_expr<Tup_expr>(std::move(tup))};
       else if (!std::isspace(ch)) {
         if (auto r = parse(input.substr(pos))) {
           tup.push_back(std::move(r.res.expr));
           pos += r.res.pos;
           continue;
         } else
-          return Ret::make_error(std::move(r.err),
-            pos + r.res.pos, std::move(r.res.expr));
+          return Ret{std::move(r.err),
+            Parse_result{pos + r.res.pos, std::move(r.res.expr)}};
       } else
         break;
     }
@@ -217,7 +217,7 @@ inline Ret<Parse_result> parse(const std::string_view input)
   }
   switch (state) {
   case space:
-    return Ret::make_result(pos);
+    return Parse_result(pos);
   case spec:
     return parse_spec(data, pos);
   case var:
@@ -227,7 +227,7 @@ inline Ret<Parse_result> parse(const std::string_view input)
   case fun:
     return parse_fun(std::move(data), pos);
   default:
-    return Ret::make_error(Errc::parse_incomplete, pos);
+    return Ret{Errc::parse_incomplete, Parse_result{pos}};
   }
 }
 

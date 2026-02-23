@@ -734,7 +734,7 @@ public:
    *
    * @param tplfile Either absolute or relative path to the text template file.
    */
-  Ret<tpl::Generic>
+  Ret<tpl::Generic, Err>
   tpl(const std::filesystem::path& tplfile, const Request& req) const
   {
     // Create the Lisp environment.

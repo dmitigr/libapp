@@ -74,7 +74,7 @@ public:
     return tpl_.to_string("<{{", "}}>");
   }
 
-  Ret<std::string> to_output() const override
+  Ret<std::string, Err> to_output() const override
   {
     return tpl_.to_output();
   }
@@ -85,7 +85,7 @@ public:
       const auto rhs_tpl = std::static_pointer_cast<Tpl_expr>(rhs);
       return tpl() < rhs_tpl->tpl() ? -1 : tpl() == rhs_tpl->tpl() ? 0 : 1;
     } else
-      return Err{Errc::lisp_expr_not_tpl};
+      return Errc::lisp_expr_not_tpl;
   }
 
   const tpl::Generic& tpl() const noexcept
@@ -131,7 +131,7 @@ public:
       return stack() < rhs_tplstack->stack() ? -1 :
         stack() == rhs_tplstack->stack() ? 0 : 1;
     } else
-      return Err{Errc::lisp_expr_not_tplstack};
+      return Errc::lisp_expr_not_tplstack;
   }
 
   const std::vector<std::filesystem::path>& stack() const noexcept
@@ -194,7 +194,7 @@ inline Err tpl_check_cycle(std::vector<std::filesystem::path>& stack,
   return Err{};
 }
 
-inline Ret<tpl::Generic>
+inline Ret<tpl::Generic, Err>
 tpl(const std::filesystem::path& tplfile, lisp::Env& env)
 {
   namespace fs = std::filesystem;
@@ -239,7 +239,7 @@ tpl(const std::filesystem::path& tplfile, lisp::Env& env)
   const auto input = read_to_string(tplfile);
   auto [err, result] = tpl::Generic::make(input, "<{{", "}}>");
   if (err)
-    return err;
+    return std::move(err);
 
   // Evaluate the Lisp expressions from the template parameters.
   for (std::size_t p{}, pcount{result.parameter_count()}; p < pcount;) {
@@ -255,9 +255,9 @@ tpl(const std::filesystem::path& tplfile, lisp::Env& env)
     }
 
     // Evaluate the Lisp expression.
-    const auto [eval_err, eval_res] = parse_res.expr->eval(shadowed_env);
+    auto [eval_err, eval_res] = parse_res.expr->eval(shadowed_env);
     if (eval_err)
-      return eval_err;
+      return std::move(eval_err);
 
     // Replace or bind the parameter with the evaluation result.
     if (eval_res->type() == type_tpl) {
@@ -269,9 +269,9 @@ tpl(const std::filesystem::path& tplfile, lisp::Env& env)
       result.bind(p, r.res);
       ++p;
     } else
-      return r.err;
+      return std::move(r.err);
   }
-  return result;
+  return std::move(result);
 }
 
 inline std::filesystem::path tplfile(const std::filesystem::path& tplfile,
@@ -310,7 +310,7 @@ inline lisp::Ret_expr fun_web_raw(const lisp::Tup_expr& fun, lisp::Env& env)
       const auto tplfile = detail::tplfile(r.res->str(), env);
       auto [err, res] = detail::read_to_str(tplfile);
       if (err)
-        return err;
+        return std::move(err);
       else if (std::any_of(cbegin(res), cend(res), str::is_zero))
         return Err{Errc::txt_invalid, fun.fun_name()};
       else
@@ -336,7 +336,7 @@ inline lisp::Ret_expr fun_web_esc(const lisp::Tup_expr& fun, lisp::Env& env)
       const auto tplfile = detail::tplfile(r.res->str(), env);
       auto [err, res] = detail::read_to_str(tplfile);
       if (err)
-        return err;
+        return std::move(err);
       else if (std::any_of(cbegin(res), cend(res), str::is_zero))
         return Err{Errc::txt_invalid, fun.fun_name()};
       else
@@ -361,7 +361,7 @@ inline lisp::Ret_expr fun_web_tpl(const lisp::Tup_expr& fun, lisp::Env& env)
       namespace fs = std::filesystem;
       const auto tplfile = detail::tplfile(r.res->str(), env);
       if (auto [err, res] = detail::tpl(tplfile, env); err)
-        return err;
+        return std::move(err);
       else
         return lisp::make_expr<Tpl_expr>(std::move(res));
     } else
