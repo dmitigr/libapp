@@ -23,31 +23,56 @@
  * @def DMITIGR_LOG_WITH_LEVEL
  * If defined, the log output is written with log level prefix `<N>`, where
  * `N` is an integer of range `[0, 7]`. The value of dmitigr::log::level defines
- * the maximum level to log.
- */
-
-/**
- * @def DMITIGR_LOG_PREFIX_WRITER
- * Defines the name of a function with signature `void w(std::ostream&, Time)`
- * for writing log entry prefix. The default is DMITIGR_LOG_DEFAULT_PREFIX_WRITER.
- */
-
-/**
- * @def DMITIGR_LOG_NOW
- * Defines the name of a function with signature `Time t()` for getting time
- * point which is passed to DMITIGR_LOG_PREFIX_WRITER. The default is
- * DMITIGR_LOG_DEFAULT_NOW.
+ * the maximum level of logging.
+ *
+ * @see dmitigr::log::level.
  */
 
 /**
  * @def DMITIGR_LOG_WITH_DEFAULT_PREFIX
  * If defined, the default log entry prefix is writen.
+ *
+ * @see dmitigr::log::default_prefix_writer().
+ */
+
+/**
+ * @def DMITIGR_LOG_PREFIX_WRITER
+ * Defines the name of a function with signature `void w(std::ostream&, Time)`
+ * for writing log entry prefix.
+ *
+ * @see dmitigr::log::default_prefix_writer().
+ */
+
+/**
+ * @def DMITIGR_LOG_NOW
+ * Defines the name of a function with signature `Time t()` for getting time
+ * point which is passed to DMITIGR_LOG_PREFIX_WRITER.
+ *
+ * @see std::chrono::system_clock::now().
+ */
+
+/**
+ * @def DMITIGR_LOG_CALL_SEVERITY
+ * Defines the default error level for logging by dmitigr::log::call().
+ *
+ * @see dmitigr::log::call().
+ */
+
+/**
+ * @def DMITIGR_LOG_CALL_ERR_LOG_FMT
+ * Defines the format string of an error message, which is printed in case of
+ * exception catched by dmitigr::log::call(). The first two placeholders of this
+ * string refers to action and `std::exception::what()` correspondingly.
+ *
+ * @see dmitigr::log::call().
  */
 
 /**
  * @def DMITIGR_LOG_CALL_WRITE
  * Defines the routine which called by dmitigr::log::call() to log the error
- * output. The default is DMITIGR_LOG_WRITE().
+ * output.
+ *
+ * @see dmitigr::log::call().
  */
 
 #ifndef DMITIGR_BASE_LOG_HPP
@@ -451,9 +476,6 @@ void write(const Level level, std::format_string<Types...> fmt, Types&& ... args
  *
  * @tparam Action An action description.
  * @tparam Severity A severity of action used as log level in case of exception.
- * @tparam ErrorLogFmt A format string of an error message, which is printed
- * in case of exception. The first two placeholders of this string refers to
- * Action and `std::exception::what()` correspondingly.
  * @param callback A function to call. It can be either parameter free or accept
  * Action as std::string_view.
  *
@@ -461,14 +483,13 @@ void write(const Level level, std::format_string<Types...> fmt, Types&& ... args
  */
 template<str::Literal Action,
   Level Severity = DMITIGR_LOG_CALL_SEVERITY,
-  str::Literal ErrLogFmt = DMITIGR_LOG_CALL_ERR_LOG_FMT,
   typename F>
 requires (std::invocable<F> || std::invocable<F, std::string_view>)
 decltype(auto) call(F&& callback)
 {
   static_assert(str::len(Action) > 0, "action literal required");
   static_assert(Severity <= Level::error, "severity error+ required");
-  static_assert(str::len(ErrLogFmt) > 0, "error format literal required");
+  constexpr std::string_view efmt{DMITIGR_LOG_CALL_ERR_LOG_FMT};
   try {
     if constexpr (std::is_invocable_v<F>)
       return std::forward<F>(callback)();
@@ -476,14 +497,12 @@ decltype(auto) call(F&& callback)
       return std::forward<F>(callback)(Action.to_string_view());
   } catch (const std::exception& e) {
     try {
-      DMITIGR_LOG_CALL_WRITE(Severity, ErrLogFmt.to_string_view(),
-        Action.to_string_view(), e.what());
+      DMITIGR_LOG_CALL_WRITE(Severity, efmt, Action.to_string_view(), e.what());
     } catch (...) {}
     throw;
   } catch (...) {
     try {
-      DMITIGR_LOG_CALL_WRITE(Severity, ErrLogFmt.to_string_view(),
-        Action.to_string_view(), "unknown error");
+      DMITIGR_LOG_CALL_WRITE(Severity, efmt, Action.to_string_view(), "unknown error");
     } catch (...) {}
     throw;
   }
@@ -496,16 +515,17 @@ decltype(auto) call(F&& callback)
  */
 template<str::Literal Action,
   Level Severity = DMITIGR_LOG_CALL_SEVERITY,
-  str::Literal ErrLogFmt = DMITIGR_LOG_CALL_ERR_LOG_FMT,
   typename F>
 requires (std::invocable<F> || std::invocable<F, std::string_view>)
 auto call_nothrow(F&& callback) noexcept
 {
+  static_assert(str::len(Action) > 0, "action literal required");
+  static_assert(Severity <= Level::error, "severity error+ required");
   static const auto eh = [](auto code, const char* const what) noexcept
   {
     try {
-      DMITIGR_LOG_CALL_WRITE(Severity, ErrLogFmt.to_string_view(),
-        Action.to_string_view(), what);
+      constexpr std::string_view efmt{DMITIGR_LOG_CALL_ERR_LOG_FMT};
+      DMITIGR_LOG_CALL_WRITE(Severity, efmt, Action.to_string_view(), what);
     } catch (...) {}
     return std::move(code);
   };

@@ -40,8 +40,7 @@ int main()
       DMITIGR_LOG_INFO("started {}", action);
       throw std::runtime_error{"it's expected"};
     });
-    const auto ret = log::call_nothrow<"test log::call", dmitigr::log::Level::critical,
-      "failure to {}: {}">(
+    const auto ret = log::call_nothrow<"test log::call", dmitigr::log::Level::critical>(
       []
       {
         throw "it's expected";
