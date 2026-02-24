@@ -310,7 +310,7 @@ inline lisp::Ret_expr fun_web_raw(const lisp::Tup_expr& fun, lisp::Env& env)
       const auto tplfile = detail::tplfile(r.res->str(), env);
       auto [err, res] = detail::read_to_str(tplfile);
       if (err)
-        return std::move(err);
+        return Err{std::move(err), fun.fun_name()};
       else if (std::any_of(cbegin(res), cend(res), str::is_zero))
         return Err{Errc::txt_invalid, fun.fun_name()};
       else
@@ -336,7 +336,7 @@ inline lisp::Ret_expr fun_web_esc(const lisp::Tup_expr& fun, lisp::Env& env)
       const auto tplfile = detail::tplfile(r.res->str(), env);
       auto [err, res] = detail::read_to_str(tplfile);
       if (err)
-        return std::move(err);
+        return Err{std::move(err), fun.fun_name()};
       else if (std::any_of(cbegin(res), cend(res), str::is_zero))
         return Err{Errc::txt_invalid, fun.fun_name()};
       else

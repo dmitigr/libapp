@@ -1102,8 +1102,8 @@ inline Ret_expr fun_fs_file_data(const Tup_expr& fun, Env& env)
       auto [err, data] = detail::read_to_str(file_name);
       if (!err)
         return make_expr<Str_expr>(std::move(data));
-      else // throw by default
-        return std::move(err);
+      else
+        return Err{std::move(err), fun.fun_name()};
     } else
       return Err{Errc::fun_usage, fun.fun_name()};
   } else

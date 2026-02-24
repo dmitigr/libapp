@@ -92,10 +92,6 @@
 #define DMITIGR_LOG_CALL_WRITE(...) DMITIGR_LOG_WRITE(__VA_ARGS__)
 #endif
 
-#ifndef DMITIGR_LOG_CALL_ERR
-#define DMITIGR_LOG_CALL_ERR Errcode
-#endif
-
 /// Expands to call dmitigr::log::emergency().
 #define DMITIGR_LOG_EMERGENCY(fmt, ...) do {                    \
     if (dmitigr::log::level >= dmitigr::log::Level::emergency)  \
@@ -451,19 +447,17 @@ void write(const Level level, std::format_string<Types...> fmt, Types&& ... args
 }
 
 /**
- * @brief Calls `callback`, catches exceptions and logs them as errors.
+ * @brief Calls `callback`, catches exceptions, logs them as errors and rethrow.
  *
  * @tparam Action An action description.
  * @tparam Severity A severity of action used as log level in case of exception.
  * @tparam ErrorLogFmt A format string of an error message, which is printed
  * in case of exception. The first two placeholders of this string refers to
  * Action and `std::exception::what()` correspondingly.
- * @tparam NoThrow Throw mode switch.
  * @param callback A function to call. It can be either parameter free or accept
  * Action as std::string_view.
  *
- * @returns The result of `callback` if `NoThrow == NoThrow::no`,
- * or Ret<T> otherwise.
+ * @returns The result of `callback`.
  */
 template<str::Literal Action,
   Level Severity = DMITIGR_LOG_CALL_SEVERITY,
@@ -495,11 +489,14 @@ decltype(auto) call(F&& callback)
   }
 }
 
-/// Calls call() with Nothrow::yes.
+/**
+ * @brief noexcept-version of call().
+ *
+ * @returns `Ret<R>`, where `R` is a type of value returned by `callback`.
+ */
 template<str::Literal Action,
   Level Severity = DMITIGR_LOG_CALL_SEVERITY,
   str::Literal ErrLogFmt = DMITIGR_LOG_CALL_ERR_LOG_FMT,
-  class E = DMITIGR_LOG_CALL_ERR,
   typename F>
 requires (std::invocable<F> || std::invocable<F, std::string_view>)
 auto call_nothrow(F&& callback) noexcept
@@ -510,7 +507,7 @@ auto call_nothrow(F&& callback) noexcept
       DMITIGR_LOG_CALL_WRITE(Severity, ErrLogFmt.to_string_view(),
         Action.to_string_view(), what);
     } catch (...) {}
-    return E{std::move(code), what};
+    return std::move(code);
   };
 
   if constexpr (std::is_invocable_v<F>)

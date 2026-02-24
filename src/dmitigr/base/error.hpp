@@ -243,99 +243,49 @@ private:
   std::string what_;
 };
 
-/// A wrapper around std::error_code, API-compatible with Err.
-class Errcode final {
-public:
-  /// The default constructor.
-  Errcode() noexcept = default;
-
-  /// The constructor.
-  Errcode(std::error_code code) noexcept
-    : code_{code}
-  {}
-
-  /**
-   * @overload
-   *
-   * @remarks For compatibility with Err::Err().
-   */
-  Errcode(std::error_code code, const char*) noexcept
-    : code_{code}
-  {}
-
-  /// Swaps this instance with `rhs`.
-  void swap(Errcode& rhs) noexcept
-  {
-    using std::swap;
-    swap(code_, rhs.code_);
-  }
-
-  /// @returns `true` if the instance represents an error.
-  explicit operator bool() const noexcept
-  {
-    return static_cast<bool>(code_);
-  }
-
-  /// @returns The error code.
-  const std::error_code& code() const noexcept
-  {
-    return code_;
-  }
-
-  /// @returns The what-string.
-  const char* what() const noexcept
-  {
-    return code_.category().name();
-  }
-
-private:
-  std::error_code code_;
-};
-
-template<class E>
-concept Error_info = std::same_as<E, Err> || std::same_as<E, Errcode>;
-
-template<Error_info E>
-auto operator<=>(const E& lhs, const std::error_code& rhs) noexcept
+/// @returns The result of 3-way comparisson of `lhs` with `rhs`.
+inline auto operator<=>(const Err& lhs, const std::error_code& rhs) noexcept
 {
   return lhs.code() <=> rhs;
 }
 
-template<Error_info E>
-bool operator==(const E& lhs, const std::error_code& rhs) noexcept
+/// @returns `true` if `lhs == rhs`.
+inline bool operator==(const Err& lhs, const std::error_code& rhs) noexcept
 {
   return (lhs <=> rhs) == std::strong_ordering::equal;
 }
 
-template<Error_info E>
-auto operator<=>(const std::error_code& lhs, const E& rhs) noexcept
+/// @returns The result of 3-way comparisson of `lhs` with `rhs`.
+inline auto operator<=>(const std::error_code& lhs, const Err& rhs) noexcept
 {
   return lhs <=> rhs.code();
 }
 
-template<Error_info E>
-bool operator==(const std::error_code& lhs, const E& rhs) noexcept
+/// @returns `true` if `lhs == rhs`.
+inline bool operator==(const std::error_code& lhs, const Err& rhs) noexcept
 {
   return (lhs <=> rhs) == std::strong_ordering::equal;
 }
 
-template<Error_info E>
-auto operator<=>(const E& lhs, const E& rhs) noexcept
+/// @returns The result of 3-way comparisson of `lhs` with `rhs`.
+inline auto operator<=>(const Err& lhs, const Err& rhs) noexcept
 {
   return lhs.code() <=> rhs.code();
 }
 
-template<Error_info E>
-bool operator==(const E& lhs, const E& rhs) noexcept
+/// @returns `true` if `lhs == rhs`.
+inline bool operator==(const Err& lhs, const Err& rhs) noexcept
 {
   return (lhs <=> rhs) == std::strong_ordering::equal;
 }
 
 // -----------------------------------------------------------------------------
 
-/// @returns The error message combined from `err.code().message()` and `err.what()`.
-template<class E>
-const std::string& message(const E& err) noexcept
+/**
+ * @returns The error description combined from `err.code().message()` and
+ * `err.what()`.
+ */
+inline const std::string& message(const Err& err) noexcept
 {
   thread_local std::string message;
   try {

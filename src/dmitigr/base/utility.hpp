@@ -102,7 +102,7 @@ auto call_nothrow(F&& func, Types&& ... args) noexcept
 {
   static const auto eh = [](auto code, const char* const what) noexcept
   {
-    return Err{std::move(code), what};
+    return std::move(code);
   };
   return call_nothrow(eh, std::forward<F>(func), std::forward<Types>(args)...);
 }
