@@ -131,7 +131,7 @@ public:
   /// @overload
   Uuid(const std::array<unsigned char, 16>& arr) noexcept
   {
-    static_assert(sizeof(data_.raw_) == arr.size());
+    static_assert(sizeof(data_.raw_) == sizeof(arr));
     std::memcpy(data_.raw_, arr.data(), arr.size());
   }
 
