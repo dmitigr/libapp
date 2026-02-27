@@ -29,6 +29,7 @@ set(dmitigr_io_headers
   async_agent.hpp
   connection.hpp
   endpoint.hpp
+  shard.hpp
 )
 
 set(dmitigr_io_implementations
@@ -49,6 +50,6 @@ list(APPEND dmitigr_io_target_link_libraries_interface Boost::boost)
 # ------------------------------------------------------------------------------
 
 if(DMITIGR_LIBS_TESTS)
-  set(dmitigr_io_tests proxy)
+  set(dmitigr_io_tests proxy shard)
   set(dmitigr_io_tests_target_link_libraries dmitigr_base)
 endif()

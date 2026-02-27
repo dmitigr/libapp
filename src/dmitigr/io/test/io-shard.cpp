@@ -14,13 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DMITIGR_IO_IO_HPP
-#define DMITIGR_IO_IO_HPP
+#include "../shard.hpp"
 
-#include "acceptor.hpp"
-#include "async_agent.hpp"
-#include "connection.hpp"
-#include "endpoint.hpp"
-#include "shard.hpp"
-
-#endif  // DMITIGR_IO_IO_HPP
+int main()
+{
+  namespace io = dmitigr::io;
+  io::Shard shard{0, 1, {0}};
+}
