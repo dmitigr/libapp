@@ -1,0 +1,44 @@
+// -*- C++ -*-
+//
+// Copyright 2026 Dmitry Igrishin
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#if !defined(__linux__) && !defined(__APPLE__)
+#error dmitigr/nix/cpu.hpp is usable only on Linux or macOS!
+#endif
+
+#include <fstream>
+#include <string>
+
+#ifndef DMITIGR_NIX_CPU_HPP
+#define DMITIGR_NIX_CPU_HPP
+
+namespace dmitigr::nix {
+
+/// @returns `true` if Hyper-threading is available.
+inline bool is_hyper_threading_available()
+{
+#ifdef __linux__
+  if (std::ifstream list{"/sys/devices/system/cpu/cpu0/topology/thread_siblings_list"}) {
+    std::string line;
+    if (std::getline(list, line))
+      return line.find_first_of(",-") != std::string::npos;
+  }
+#endif
+  return false;
+}
+
+} // namespace dmitigr::nix
+
+#endif  // DMITIGR_NIX_CPU_HPP

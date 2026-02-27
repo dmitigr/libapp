@@ -56,7 +56,7 @@ list(APPEND dmitigr_nix_target_link_libraries_interface dl)
 
 if(DMITIGR_LIBS_TESTS)
   if(UNIX AND NOT CMAKE_SYSTEM_NAME MATCHES MSYS|MinGW|Cygwin)
-    set(dmitigr_nix_tests detach dl ifaddrs)
+    set(dmitigr_nix_tests cpu detach dl ifaddrs)
   endif()
   if(UNIX AND NOT LINUX)
     list(APPEND dmitigr_nix_tests sysctl)

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2025 Dmitry Igrishin
+// Copyright 2026 Dmitry Igrishin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,22 +14,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DMITIGR_NIX_NIX_HPP
-#define DMITIGR_NIX_NIX_HPP
+#include "../cpu.hpp"
 
-#if defined(__linux__) || defined(__APPLE__)
-#include "detach.hpp"
-#include "ifaddrs.hpp"
-#endif
+#include <iostream>
 
-#if defined(__FreeBSD__) || defined(__APPLE__)
-#include "sysctl.hpp"
-#endif
-
-#include "cpu.hpp"
-#include "dl.hpp"
-#include "error.hpp"
-#include "ipc_pipe.hpp"
-#include "process.hpp"
-
-#endif  // DMITIGR_NIX_NIX_HPP
+int main()
+{
+  try {
+    namespace nix = dmitigr::nix;
+    using std::cout;
+    cout << "Hyper-threading is "
+         << (nix::is_hyper_threading_available() ? "available" : "not available")
+         << '.' << std::endl;
+  } catch (const std::exception& e) {
+    std::cerr << e.what() << std::endl;
+    return 1;
+  } catch (...) {
+    std::cerr << "unknown error" << std::endl;
+    return 2;
+  }
+}
