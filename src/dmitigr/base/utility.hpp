@@ -100,7 +100,7 @@ auto call_nothrow(E&& eh, F&& func, Types&& ... args) noexcept
 template<typename F, typename ... Types>
 auto call_nothrow(F&& func, Types&& ... args) noexcept
 {
-  static const auto eh = [](auto code, const char* const what) noexcept
+  static const auto eh = [](auto code, const char*) noexcept
   {
     return std::move(code);
   };
