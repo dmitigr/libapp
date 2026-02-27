@@ -249,14 +249,20 @@ inline std::error_code set_affinity(const pthread_t handle,
   return make_error_code(std::errc::not_supported);
 #endif
 }
+#endif  // _WIN32
 
 /// @overload
 inline std::error_code set_affinity(std::thread& thread,
   const unsigned int cpu) noexcept
 {
+#ifdef _WIN32
+  (void)thread;
+  (void)cpu;
+  return make_error_code(std::errc::not_supported);
+#else
   return set_affinity(thread.native_handle(), cpu);
-}
 #endif
+}
 
 // -----------------------------------------------------------------------------
 // Sleep
