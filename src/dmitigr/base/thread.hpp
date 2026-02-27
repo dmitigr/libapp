@@ -27,6 +27,7 @@
 #include <functional>
 #include <mutex>
 #include <queue>
+#include <stdexcept>
 #include <string_view>
 #include <system_error>
 #include <thread>
@@ -41,6 +42,62 @@
 #endif  // __linux__
 
 namespace dmitigr::thread {
+
+// -----------------------------------------------------------------------------
+// Affinity
+// -----------------------------------------------------------------------------
+
+#ifndef _WIN32
+/// Sets the CPU affinity of the thread `handle` to the `cpu`.
+inline std::error_code set_affinity(const pthread_t handle,
+  const unsigned int cpu) noexcept
+{
+#ifdef __linux__
+  if (!(handle && cpu < std::thread::hardware_concurrency()))
+    return std::make_error_code(std::errc::invalid_argument);
+
+  cpu_set_t set;
+  CPU_ZERO(&set);
+  CPU_SET(cpu, &set);
+  const int err{pthread_setaffinity_np(handle, sizeof(cpu_set_t), &set)};
+  return std::error_code{err, std::generic_category()};
+#else
+  (void)handle;
+  (void)cpu;
+  return make_error_code(std::errc::not_supported);
+#endif
+}
+#endif  // _WIN32
+
+/// @overload
+inline std::error_code set_affinity(std::thread& thread,
+  const unsigned int cpu) noexcept
+{
+#ifdef _WIN32
+  (void)thread;
+  (void)cpu;
+  return make_error_code(std::errc::not_supported);
+#else
+  return set_affinity(thread.native_handle(), cpu);
+#endif
+}
+
+// -----------------------------------------------------------------------------
+// Sleep
+// -----------------------------------------------------------------------------
+
+/**
+ * @brief Blocks the execution of the current thread for
+ * `max_timeout - (Clock::now() - started)`.
+ */
+template<class Clock, class Rep, class Period>
+void sleep_for_remaining(const std::chrono::time_point<Clock> started,
+  const std::chrono::duration<Rep, Period> max_timeout)
+{
+  const auto elapsed = Clock::now() - started;
+  const auto timeout = max_timeout - elapsed;
+  std::this_thread::sleep_for(timeout);
+}
 
 // -----------------------------------------------------------------------------
 // Pool
@@ -118,6 +175,34 @@ public:
     for (std::size_t i{}; i < size; ++i)
       pool_.threads.emplace_back(&Pool::wait_and_run, this);
   }
+
+  /**
+   * @overload
+   *
+   * @details Pins threads according to `pinmap`.
+   */
+  Pool(const std::size_t size, const std::vector<unsigned int>& pinmap,
+    Logger logger = {})
+    : Pool{size, std::move(logger)}
+  {
+    DMITIGR_ASSERT(size == pool_.threads.size());
+    if (!(size >= pinmap.size()) || (size % pinmap.size()))
+      throw std::invalid_argument{"dmitigr::thread::Pool: invalid size or pinmap"};
+    for (std::size_t i{}; i < size; ++i) {
+      const auto core_index = pinmap[i % pinmap.size()];
+      dmitigr::thread::set_affinity(pool_.threads[i], core_index);
+    }
+  }
+
+  /// @overload
+  Pool(const std::vector<unsigned int>& pinmap, Logger logger)
+    : Pool{pinmap.size(), pinmap, std::move(logger)}
+  {}
+
+  /// @overload
+  explicit Pool(const std::vector<unsigned int>& pinmap)
+    : Pool{pinmap, Logger{}}
+  {}
 
   /// @}
 
@@ -224,62 +309,6 @@ private:
     } catch (...){}
   }
 };
-
-// -----------------------------------------------------------------------------
-// Affinity
-// -----------------------------------------------------------------------------
-
-#ifndef _WIN32
-/// Sets the CPU affinity of the thread `handle` to the `cpu`.
-inline std::error_code set_affinity(const pthread_t handle,
-  const unsigned int cpu) noexcept
-{
-#ifdef __linux__
-  if (!(handle && cpu < std::thread::hardware_concurrency()))
-    return std::make_error_code(std::errc::invalid_argument);
-
-  cpu_set_t set;
-  CPU_ZERO(&set);
-  CPU_SET(cpu, &set);
-  const int err{pthread_setaffinity_np(handle, sizeof(cpu_set_t), &set)};
-  return std::error_code{err, std::generic_category()};
-#else
-  (void)handle;
-  (void)cpu;
-  return make_error_code(std::errc::not_supported);
-#endif
-}
-#endif  // _WIN32
-
-/// @overload
-inline std::error_code set_affinity(std::thread& thread,
-  const unsigned int cpu) noexcept
-{
-#ifdef _WIN32
-  (void)thread;
-  (void)cpu;
-  return make_error_code(std::errc::not_supported);
-#else
-  return set_affinity(thread.native_handle(), cpu);
-#endif
-}
-
-// -----------------------------------------------------------------------------
-// Sleep
-// -----------------------------------------------------------------------------
-
-/**
- * @brief Blocks the execution of the current thread for
- * `max_timeout - (Clock::now() - started)`.
- */
-template<class Clock, class Rep, class Period>
-void sleep_for_remaining(const std::chrono::time_point<Clock> started,
-  const std::chrono::duration<Rep, Period> max_timeout)
-{
-  const auto elapsed = Clock::now() - started;
-  const auto timeout = max_timeout - elapsed;
-  std::this_thread::sleep_for(timeout);
-}
 
 } // namespace dmitigr::thread
 
