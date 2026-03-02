@@ -17,6 +17,7 @@
 #ifndef DMITIGR_IO_SHARD_HPP
 #define DMITIGR_IO_SHARD_HPP
 
+#include "../base/assert.hpp"
 #include "../base/thread.hpp"
 
 #include <boost/asio.hpp>
@@ -51,11 +52,8 @@ public:
     const std::vector<unsigned int>& worker_pinmap)
     : io_guard_{boost::asio::make_work_guard(io_ctx_)}
   {
-    if (!(worker_count > 0))
-      throw std::invalid_argument{"dmitigr::io::Shard: invalid worker_count"};
-    else if (!(worker_pinmap.size() > 0))
-      throw std::invalid_argument{"dmitigr::io::Shard: invalid worker_pinmap"};
-
+    DMITIGR_CKARG(worker_count > 0);
+    DMITIGR_CKARG(worker_pinmap.size() > 0);
     io_ = std::thread{&boost::asio::io_context::run, &io_ctx_};
     dmitigr::thread::set_affinity(io_, io_pin_index);
     workers_ = std::make_unique<dmitigr::thread::Pool>(worker_count, worker_pinmap);
