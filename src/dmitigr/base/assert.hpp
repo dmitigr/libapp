@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2025 Dmitry Igrishin
+// Copyright 2026 Dmitry Igrishin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,20 +22,73 @@
 #include <iostream>
 #endif
 
+#ifndef DMITIGR_CKARG
+#include <source_location>
+#endif
+
+#if !defined(DMITIGR_CKARG) || !defined(DMITIGR_CHECK)
+#include <stdexcept>
+#include <string>
+#endif
+
 #ifndef DMITIGR_ASSERT
 /**
  * @brief Checks the assertion `a`.
  *
- * @details Always active regardless of `NDEBUG`.
+ * @details Calls std::terminate() if assertion `a` violated.
  *
- * @par Effects Terminates the process if `!a`.
+ * @remarks Always active regardless of `NDEBUG`.
+ *
+ * @par Effects
+ * If `!a`, an assertion is printed with the name of the source file and the
+ * line where it was violated, after which std::terminate() is called.
  */
 #define DMITIGR_ASSERT(a) do {                                          \
     if (!(a)) {                                                         \
-      std::cerr<<"assertion ("<<#a<<") failed at "<<__FILE__<<":"<<__LINE__<<"\n"; \
+      std::cerr<<"assertion ("#a") failed at "<<__FILE__<<":"<<__LINE__<<"\n"; \
       std::terminate();                                                 \
     }                                                                   \
   } while (false)
-#endif
+#endif  // DMITIGR_ASSERT
+
+#ifndef DMITIGR_CHECK
+/**
+ * @brief Checks the assertion `a`.
+ *
+ * @details Throws std::logic_error if assertion `a` violated.
+ *
+ * @remarks Always active regardless of `NDEBUG`.
+ *
+ * @throws std::logic_error with assertion text, the name of the source file and
+ * the line where it was violated as the what-string.
+ */
+#define DMITIGR_CHECK(a) do {                                           \
+    if (!(a)) {                                                         \
+      throw std::logic_error{std::string{"check ("#a") failed at "}     \
+        .append(__FILE__).append(1, ':').append(std::to_string(__LINE__))}; \
+    }                                                                   \
+  } while (false)
+#endif  // DMITIGR_CHECK
+
+#ifndef DMITIGR_CKARG
+/**
+ * @brief Checks the assertion `a`.
+ *
+ * @details Throws std::invalid_argument if assertion `a` violated.
+ *
+ * @remarks Always active regardless of `NDEBUG`.
+ *
+ * @throws std::invalid_argument with assertion text and the function name (if
+ * used in a function body) where it was violated as the what-string.
+ */
+#define DMITIGR_CKARG(a) do { if (!(a)) { const auto sl = std::source_location::current(); \
+      std::string msg;                                                  \
+      msg.reserve(192);                                                 \
+      msg.append("argument check ("#a") failed");                       \
+      if (sl.function_name())                                           \
+        msg.append(" in ").append(sl.function_name());                  \
+      throw std::invalid_argument{msg};                                 \
+    }} while (false)
+#endif  // DMITIGR_CKARG
 
 #endif  // DMITIGR_BASE_ASSERT_HPP
