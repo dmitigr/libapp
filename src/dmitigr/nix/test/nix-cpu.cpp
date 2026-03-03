@@ -15,6 +15,8 @@
 // limitations under the License.
 
 #include "../cpu.hpp"
+#include "../../base/assert.hpp"
+#include "../../base/str.hpp"
 
 #include <iostream>
 
@@ -22,10 +24,29 @@ int main()
 {
   try {
     namespace nix = dmitigr::nix;
+    namespace str = dmitigr::str;
     using std::cout;
-    cout << "Hyper-threading is "
-         << (nix::is_hyper_threading_available() ? "available" : "not available")
-         << '.' << std::endl;
+    using std::endl;
+    cout << "SMT is "
+         << (nix::is_smt_available() ? "available" : "not available")
+         << '.' << endl;
+
+    nix::for_each_cpu([](auto&& cpu)
+    {
+      DMITIGR_ASSERT(cpu.is_valid());
+      cout << std::boolalpha
+           << endl
+           << "CPU " << cpu.index() << ":" << endl
+           << "  Physical: " << cpu.is_physical() << endl
+           << "  Performant: " << cpu.is_performant() << endl
+           << "  Capacity: " << cpu.capacity() << endl
+           << "  Logical core list: " << str::to_string([](const auto& range)
+           {
+             return range.to_string();
+           }, cpu.logical_core_list(), ",")
+           << endl << endl;
+      return true;
+    });
   } catch (const std::exception& e) {
     std::cerr << e.what() << std::endl;
     return 1;

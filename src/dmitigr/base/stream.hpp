@@ -62,7 +62,7 @@ inline auto seekg_size(std::istream& in, const std::istream::off_type offset = 0
 /**
  * @brief Reads lines from the `input` stream.
  *
- * @param callback The function of signature `bool callback(const std::string&)`
+ * @param callback The function of signature `bool callback(std::string&&)`
  * that returns `true` to continue the reading.
  * @param input The input stream to read the data from.
  * @param delimiter The delimiter character.
@@ -73,7 +73,7 @@ std::istream& read_lines_if(F&& callback, std::istream& input,
 {
   std::string line;
   while (getline(input, line, delimiter)) {
-    if (!callback(line))
+    if (!callback(std::move(line)))
       break;
     line.clear();
   }
@@ -135,6 +135,33 @@ inline std::string read_to_string(const std::filesystem::path& path)
 {
   if (std::ifstream input{path, std::ios_base::binary})
     return read_to_string(input);
+  throw Exception{"cannot open file "+path.string()+" for reading"};
+}
+
+/**
+ * @returns The line from input.
+ *
+ * @throws Exception on error.
+ */
+inline std::string read_line_to_string(std::istream& input,
+  const char delimiter = '\n')
+{
+  std::string result;
+  if (getline(input, result, delimiter))
+    return result;
+  throw Exception{"cannot read line from input stream"};
+}
+
+/**
+ * @returns The first line from file at `path`.
+ *
+ * @throws Exception on error.
+ */
+inline std::string read_first_line_to_string(const std::filesystem::path& path,
+  const char delimiter = '\n')
+{
+  if (std::ifstream input{path})
+    return read_line_to_string(input, delimiter);
   throw Exception{"cannot open file "+path.string()+" for reading"};
 }
 
