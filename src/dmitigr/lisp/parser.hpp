@@ -31,7 +31,7 @@ struct Parse_result final {
   /// Position followed the parsed `expr`.
   std::string_view::size_type pos{};
   /// The parsed expression.
-  Shared_expr expr;
+  Shared_expr expr{};
 };
 
 /// @returns The error or parse result.
