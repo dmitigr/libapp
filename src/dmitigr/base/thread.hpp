@@ -47,13 +47,12 @@ namespace dmitigr::thread {
 // Affinity
 // -----------------------------------------------------------------------------
 
-#ifndef _WIN32
+#ifdef __linux__
 /// Sets the CPU affinity of the thread `handle` to the `cpu`.
 inline std::error_code set_affinity(const pthread_t handle,
   const unsigned int cpu) noexcept
 {
-#ifdef __linux__
-  if (!(handle && cpu < std::thread::hardware_concurrency()))
+  if (!handle)
     return std::make_error_code(std::errc::invalid_argument);
 
   cpu_set_t set;
@@ -61,19 +60,14 @@ inline std::error_code set_affinity(const pthread_t handle,
   CPU_SET(cpu, &set);
   const int err{pthread_setaffinity_np(handle, sizeof(cpu_set_t), &set)};
   return std::error_code{err, std::generic_category()};
-#else
-  (void)handle;
-  (void)cpu;
-  return make_error_code(std::errc::not_supported);
-#endif
 }
-#endif  // _WIN32
+#endif  // __linux__
 
 /// @overload
 inline std::error_code set_affinity(std::thread& thread,
   const unsigned int cpu) noexcept
 {
-#ifdef _WIN32
+#ifndef __linux__
   (void)thread;
   (void)cpu;
   return make_error_code(std::errc::not_supported);
@@ -176,6 +170,7 @@ public:
       pool_.threads.emplace_back(&Pool::wait_and_run, this);
   }
 
+#ifdef __linux__
   /**
    * @overload
    *
@@ -190,9 +185,12 @@ public:
       throw std::invalid_argument{"dmitigr::thread::Pool: invalid size or pinmap"};
     for (std::size_t i{}; i < size; ++i) {
       const auto core_index = pinmap[i % pinmap.size()];
-      dmitigr::thread::set_affinity(pool_.threads[i], core_index);
+      const auto errc = dmitigr::thread::set_affinity(pool_.threads[i], core_index);
+      if (errc)
+        throw std::system_error{errc};
     }
   }
+#endif  // __linux__
 
   /// @overload
   Pool(const std::vector<unsigned int>& pinmap, Logger logger)
