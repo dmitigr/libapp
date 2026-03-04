@@ -40,10 +40,10 @@ int main()
            << "  Physical: " << cpu.is_physical() << endl
            << "  Performant: " << cpu.is_performant() << endl
            << "  Capacity: " << cpu.capacity() << endl
-           << "  Logical core list: " << str::to_string([](const auto& range)
+           << "  Core list: " << str::to_string([](const auto& range)
            {
              return range.to_string();
-           }, cpu.logical_core_list(), ",")
+           }, cpu.core_list(), ",")
            << endl << endl;
       return true;
     });

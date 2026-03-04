@@ -140,8 +140,8 @@ public:
   /// @returns `true` if this CPU core is physical.
   bool is_physical() const noexcept
   {
-    const auto lcl = logical_core_list();
-    return lcl.empty() || lcl.front().lower() == index();
+    const auto list = core_list();
+    return list.empty() || list.front().lower() == index();
   }
 
   /// @returns `true` if this CPU core is performant (P-core).
@@ -189,8 +189,8 @@ public:
 
 #endif
 
-  /// @returns The logical core list.
-  std::vector<Range> logical_core_list() const
+  /// @returns The (logical) core list.
+  std::vector<Range> core_list() const
   {
     const auto path = system_path()/"topology/core_cpus_list";
     std::vector<Cpu::Range> result;
@@ -243,9 +243,9 @@ private:
  * @param callback A function of signature `bool(Cpu&&)`.
  */
 template<typename F>
-void for_each_cpu(F&& callback)
+void for_each_cpu(F&& callback, const int offset = 0)
 {
-  for (int i{}; ; ++i) {
+  for (int i{offset}; ; ++i) {
     if (auto cpu = Cpu::make(i)) {
       if (!std::forward<F>(callback)(std::move(*cpu)))
         break;
