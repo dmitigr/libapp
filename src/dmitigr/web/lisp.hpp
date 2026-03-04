@@ -173,10 +173,10 @@ inline auto stack_graph(std::vector<std::filesystem::path>& stack,
 {
   for (auto& path : stack)
     path = rebased(path, docroot);
-  auto graph = str::to_string(stack, " -> ", [](const auto& e)
+  auto graph = str::to_string([](const auto& e)
   {
     return e.string();
-  });
+  }, stack, " -> ");
   return graph;
 }
 

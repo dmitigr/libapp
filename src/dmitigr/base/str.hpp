@@ -409,13 +409,13 @@ inline bool is_begins_with(const std::string_view input,
 
 /// @returns The string with stringified elements of the sequence in range `[b, e)`.
 template<class InputIterator, typename Function>
-std::string to_string(InputIterator b, const InputIterator e,
-  const std::string_view sep, const Function& to_str)
+std::string to_string(Function&& to_str, InputIterator b, const InputIterator e,
+  const std::string_view sep)
 {
   std::string result;
   if (b != e) {
     while (true) {
-      result.append(to_str(*b));
+      result.append(std::forward<Function>(to_str)(*b));
       ++b;
       if (b != e)
         result.append(sep);
@@ -428,20 +428,20 @@ std::string to_string(InputIterator b, const InputIterator e,
 
 /// @returns The string with stringified elements of the `Container`.
 template<class Container, typename Function>
-std::string to_string(const Container& cont, const std::string_view sep,
-  const Function& to_str)
+std::string to_string(Function&& to_str,
+  const Container& cont, const std::string_view sep)
 {
-  return to_string(cbegin(cont), cend(cont), sep, to_str);
+  return to_string(std::forward<Function>(to_str), cbegin(cont), cend(cont), sep);
 }
 
 /// @returns The string with stringified elements of the `Container`.
 template<class Container>
 std::string to_string(const Container& cont, const std::string_view sep)
 {
-  return to_string(cont, sep, [](const auto& e) noexcept
+  return to_string([](const auto& e) noexcept
   {
     return std::string_view{e};
-  });
+  }, cont, sep);
 }
 
 // =============================================================================
