@@ -93,6 +93,8 @@ private:
 
 /**
  * @brief Makes `count` CPU shards with thread pinning.
+ *
+ * @todo Make shards without thread pinning on non-Linux.
  */
 inline std::vector<std::unique_ptr<Shard>>
 make_shards(unsigned int count,
