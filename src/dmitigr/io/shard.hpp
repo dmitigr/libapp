@@ -19,6 +19,7 @@
 
 #include "../base/assert.hpp"
 #include "../base/thread.hpp"
+#include "../nix/cpu.hpp"
 
 #include <boost/asio.hpp>
 
@@ -84,11 +85,71 @@ public:
   }
 
 private:
-  boost::asio::io_context io_ctx_;
+  boost::asio::io_context io_ctx_{1};
   boost::asio::executor_work_guard<decltype(io_ctx_)::executor_type> io_guard_;
   std::thread io_;
   std::unique_ptr<dmitigr::thread::Pool> workers_;
 };
+
+/**
+ * @brief Makes `count` CPU shards with thread pinning.
+ */
+inline std::vector<std::unique_ptr<Shard>>
+make_shards(unsigned int count,
+  const unsigned int core_offset,
+  const std::size_t worker_thread_count,
+  std::size_t worker_core_count)
+{
+  DMITIGR_CKARG(worker_thread_count > 0);
+
+  // Get SMT availability.
+  const auto is_smt_avail = nix::is_smt_available();
+
+  // Get CPUs.
+  const auto cpus = [core_offset]
+  {
+    std::vector<nix::Cpu> cpus;
+    nix::for_each_cpu([&cpus](auto&& cpu)
+    {
+      if (cpu.is_physical() && cpu.is_performant())
+        cpus.push_back(std::move(cpu));
+      return true;
+    }, core_offset);
+    return cpus;
+  }();
+
+  if (!worker_core_count)
+    worker_core_count = !is_smt_avail ? std::min<unsigned int>(7, cpus.size()) : 1;
+
+  if (!count)
+    count = cpus.size() / (worker_core_count + !is_smt_avail);
+
+  if (cpus.size() < count * (worker_core_count + !is_smt_avail))
+    throw std::runtime_error{"insufficient of CPU cores to make "+
+      std::to_string(count)+" CPU shards"};
+
+  std::vector<std::unique_ptr<Shard>> result(count);
+  for (unsigned int shard_i{}; shard_i < count; ++shard_i) {
+    const auto& first_cpu = cpus[shard_i * worker_core_count];
+
+    const unsigned int io_pin_index{is_smt_avail ?
+      first_cpu.core_list().at(1).lower() : first_cpu.index()};
+
+    const auto worker_pinmap = [&]
+    {
+      std::vector<unsigned int> worker_pinmap;
+      worker_pinmap.reserve(worker_core_count - !is_smt_avail);
+      for (unsigned int i{!is_smt_avail}; i < worker_core_count; ++i)
+        worker_pinmap.push_back(cpus[shard_i * worker_core_count + i].index());
+      return worker_pinmap;
+    }();
+
+    result[shard_i] = std::make_unique<Shard>(io_pin_index,
+      worker_thread_count, worker_pinmap);
+  }
+
+  return result;
+}
 
 } // namespace dmitigr::io
 
