@@ -23,6 +23,7 @@
 #include "traits.hpp"
 
 #include <algorithm>
+#include <concepts>
 #include <cstddef>
 #include <cstdio>
 #include <cctype>
@@ -32,6 +33,7 @@
 #include <functional>
 #include <initializer_list>
 #include <limits>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -289,7 +291,7 @@ get_lines(std::vector<std::string>& result, std::string& buffer,
 }
 
 // =============================================================================
-// Numeric conversions
+// Conversions
 // =============================================================================
 
 /**
@@ -299,14 +301,15 @@ get_lines(std::vector<std::string>& result, std::string& buffer,
  * @par Requires
  * `(2 <= base && base <= 36)`.
  */
-template<typename Number>
-std::enable_if_t<std::is_integral<Number>::value, std::string>
-to_string(Number value, const Number base = 10)
+template<std::integral Number>
+std::string to_string(Number value, const Number base = 10)
 {
   static_assert(std::numeric_limits<Number>::min() <= 2 &&
     std::numeric_limits<Number>::max() >= 36);
 
-  if (!(2 <= base && base <= 36))
+  if (base == 10)
+    return std::to_string(value);
+  else if (!(2 <= base && base <= 36))
     throw Exception{"cannot convert number to text by using invalid base"};
 
   constexpr const char digits[] =
@@ -329,6 +332,20 @@ to_string(Number value, const Number base = 10)
     result += '-';
   std::reverse(begin(result), end(result));
   return result;
+}
+
+/// @returns The result of conversion `value` to string via `std::ostringstream`.
+template<class T>
+std::string to_string(T&& value)
+  noexcept(std::is_same_v<std::decay_t<T>, std::string>)
+{
+  if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
+    return std::move(value);
+  else if constexpr (std::is_arithmetic_v<T>)
+    return std::to_string(value);
+  std::ostringstream os;
+  os << value;
+  return os.str();
 }
 
 // =============================================================================
