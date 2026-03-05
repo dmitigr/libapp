@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#if !defined(__linux__) && !defined(__APPLE__)
-#error dmitigr/nix/cpu.hpp is usable only on Linux or macOS!
+#if !defined(__linux__)
+#error dmitigr/nix/cpu.hpp is usable only on Linux!
 #endif
 
 #include "../base/assert.hpp"
@@ -35,16 +35,60 @@
 
 namespace dmitigr::nix {
 
-/// @returns `true` if Simultaneous Multithreading is available.
-inline bool is_smt_available()
+/// Represents SMT status.
+enum class Smt_status {
+  notsupported,
+  froceoff,
+  off,
+  on
+};
+
+/// @returns The text representation of `value`.
+inline const char* to_literal(const Smt_status value) noexcept
 {
-#ifdef __linux__
-  if (std::ifstream list{"/sys/devices/system/cpu/cpu0/topology/core_cpus_list"}) {
-    const auto line = read_line_to_string(list);
-    return line.find_first_of(",-") != std::string::npos;
+  using enum Smt_status;
+  switch (value) {
+  case notsupported:
+    return "notsupported";
+  case forceoff:
+    return "forceoff";
+  case off:
+    return "off";
+  case on:
+    return "on";
   }
-#endif
-  return false;
+  return nullptr;
+}
+
+/// @returns The text representation of `value`.
+inline std::string_view to_string_view(const Smt_status value)
+{
+  if (const auto* const result = to_literal(value))
+    return result;
+  DMITIGR_THROW_INVARG(value);
+}
+
+/// @returns The binary representation of `value`.
+inline Smt_status to_smt_status(const std::string_view value)
+{
+  using enum Smt_status;
+  if (value == "notsupported")
+    return notsupported;
+  else if (value == "forceoff")
+    return forceoff;
+  else if (value == "off")
+    return off;
+  else if (value == "on")
+    return on;
+  DMITIGR_THROW_INVARG(value);
+}
+
+/// @returns The status of Simultaneous Multithreading.
+inline Smt_status smt_status()
+{
+  if (std::ifstream file{"/sys/devices/system/cpu/smt/control"})
+    return to_smt_status(read_line_to_string(file));
+  return Smt_status::notsupported;
 }
 
 /**
@@ -113,28 +157,43 @@ public:
 
   /// Constructs an instance of CPU at index `index`.
   explicit Cpu(const int index)
-    : Cpu{index, int{}}
+    : index_{index}
   {
-#ifdef __linux__
-    DMITIGR_CKARG(exists(system_path()));
-#endif
+    DMITIGR_CKARG(is_possible(index));
   }
 
   /// @returns An instance of CPU at index `index` or `std::nullopt`.
   static std::optional<Cpu> make(const int index)
   {
-#ifdef __linux__
     Cpu result{index, int{}};
     if (exists(result.system_path()))
       return std::optional{std::move(result)};
-#endif
-    return std::nullopt;
+  }
+
+  /// @returns `true` if Simultaneous Multithreading is available.
+  bool is_smt_available() const
+  {
+    return core_list().size() > 1;
   }
 
   /// @returns `true` if this instance is valid.
   bool is_valid() const noexcept
   {
     return index() >= 0;
+  }
+
+  /// @returns `true` if this CPU core is presents.
+  bool is_possible() const
+  {
+    static const std::filesystem::path file{cpu_root_path()/"possible"};
+    return !exists(file) || is_in_ranges(file, index());
+  }
+
+  /// @returns `true` if this CPU core is online.
+  bool is_online() const
+  {
+    static const std::filesystem::path file{cpu_root_path()/"online"};
+    return !exists(file) || is_in_ranges(file, index());
   }
 
   /// @returns `true` if this CPU core is physical.
@@ -145,24 +204,10 @@ public:
   }
 
   /// @returns `true` if this CPU core is performant (P-core).
-  bool is_performant() const noexcept
+  bool is_performant() const
   {
-    static const std::filesystem::path cpus{"/sys/devices/cpu_core/cpus"};
-    if (exists(cpus)) {
-      bool result{};
-      for_each_range([&result, this](const auto& range)
-      {
-        for (int i{range.lower()}; i <= range.upper(); ++i) {
-          if (i == index()) {
-            result = true;
-            return false;
-          }
-        }
-        return true;
-      }, read_first_line_to_string(cpus));
-      return result;
-    }
-    return true;
+    static const std::filesystem::path file{"/sys/devices/cpu_core/cpus"};
+    return !exists(cpus) || is_in_ranges(file, index());
   }
 
   /// @returns An index of this CPU.
@@ -170,8 +215,6 @@ public:
   {
     return index_;
   }
-
-#ifdef __linux__
 
   /// @returns Max CPU capacity.
   static constexpr int max_capacity() noexcept
@@ -182,17 +225,15 @@ public:
   /// @returns CPU capacity.
   int capacity() const
   {
-    if (const auto path = system_path()/"cpu_capacity"; exists(path))
-      return std::stoi(read_first_line_to_string(path));
-    return max_capacity();
+    static const std::filesystem::path file{cpu_path()/"cpu_capacity"};
+    return exists(path) ? std::stoi(read_first_line_to_string(path)) :
+      max_capacity();
   }
-
-#endif
 
   /// @returns The (logical) core list.
   std::vector<Range> core_list() const
   {
-    const auto path = system_path()/"topology/core_cpus_list";
+    const auto path = cpu_path()/"topology/core_cpus_list";
     std::vector<Cpu::Range> result;
     if (exists(path)) {
       const auto line = read_first_line_to_string(path);
@@ -207,15 +248,16 @@ public:
 
 private:
   int index_{-1};
-  std::vector<Range> core_list_;
 
-  Cpu(const int index, int)
-    : index_{index}
-  {}
-
-  std::filesystem::path system_path() const
+  static const std::filesystem::path& cpu_root_path()
   {
-    return std::filesystem::path{"/sys/devices/system/cpu/cpu"+std::to_string(index_)};
+    static std::filesystem::path file{"/sys/devices/system/cpu"};
+    return file;
+  }
+
+  std::filesystem::path cpu_path() const
+  {
+    return std::filesystem::path{cpu_root_path()/"cpu"+std::to_string(index_)};
   }
 
   template<typename F>
@@ -234,6 +276,22 @@ private:
         range = Cpu::Range{std::stoi(std::string{part})};
       return std::forward<F>(callback)(std::move(range));
     }, line, str::Fepsep_exact{","});
+  }
+
+  static bool is_in_ranges_of(const std::filesystem::path& path, const int idx)
+  {
+    bool result{};
+    for_each_range([&result, idx](const auto& range)
+    {
+      for (int i{range.lower()}; i <= range.upper(); ++i) {
+        if (i == idx) {
+          result = true;
+          return false;
+        }
+      }
+      return true;
+    }, read_first_line_to_string(path));
+    return result;
   }
 };
 
