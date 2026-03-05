@@ -91,4 +91,22 @@
     }} while (false)
 #endif  // DMITIGR_CKARG
 
+#ifndef DMITIGR_THROW_INVARG
+/**
+ * @brief Checks the assertion `a`.
+ *
+ * @throws std::invalid_argument with text `a` and the function name (if
+ * used in a function body).
+ */
+#define DMITIGR_THROW_INVARG(a) do { const auto sl = std::source_location::current(); \
+    (void)(a);                                                          \
+    std::string msg;                                                    \
+    msg.reserve(192);                                                   \
+    msg.append("invalid argument ("#a")");                              \
+    if (sl.function_name())                                             \
+      msg.append(" of ").append(sl.function_name());                    \
+    throw std::invalid_argument{msg};                                   \
+  } while (false)
+#endif  // DMITIGR_THROW_INVARG
+
 #endif  // DMITIGR_BASE_ASSERT_HPP
