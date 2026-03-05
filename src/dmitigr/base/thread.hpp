@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2025 Dmitry Igrishin
+// Copyright 2026 Dmitry Igrishin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public:
   Pool() = default;
 
   /// Constructs the thread pool of the given `size` without logger.
-  explicit Pool(const std::size_t size)
+  explicit Pool(const int size)
     : Pool{size, Logger{}}
   {}
 
@@ -158,7 +158,7 @@ public:
    *
    * @remarks If the `size` is `0`, constructs invalid instance.
    */
-  Pool(const std::size_t size, Logger logger)
+  Pool(const std::ptrdiff_t size, Logger logger)
     : logger_{std::move(logger)}
   {
     if (!size)
@@ -166,7 +166,7 @@ public:
 
     queue_.is_started = true;
     pool_.threads.reserve(size);
-    for (std::size_t i{}; i < size; ++i)
+    for (std::ptrdiff_t i{}; i < size; ++i)
       pool_.threads.emplace_back(&Pool::wait_and_run, this);
   }
 
@@ -176,15 +176,15 @@ public:
    *
    * @details Pins threads according to `pinmap`.
    */
-  Pool(const std::size_t size, const std::vector<unsigned int>& pinmap,
+  Pool(const std::ptrdiff_t size, const std::vector<int>& pinmap,
     Logger logger = {})
     : Pool{size, std::move(logger)}
   {
-    DMITIGR_ASSERT(size == pool_.threads.size());
-    if (!(size >= pinmap.size()) || (size % pinmap.size()))
-      throw std::invalid_argument{"dmitigr::thread::Pool: invalid size or pinmap"};
-    for (std::size_t i{}; i < size; ++i) {
-      const auto core_index = pinmap[i % pinmap.size()];
+    DMITIGR_ASSERT(size == std::ssize(pool_.threads));
+    DMITIGR_CKARG(size >= std::ssize(pinmap));
+    DMITIGR_CKARG(!(size % std::ssize(pinmap)));
+    for (std::ptrdiff_t i{}; i < size; ++i) {
+      const auto core_index = pinmap[i % std::ssize(pinmap)];
       const auto errc = dmitigr::thread::set_affinity(pool_.threads[i], core_index);
       if (errc)
         throw std::system_error{errc};
@@ -193,12 +193,12 @@ public:
 #endif  // __linux__
 
   /// @overload
-  Pool(const std::vector<unsigned int>& pinmap, Logger logger)
-    : Pool{pinmap.size(), pinmap, std::move(logger)}
+  Pool(const std::vector<int>& pinmap, Logger logger)
+    : Pool{std::ssize(pinmap), pinmap, std::move(logger)}
   {}
 
   /// @overload
-  explicit Pool(const std::vector<unsigned int>& pinmap)
+  explicit Pool(const std::vector<int>& pinmap)
     : Pool{pinmap, Logger{}}
   {}
 
@@ -230,23 +230,23 @@ public:
   }
 
   /// @returns The size of task queue.
-  std::size_t queue_size() const noexcept
+  auto queue_size() const noexcept
   {
     const std::lock_guard lg{queue_.mutex};
-    return queue_.tasks.size();
+    return std::ssize(queue_.tasks);
   }
 
   /// @returns The thread pool size.
-  std::size_t size() const noexcept
+  auto size() const noexcept
   {
     const std::lock_guard lg{pool_.mutex};
-    return pool_.threads.size();
+    return std::ssize(pool_.threads);
   }
 
   /// @returns The number of currently running tasks.
-  std::size_t usage() const noexcept
+  auto usage() const noexcept
   {
-    return pool_.usage;
+    return pool_.usage.load();
   }
 
 private:
@@ -260,7 +260,7 @@ private:
   struct {
     mutable std::mutex mutex;
     std::vector<std::thread> threads;
-    std::atomic<std::size_t> usage;
+    std::atomic<std::ptrdiff_t> usage;
   } pool_;
 
   Logger logger_;

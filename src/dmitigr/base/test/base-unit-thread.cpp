@@ -41,12 +41,12 @@ int main()
     // -------------------------------------------------------------------------
 
     {
-      const auto size = std::thread::hardware_concurrency() * 2;
+      const int size = std::thread::hardware_concurrency() * 2;
       thread::Pool pool{size};
       DMITIGR_ASSERT(pool.size() == size);
       DMITIGR_ASSERT(pool.queue_size() == 0);
 
-      for (std::size_t i = 0; i < 16*size; ++i) {
+      for (int i = 0; i < 16*size; ++i) {
         pool.submit([]
         {
           std::this_thread::sleep_for(std::chrono::milliseconds{5});
