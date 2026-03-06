@@ -180,27 +180,28 @@ public:
     Logger logger = {})
     : Pool{size, std::move(logger)}
   {
-    DMITIGR_ASSERT(size == std::ssize(pool_.threads));
-    DMITIGR_CKARG(size >= std::ssize(pinmap));
-    DMITIGR_CKARG(!(size % std::ssize(pinmap)));
+    DMITIGR_ASSERT(size == ssize(pool_.threads));
+    DMITIGR_CKARG(size >= ssize(pinmap));
+    DMITIGR_CKARG(!(size % ssize(pinmap)));
     for (std::ptrdiff_t i{}; i < size; ++i) {
-      const auto core_index = pinmap[i % std::ssize(pinmap)];
+      const auto core_index = pinmap[i % ssize(pinmap)];
       const auto errc = dmitigr::thread::set_affinity(pool_.threads[i], core_index);
       if (errc)
         throw std::system_error{errc};
     }
   }
-#endif  // __linux__
 
   /// @overload
   Pool(const std::vector<int>& pinmap, Logger logger)
-    : Pool{std::ssize(pinmap), pinmap, std::move(logger)}
+    : Pool{ssize(pinmap), pinmap, std::move(logger)}
   {}
 
   /// @overload
   explicit Pool(const std::vector<int>& pinmap)
     : Pool{pinmap, Logger{}}
   {}
+
+#endif  // __linux__
 
   /// @}
 
@@ -233,14 +234,14 @@ public:
   auto queue_size() const noexcept
   {
     const std::lock_guard lg{queue_.mutex};
-    return std::ssize(queue_.tasks);
+    return ssize(queue_.tasks);
   }
 
   /// @returns The thread pool size.
   auto size() const noexcept
   {
     const std::lock_guard lg{pool_.mutex};
-    return std::ssize(pool_.threads);
+    return ssize(pool_.threads);
   }
 
   /// @returns The number of currently running tasks.
