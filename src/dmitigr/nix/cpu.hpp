@@ -24,7 +24,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -159,15 +158,14 @@ public:
   explicit Cpu(const int index)
     : index_{index}
   {
-    DMITIGR_CKARG(is_possible(index));
+    DMITIGR_CKARG(is_possible(index_));
   }
 
-  /// @returns An instance of CPU at index `index` or `std::nullopt`.
-  static std::optional<Cpu> make(const int index)
+  /// @returns `true` if CPU at index `index` is presents.
+  static bool is_possible(const int index)
   {
-    Cpu result{index, int{}};
-    if (exists(result.system_path()))
-      return std::optional{std::move(result)};
+    static const std::filesystem::path file{cpu_root_path()/"possible"};
+    return !exists(file) || is_in_ranges(file, index);
   }
 
   /// @returns `true` if this instance is valid.
@@ -180,13 +178,6 @@ public:
   bool is_smt_available() const
   {
     return core_list().size() > 1;
-  }
-
-  /// @returns `true` if this CPU core is presents.
-  bool is_possible() const
-  {
-    static const std::filesystem::path file{cpu_root_path()/"possible"};
-    return !exists(file) || is_in_ranges(file, index());
   }
 
   /// @returns `true` if this CPU core is online.
@@ -207,7 +198,7 @@ public:
   bool is_performant() const
   {
     static const std::filesystem::path file{"/sys/devices/cpu_core/cpus"};
-    return !exists(cpus) || is_in_ranges(file, index());
+    return !exists(file) || is_in_ranges(file, index());
   }
 
   /// @returns An index of this CPU.
@@ -226,7 +217,7 @@ public:
   int capacity() const
   {
     static const std::filesystem::path file{cpu_path()/"cpu_capacity"};
-    return exists(path) ? std::stoi(read_first_line_to_string(path)) :
+    return exists(file) ? std::stoi(read_first_line_to_string(file)) :
       max_capacity();
   }
 
@@ -257,7 +248,7 @@ private:
 
   std::filesystem::path cpu_path() const
   {
-    return std::filesystem::path{cpu_root_path()/"cpu"+std::to_string(index_)};
+    return std::filesystem::path{cpu_root_path()/("cpu"+std::to_string(index_))};
   }
 
   template<typename F>
@@ -278,7 +269,7 @@ private:
     }, line, str::Fepsep_exact{","});
   }
 
-  static bool is_in_ranges_of(const std::filesystem::path& path, const int idx)
+  static bool is_in_ranges(const std::filesystem::path& path, const int idx)
   {
     bool result{};
     for_each_range([&result, idx](const auto& range)
@@ -304,8 +295,8 @@ template<typename F>
 void for_each_cpu(F&& callback, const int offset = 0)
 {
   for (int i{offset}; ; ++i) {
-    if (auto cpu = Cpu::make(i)) {
-      if (!std::forward<F>(callback)(std::move(*cpu)))
+    if (Cpu::is_possible(i)) {
+      if (!std::forward<F>(callback)(Cpu{i}))
         break;
     } else
       break;

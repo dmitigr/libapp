@@ -194,7 +194,7 @@ std::vector<SmartPtr> make_shards(const Make_shards_args& args = {})
   // Get SMT availability.
 #ifdef __linux__
   const auto is_with_smt = args.is_consider_smt &&
-    nix::smt_status() == Smt_status::on;
+    nix::smt_status() == nix::Smt_status::on;
 #else
   const auto is_with_smt = false;
 #endif
@@ -204,7 +204,7 @@ std::vector<SmartPtr> make_shards(const Make_shards_args& args = {})
   const auto cpus = args.is_thread_pinning ? [&]
   {
     std::vector<nix::Cpu> cpus;
-    nix::for_each_cpu([&cpus](auto&& cpu)
+    nix::for_each_cpu([&](auto&& cpu)
     {
       if (cpu.is_online() && cpu.is_physical() && cpu.is_performant() &&
         (!is_with_smt || cpu.is_smt_available()))

@@ -27,9 +27,7 @@ int main()
     namespace str = dmitigr::str;
     using std::cout;
     using std::endl;
-    cout << "SMT is "
-         << (nix::is_smt_available() ? "available" : "not available")
-         << '.' << endl;
+    cout << "SMT is " << to_string_view(nix::smt_status()) << '.' << endl;
 
     nix::for_each_cpu([](auto&& cpu)
     {
