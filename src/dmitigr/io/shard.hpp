@@ -236,9 +236,16 @@ std::vector<SmartPtr> make_shards(const Make_shards_args& args = {})
       return args.count;
   }();
 
-  if (cpu_count < count * total_core_count)
-    throw std::runtime_error{"dmitigr::io: insufficient of "
-      "CPU cores to make "+std::to_string(count)+" CPU shards"};
+  {
+    using std::to_string;
+    if (cpu_count < count * total_core_count)
+      throw std::runtime_error{"insufficient CPU physical cores: "+
+        to_string(cpu_count)+" available, "+
+        to_string(count * total_core_count)+
+        " required for "+to_string(count)+
+        " shards with "+to_string(total_core_count)+
+        " cores per shard"};
+  }
 
   std::vector<SmartPtr> result;
   result.reserve(count);
