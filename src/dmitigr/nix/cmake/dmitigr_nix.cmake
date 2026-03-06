@@ -31,13 +31,15 @@ set(dmitigr_nix_headers
   process.hpp
 )
 
+if(LINUX)
+  list(APPEND dmitigr_nix_headers cpu.hpp)
+endif()
 if(LINUX OR APPLE)
   list(APPEND dmitigr_nix_headers detach.hpp ifaddrs.hpp)
 endif()
 if(FREEBSD OR APPLE)
   list(APPEND dmitigr_nix_headers sysctl.hpp)
 endif()
-
 
 set(dmitigr_nix_implementations
   )
@@ -56,13 +58,13 @@ list(APPEND dmitigr_nix_target_link_libraries_interface dl)
 
 if(DMITIGR_LIBS_TESTS)
   if(UNIX AND NOT CMAKE_SYSTEM_NAME MATCHES MSYS|MinGW|Cygwin)
-    set(dmitigr_nix_tests cpu detach dl ifaddrs)
+    set(dmitigr_nix_tests detach dl ifaddrs)
   endif()
   if(UNIX AND NOT LINUX)
     list(APPEND dmitigr_nix_tests sysctl)
   endif()
  if(LINUX)
-    list(APPEND dmitigr_nix_tests pipe pipe2 slow_write)
+    list(APPEND dmitigr_nix_tests cpu pipe pipe2 slow_write)
   endif()
 
   add_library(dmitigr_nix_dl SHARED

@@ -17,6 +17,10 @@
 #ifndef DMITIGR_NIX_NIX_HPP
 #define DMITIGR_NIX_NIX_HPP
 
+#if defined(__linux)
+#include "cpu.hpp"
+#endif
+
 #if defined(__linux__) || defined(__APPLE__)
 #include "detach.hpp"
 #include "ifaddrs.hpp"
@@ -26,7 +30,6 @@
 #include "sysctl.hpp"
 #endif
 
-#include "cpu.hpp"
 #include "dl.hpp"
 #include "error.hpp"
 #include "ipc_pipe.hpp"

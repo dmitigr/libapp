@@ -38,7 +38,7 @@ namespace dmitigr::nix {
 /// Represents SMT status.
 enum class Smt_status {
   notsupported,
-  froceoff,
+  forceoff,
   off,
   on
 };
