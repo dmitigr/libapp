@@ -170,16 +170,16 @@ public:
       return std::optional{std::move(result)};
   }
 
-  /// @returns `true` if Simultaneous Multithreading is available.
-  bool is_smt_available() const
-  {
-    return core_list().size() > 1;
-  }
-
   /// @returns `true` if this instance is valid.
   bool is_valid() const noexcept
   {
     return index() >= 0;
+  }
+
+  /// @returns `true` if Simultaneous Multithreading is available.
+  bool is_smt_available() const
+  {
+    return core_list().size() > 1;
   }
 
   /// @returns `true` if this CPU core is presents.
