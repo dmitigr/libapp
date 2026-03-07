@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2025 Dmitry Igrishin
+// Copyright 2026 Dmitry Igrishin
 
 #include "../../base/assert.hpp"
 #include "../../nix/ipc_pipe.hpp"

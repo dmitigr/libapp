@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2025 Dmitry Igrishin
+// Copyright 2026 Dmitry Igrishin
 
 #include "../../base/assert.hpp"
 #include "../../pgfex/connection_options.hpp"
